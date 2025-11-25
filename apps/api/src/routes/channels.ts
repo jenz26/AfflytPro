@@ -1,13 +1,11 @@
 import { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ChannelPlatform } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 
 const createChannelSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
-    platform: z.enum(['TELEGRAM', 'DISCORD', 'EMAIL', 'WHATSAPP'], {
-        errorMap: () => ({ message: 'Invalid platform' })
-    }),
+    platform: z.enum(['TELEGRAM', 'DISCORD']),
     channelId: z.string().min(1, 'Channel ID is required'),
     credentialId: z.string().uuid().optional()
 });
@@ -40,7 +38,7 @@ export async function channelRoutes(fastify: FastifyInstance) {
                 data: {
                     userId,
                     name,
-                    platform,
+                    platform: platform as ChannelPlatform,
                     channelId,
                     credentialId,
                     status: 'CONNECTED', // Assuming connected if created via wizard
@@ -52,7 +50,7 @@ export async function channelRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);
@@ -105,7 +103,7 @@ export async function channelRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);

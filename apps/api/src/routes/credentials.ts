@@ -48,7 +48,7 @@ export async function credentialRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);
@@ -100,7 +100,7 @@ export async function credentialRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);

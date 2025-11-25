@@ -137,7 +137,7 @@ async function checkAndExecuteRules() {
 
       // Check schedule triggers
       for (const trigger of rule.triggers) {
-        const config = JSON.parse(trigger.config);
+        const config = trigger.config as any;
 
         // Get user plan and use plan-based cron if custom cron not specified
         const userPlan = rule.user.plan as string;

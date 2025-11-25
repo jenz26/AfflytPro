@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TriggerType, ActionType } from '@prisma/client';
 import { RuleExecutor } from '../services/RuleExecutor';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
@@ -116,7 +116,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -172,21 +172,21 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     userId,
                     name,
                     description,
-                    categories: JSON.stringify(categories),
+                    categories: categories,
                     minScore,
                     maxPrice,
                     ...(channelId && channelId.trim() !== '' ? { channelId } : {}),
                     ...(splitId && splitId.trim() !== '' ? { splitId } : {}),
                     triggers: {
                         create: triggers.map(t => ({
-                            type: t.type,
-                            config: JSON.stringify(t.config)
+                            type: t.type as TriggerType,
+                            config: t.config
                         }))
                     },
                     actions: {
                         create: actions.map(a => ({
-                            type: a.type,
-                            config: JSON.stringify(a.config),
+                            type: a.type as ActionType,
+                            config: a.config,
                             order: a.order
                         }))
                     }
@@ -206,7 +206,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -281,7 +281,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -333,7 +333,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -393,7 +393,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -456,8 +456,8 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
 
-            // Parse categories
-            const categories = JSON.parse(template.categories);
+            // Categories is now a native array in PostgreSQL
+            const categories = template.categories;
 
             // Create automation from template
             const automation = await prisma.automationRule.create({
@@ -465,23 +465,23 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     userId,
                     name: template.name,
                     description: template.description,
-                    categories: template.categories,
+                    categories: categories,
                     minScore: template.minScore,
                     maxPrice: template.maxPrice || undefined,
                     isActive: false, // User must activate manually
                     triggers: {
                         create: [
                             {
-                                type: 'SCHEDULE',
-                                config: JSON.stringify({ cron: template.schedule })
+                                type: 'SCHEDULE' as TriggerType,
+                                config: { cron: template.schedule }
                             }
                         ]
                     },
                     actions: {
                         create: [
                             {
-                                type: 'PUBLISH_CHANNEL',
-                                config: JSON.stringify({ template: 'default' }),
+                                type: 'PUBLISH_CHANNEL' as ActionType,
+                                config: { template: 'default' },
                                 order: 1
                             }
                         ]
@@ -503,7 +503,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);
@@ -540,8 +540,8 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
 
-            // Parse categories
-            const categories = JSON.parse(rule.categories);
+            // Categories is now a native array in PostgreSQL
+            const categories = rule.categories;
 
             // Find matching products (preview mode - limit to 5)
             const products = await prisma.product.findMany({
@@ -591,7 +591,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     error: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             fastify.log.error(error);

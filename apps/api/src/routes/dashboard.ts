@@ -87,12 +87,12 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 let score = deal.discount; // Fallback to discount
                 if (deal.scoreComponents) {
                     try {
-                        const components = JSON.parse(deal.scoreComponents);
+                        const components = deal.scoreComponents as any;
                         score = Math.round(
-                            components.discountScore +
-                            components.salesRankScore +
-                            components.ratingScore +
-                            components.priceDropScore
+                            (components.discountScore || 0) +
+                            (components.salesRankScore || 0) +
+                            (components.ratingScore || 0) +
+                            (components.priceDropScore || 0)
                         );
                     } catch (e) {
                         // Use discount as fallback

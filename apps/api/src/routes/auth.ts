@@ -274,7 +274,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors.map((e) => ({
+            errors: err.issues.map((e: any) => ({
               field: e.path.join('.'),
               message: e.message,
             })),
@@ -329,7 +329,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Token non valido',
-            errors: err.errors,
+            errors: err.issues,
           });
         }
         fastify.log.error(err);
@@ -381,7 +381,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors,
+            errors: err.issues,
           });
         }
         fastify.log.error(err);
@@ -496,7 +496,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors.map((e) => ({
+            errors: err.issues.map((e: any) => ({
               field: e.path.join('.'),
               message: e.message,
             })),
@@ -557,7 +557,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors,
+            errors: err.issues,
           });
         }
         fastify.log.error(err);
@@ -611,7 +611,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Token non valido',
-            errors: err.errors,
+            errors: err.issues,
           });
         }
         fastify.log.error(err);
@@ -664,7 +664,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors,
+            errors: err.issues,
           });
         }
         fastify.log.error(err);
@@ -719,7 +719,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors.map((e) => ({
+            errors: err.issues.map((e: any) => ({
               field: e.path.join('.'),
               message: e.message,
             })),
@@ -813,7 +813,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (err instanceof z.ZodError) {
           return reply.code(400).send({
             message: 'Errore di validazione',
-            errors: err.errors.map((e) => ({
+            errors: err.issues.map((e: any) => ({
               field: e.path.join('.'),
               message: e.message,
             })),

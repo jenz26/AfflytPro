@@ -170,17 +170,17 @@ export class AnalyticsService {
 
     const welcomeStarted = events.filter(e =>
       e.eventName === 'onboarding_step_viewed' &&
-      JSON.parse(e.properties).step === 'welcome'
+      (e.properties as any)?.step === 'welcome'
     ).length;
 
     const channelConnected = events.filter(e =>
       e.eventName === 'onboarding_step_completed' &&
-      (JSON.parse(e.properties).step === 'telegram' || JSON.parse(e.properties).step === 'email')
+      ((e.properties as any)?.step === 'telegram' || (e.properties as any)?.step === 'email')
     ).length;
 
     const automationCreated = events.filter(e =>
       e.eventName === 'onboarding_step_completed' &&
-      JSON.parse(e.properties).step === 'firstAutomation'
+      (e.properties as any)?.step === 'firstAutomation'
     ).length;
 
     return {

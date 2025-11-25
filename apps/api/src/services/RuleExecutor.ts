@@ -82,8 +82,8 @@ export class RuleExecutor {
             // ===== STEP 2: Targeting - Find Deals (with Cache) =====
             console.log('🎯 STEP 2: Targeting deals from cache...');
 
-            // Parse categories from JSON string
-            const categories = JSON.parse(rule.categories);
+            // Categories is now a native array in PostgreSQL
+            const categories = rule.categories;
             const cacheService = new ProductCacheService();
 
             // Search in cached products (fresh data < 24h)
@@ -159,7 +159,7 @@ export class RuleExecutor {
             if (rule.split) {
                 console.log('🔀 STEP 4: Applying A/B Split...');
 
-                const variants = JSON.parse(rule.split.variants);
+                const variants = rule.split.variants as any[];
                 // Weighted random selection
                 const totalWeight = variants.reduce((sum: number, v: any) => sum + v.weight, 0);
                 let random = Math.random() * totalWeight;

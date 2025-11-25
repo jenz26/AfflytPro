@@ -48,14 +48,19 @@ export async function linkRoutes(fastify: FastifyInstance) {
             // Generate short URL (mock - in production use Amazon's link shortener API)
             const shortUrl = `https://amzn.to/${generateShortCode()}`;
 
+            // Generate short code
+            const shortCode = generateShortCode();
+
             // Store link in DB for tracking
             const affiliateLink = await prisma.affiliateLink.create({
                 data: {
                     productId: product.id,
                     userId,
                     amazonTag,
+                    shortCode,
                     shortUrl,
                     fullUrl,
+                    destinationUrl: fullUrl,
                     clicks: 0
                 }
             });
@@ -81,7 +86,7 @@ export async function linkRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);
@@ -152,7 +157,7 @@ export async function linkRoutes(fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     message: 'Validation error',
-                    errors: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
             }
             request.log.error(error);
