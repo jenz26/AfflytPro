@@ -1,11 +1,11 @@
-# Multi-stage build for production
+# Multi-stage build for Afflyt API
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy only API package files first (better caching)
+COPY apps/api/package*.json ./
+COPY apps/api/prisma ./prisma/
 
 # Install dependencies
 RUN npm ci
@@ -13,8 +13,9 @@ RUN npm ci
 # Generate Prisma client
 RUN npx prisma generate
 
-# Copy source code
-COPY . .
+# Copy API source code
+COPY apps/api/src ./src
+COPY apps/api/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build
