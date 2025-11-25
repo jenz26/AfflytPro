@@ -1,0 +1,518 @@
+{
+  "auth": {
+    "login": {
+      "title": "Access Command Center",
+      "subtitle": "Your control hub for intelligent affiliate marketing",
+      "emailLabel": "Business Email",
+      "passwordLabel": "Password",
+      "emailPlaceholder": "you@company.com",
+      "passwordPlaceholder": "••••••••",
+      "continueButton": "Login with Magic Link",
+      "loginButton": "Login",
+      "noPassword": "No password required",
+      "secure": "Secure and instant access",
+      "emailSentTitle": "Check your email!",
+      "emailSentDesc": "We've sent you a secure link to login.",
+      "processing": "Processing...",
+      "loginFailed": "Login failed. Check your credentials.",
+      "connectionError": "Server connection error."
+    },
+    "features": {
+      "realTimeDashboard": "Real-Time Dashboard",
+      "aiAutomations": "AI-Powered Automations",
+      "advancedAnalytics": "Advanced Analytics"
+    }
+  },
+  "common": {
+    "language": "Language",
+    "switchLanguage": "Switch language",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "stats": {
+    "averageROI": "Average ROI",
+    "dealsPerDay": "Deals/Day"
+  },
+  "brand": {
+    "name": "AFFLYT PRO",
+    "tagline": "Command Center"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "dealFinder": "Deal Finder",
+    "automations": "Automations",
+    "channels": "Channels",
+    "help": "Help",
+    "settings": "Settings",
+    "search": "Search...",
+    "live": "Live"
+  },
+  "dashboard": {
+    "loading": "Loading dashboard...",
+    "error": "Error loading data",
+    "title": "Command Center",
+    "states": {
+      "new": "Welcome! Start configuration to activate the system",
+      "partial": "Configuration in progress - Complete to unlock full potential",
+      "active": "System operational - All automations active"
+    },
+    "account": {
+      "plan": "Plan",
+      "weeklyActive": "Weekly Active",
+      "automations": "Automations",
+      "systemActive": "System Active"
+    },
+    "kpi": {
+      "totalPerformance": "Total Performance",
+      "totalClicks": "Total Clicks",
+      "estimatedRevenue": "Estimated Revenue",
+      "vsLastWeek": "vs last week",
+      "limitsStatus": "Limits Status",
+      "activeRules": "Active Rules",
+      "sentOffers": "Sent Offers",
+      "keepaBudget": "Keepa Budget",
+      "consumed": "Consumed",
+      "remaining": "Remaining",
+      "daysRemaining": "days remaining",
+      "lastActivity": "Last Activity",
+      "lastClick": "Last Click",
+      "lastDeal": "Last Deal"
+    },
+    "hotDeals": {
+      "title": "Hot Deals Real-Time",
+      "seeAll": "See All",
+      "hot": "HOT"
+    },
+    "quickStats": {
+      "title": "Quick Stats (24h)",
+      "dealsAnalyzed": "Deals Analyzed",
+      "dealsPublished": "Deals Published",
+      "conversionRate": "Conversion Rate",
+      "averageScore": "Average Score"
+    }
+  },
+  "deals": {
+    "title": "Deal Finder",
+    "subtitle": "Find the best deals on Amazon powered by Keepa",
+    "mockDataWarning": "Using mock data",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "dealsFound": "Deals found",
+    "searchPlaceholder": "Search by ASIN or keyword...",
+    "filters": {
+      "title": "Filters",
+      "category": "Category",
+      "minPrice": "Min Price",
+      "maxPrice": "Max Price",
+      "minScore": "Min Score"
+    },
+    "categories": {
+      "all": "All Categories",
+      "electronics": "Electronics",
+      "computers": "Computers",
+      "homeKitchen": "Home & Kitchen",
+      "sportsOutdoors": "Sports & Outdoors",
+      "beauty": "Beauty",
+      "toysGames": "Toys & Games"
+    },
+    "table": {
+      "score": "Score",
+      "product": "Product",
+      "price": "Price",
+      "discount": "Discount",
+      "rating": "Rating",
+      "actions": "Actions",
+      "reviews": "reviews",
+      "noDeals": "No deals found with selected filters"
+    },
+    "stats": {
+      "hotDeals": "HOT Deals (≥80)",
+      "goodDeals": "GOOD Deals (60-79)",
+      "averageDiscount": "Average Discount"
+    }
+  },
+  "onboarding": {
+    "errors": {
+      "telegramSaveFailed": "Error saving Telegram configuration. Please try again.",
+      "emailSaveFailed": "Error saving Email configuration. Please try again."
+    },
+    "steps": {
+      "welcome": {
+        "label": "Welcome",
+        "description": "Customize your experience"
+      },
+      "channels": {
+        "label": "Setup Channels",
+        "description": "Setup Telegram, Email or Discord"
+      },
+      "automation": {
+        "label": "First Automation",
+        "description": "Configure filters and publish"
+      }
+    },
+    "complete": {
+      "title": "🎉 All set!",
+      "subtitle": "Your first automation is active.",
+      "redirecting": "Taking you to the dashboard..."
+    }
+  },
+  "automations": {
+    "title": "Automation Studio",
+    "subtitle": "Mission Control for your intelligent agents",
+    "loading": "Loading Mission Control...",
+    "newMission": "New Mission",
+    "searchPlaceholder": "Search missions...",
+    "system": "System",
+    "operational": "OPERATIONAL",
+    "activeMissions": "Active Missions",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "testSuccess": "Execution completed!\n\nDeals Processed: {processed}\nDeals Published: {published}\nTime: {time}ms",
+    "testError": "Error during execution",
+    "duplicateSuffix": " (Copy)",
+    "deleteModal": {
+      "title": "Delete rule?",
+      "description": "You are about to delete:",
+      "noChannel": "No channel",
+      "minScore": "Min score:",
+      "warning": "This action cannot be undone. All historical data related to this automation will be lost.",
+      "confirmButton": "Yes, delete",
+      "cancelButton": "Cancel"
+    },
+    "card": {
+      "performance": {
+        "topPerformer": "TOP PERFORMER",
+        "highPerformance": "HIGH PERFORMANCE",
+        "moderate": "MODERATE",
+        "optimizing": "OPTIMIZING"
+      },
+      "time": {
+        "never": "Never",
+        "now": "Now",
+        "ago": "ago",
+        "days": "d",
+        "hours": "h",
+        "minutes": "m"
+      },
+      "metrics": {
+        "runs": "Runs",
+        "found": "Found",
+        "published": "Published",
+        "conv": "Conv"
+      },
+      "actions": {
+        "test": "Test",
+        "edit": "Edit",
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "lastRun": "Last"
+      }
+    },
+    "wizard": {
+      "title": "New Automation Mission",
+      "titleEdit": "Edit Mission",
+      "subtitle": "Configure your intelligent agent",
+      "cancel": "Cancel Mission",
+      "steps": {
+        "mission": {
+          "title": "Mission",
+          "description": "Name and goal"
+        },
+        "target": {
+          "title": "Target",
+          "description": "Categories"
+        },
+        "parameters": {
+          "title": "Parameters",
+          "description": "Score and price"
+        },
+        "destination": {
+          "title": "Destination",
+          "description": "Where to publish"
+        },
+        "review": {
+          "title": "Review",
+          "description": "Confirm mission"
+        }
+      },
+      "step1": {
+        "nameLabel": "Mission Name *",
+        "namePlaceholder": "e.g. Hot Electronics Deals",
+        "descriptionLabel": "Description (Optional)",
+        "descriptionPlaceholder": "Describe the goal of this automation..."
+      },
+      "step2": {
+        "categoriesLabel": "Select Target Categories *",
+        "selectedCount": "{count} categories selected"
+      },
+      "step3": {
+        "minScoreLabel": "Minimum Deal Score:",
+        "priceLabel": "Maximum Price (Optional)",
+        "pricePlaceholder": "No limit",
+        "hints": {
+          "low": "Will include many deals, even low quality ones",
+          "moderate": "Balances quantity and quality",
+          "good": "Only good quality deals",
+          "excellent": "Only the best deals (few but excellent)"
+        }
+      },
+      "step4": {
+        "channelLabel": "Where to publish deals?",
+        "loadingChannels": "Loading channels...",
+        "channelActive": "Active",
+        "testingOnly": "Testing Only",
+        "testingOnlyDesc": "Do not publish automatically",
+        "noChannelsWarning": "You have no configured channels. Go to Settings → Channels to add one.",
+        "hint": "You can always test the rule manually before activating it"
+      },
+      "step5": {
+        "ready": "Mission Ready!",
+        "reviewMessage": "Review the configuration before {action}",
+        "activating": "activating",
+        "updating": "updating",
+        "name": "Name:",
+        "categories": "Categories:",
+        "categoriesSelected": "{count} selected",
+        "minScore": "Min Score:",
+        "maxPrice": "Max Price:",
+        "channel": "Channel:",
+        "selected": "Selected",
+        "createAndActivate": "Create and Activate Now",
+        "updateAndActivate": "Update and Activate",
+        "createInactive": "Create but Don't Activate",
+        "updateKeepState": "Update (Keep State)"
+      },
+      "navigation": {
+        "back": "Back",
+        "continue": "Continue"
+      },
+      "categories": {
+        "Electronics": "Electronics",
+        "Computers": "Computers",
+        "Home": "Home & Kitchen",
+        "Beauty": "Beauty",
+        "Gaming": "Gaming",
+        "Books": "Books",
+        "Fashion": "Fashion",
+        "Music": "Music"
+      }
+    }
+  },
+  "help": {
+    "hero": {
+      "title": "How can we help you?",
+      "subtitle": "Search the documentation or explore the guides below",
+      "searchPlaceholder": "Search documentation...",
+      "popularLinks": "Popular links"
+    },
+    "quickLinks": {
+      "telegram": "How to connect Telegram",
+      "firstAutomation": "Create your first automation",
+      "dealScore": "Understand Deal Score",
+      "apiLimits": "Manage API limits"
+    },
+    "knowledgeBase": {
+      "title": "Knowledge Base",
+      "readMore": "Read guide"
+    },
+    "sections": {
+      "dashboard": {
+        "title": "Dashboard & Analytics",
+        "description": "Monitor your real-time performance",
+        "guides": {
+          "readMetrics": "Reading metrics",
+          "readMetricsDesc": "Understand all your dashboard KPIs",
+          "dealScore": "Interpret Deal Score",
+          "dealScoreDesc": "How the scoring algorithm works",
+          "roi": "ROI and conversion tracking",
+          "roiDesc": "Measure your investment returns",
+          "export": "Data export",
+          "exportDesc": "Export statistics and reports"
+        }
+      },
+      "automations": {
+        "title": "Automations",
+        "description": "Automate deal publishing",
+        "guides": {
+          "createBasic": "Create basic rules",
+          "createBasicDesc": "Your first automation step-by-step",
+          "advancedFilters": "Advanced filters",
+          "advancedFiltersDesc": "Precise targeting for quality deals",
+          "scheduling": "Scheduling and timing",
+          "schedulingDesc": "When and how often to publish",
+          "troubleshooting": "Troubleshooting automations",
+          "troubleshootingDesc": "Solve common problems"
+        }
+      },
+      "integrations": {
+        "title": "Integrations",
+        "description": "Connect your publishing channels",
+        "guides": {
+          "telegram": "Telegram Bot Setup",
+          "telegramDesc": "Complete guide with step-by-step screenshots",
+          "discord": "Configure Discord",
+          "discordDesc": "Publish deals on your Discord server",
+          "email": "Email automation",
+          "emailDesc": "Send deals via newsletter",
+          "webhooks": "Custom webhooks",
+          "webhooksDesc": "Integrate with external services"
+        }
+      },
+      "monetization": {
+        "title": "Monetization",
+        "description": "Maximize your affiliate earnings",
+        "guides": {
+          "bestPractices": "Affiliate best practices",
+          "bestPracticesDesc": "Strategies to increase conversions",
+          "optimize": "Optimize conversions",
+          "optimizeDesc": "Advanced optimization techniques",
+          "compliance": "Amazon compliance",
+          "complianceDesc": "Follow affiliate program rules",
+          "multiChannel": "Multi-channel strategy",
+          "multiChannelDesc": "Diversify your traffic sources"
+        }
+      }
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting Hub",
+      "fullGuide": "Full guide",
+      "issues": {
+        "telegramNotPublishing": "Telegram bot not publishing",
+        "lowDealScore": "Deal Score always low",
+        "apiLimitsReached": "API limits reached"
+      },
+      "solutions": {
+        "checkPermissions": "Check admin permissions",
+        "verifyToken": "Verify bot token",
+        "adjustFilters": "Adjust targeting filters",
+        "changeCategories": "Change target categories",
+        "monitorUsage": "Monitor real-time usage",
+        "optimizeRules": "Optimize rules to reduce calls"
+      }
+    },
+    "videoLibrary": {
+      "title": "Video Tutorials",
+      "comingSoon": "Coming soon!",
+      "comingSoonDesc": "We're preparing video tutorials to help you get the most out of Afflyt Pro"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "resetPassword": "Reset password",
+      "exportData": "Export data",
+      "regenerateApiKey": "Regenerate API key",
+      "reportIssue": "Report issue",
+      "suggestFeature": "Suggest feature",
+      "proTip": "💡 Pro tip: Use Cmd+K to search quickly"
+    },
+    "support": {
+      "title": "Need help?",
+      "subtitle": "Our team is here for you",
+      "liveChat": "Live Chat (2 min)",
+      "emailSupport": "Email Support",
+      "bookCall": "Book Call",
+      "responseTime": "PRO Plan • Response time: <2h"
+    },
+    "whatsNew": {
+      "title": "What's New",
+      "viewAll": "View all updates",
+      "telegram": "Integrated Telegram Bot",
+      "telegramDesc": "Automatically publish deals to your Telegram channel with full tracking",
+      "dealScore": "New Deal Score 2.0 algorithm",
+      "dealScoreDesc": "Better precision in deal quality calculation"
+    }
+  },
+  "templates": {
+    "title": "Message Templates",
+    "subtitle": "Customize messages that will be published to your Telegram channels",
+    "loading": "Loading templates...",
+    "newTemplate": "New Template",
+    "backToList": "Back to list",
+    "list": {
+      "noTemplates": "No Templates",
+      "noTemplatesDesc": "Start by creating your first custom template",
+      "createFirst": "Create your first template",
+      "defaultBadge": "DEFAULT",
+      "createdOn": "Created on",
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "editor": {
+      "title": "Template Editor",
+      "reset": "Reset",
+      "resetConfirm": "Restore default template? All changes will be lost.",
+      "variables": {
+        "title": "Available variables",
+        "title_var": "Title",
+        "price": "Price",
+        "originalPrice": "Original Price",
+        "discount": "Discount %",
+        "savings": "Savings",
+        "rating": "Rating",
+        "reviewCount": "Reviews",
+        "category": "Category",
+        "aiDescription": "AI Description"
+      },
+      "placeholder": "Write your template here...",
+      "markdownHint": "Use *text* for bold, _text_ for italic, ~~text~~ for strikethrough",
+      "save": "Save Template",
+      "saving": "Saving...",
+      "validation": {
+        "titleRequired": "Template must contain at least the {title} variable",
+        "aiMissing": "You enabled AI but the template doesn't contain {aiDescription}. Insert it or disable AI."
+      }
+    },
+    "ai": {
+      "title": "AI Copy Generator",
+      "proBadge": "PRO+",
+      "enable": "Enable AI",
+      "toneLabel": "Description Tone",
+      "tones": {
+        "professional": "Professional",
+        "enthusiastic": "Enthusiastic",
+        "casual": "Casual",
+        "urgent": "Urgent",
+        "technical": "Technical"
+      },
+      "customPromptLabel": "Custom Prompt (Optional)",
+      "customPromptPlaceholder": "E.g.: Write a description that emphasizes product quality and value for money...",
+      "generatePreview": "Generate AI Preview",
+      "generating": "Generating...",
+      "hint": "AI will generate a unique description for each product based on its characteristics. Insert {aiDescription} in the template where you want it to appear.",
+      "unlock": {
+        "title": "Unlock AI Copy Generator",
+        "description": "Generate unique and persuasive descriptions for each product with artificial intelligence.",
+        "upgradeButton": "Upgrade to PRO Plan"
+      }
+    },
+    "preview": {
+      "title": "Telegram Preview",
+      "channel": "Afflyt Deals"
+    },
+    "upgrade": {
+      "feature": "AI Copy Generator",
+      "message": "AI for generating custom descriptions is only available from PRO plan.",
+      "benefits": {
+        "descriptions": "AI-generated product descriptions",
+        "customize": "Customize text tone and style",
+        "prompts": "Custom prompts for each template",
+        "testing": "A/B testing of messages"
+      }
+    },
+    "delete": {
+      "confirm": "Delete this template? This action cannot be undone.",
+      "error": "Error deleting template",
+      "cannotDeleteDefault": "Cannot delete default template",
+      "setAnotherFirst": "Set another template as default first"
+    },
+    "save": {
+      "success": "Template saved successfully!",
+      "error": "Error saving. Please try again later."
+    }
+  }
+}

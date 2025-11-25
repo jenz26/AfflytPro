@@ -1,0 +1,518 @@
+{
+  "auth": {
+    "login": {
+      "title": "Accedi al Command Center",
+      "subtitle": "Il tuo hub di controllo per l'affiliate marketing intelligente",
+      "emailLabel": "Email Aziendale",
+      "passwordLabel": "Password",
+      "emailPlaceholder": "tu@azienda.com",
+      "passwordPlaceholder": "••••••••",
+      "continueButton": "Accedi con Magic Link",
+      "loginButton": "Accedi",
+      "noPassword": "Nessuna password richiesta",
+      "secure": "Accesso sicuro e immediato",
+      "emailSentTitle": "Controlla la tua email!",
+      "emailSentDesc": "Ti abbiamo inviato un link sicuro per accedere.",
+      "processing": "Elaborazione...",
+      "loginFailed": "Login fallito. Controlla le credenziali.",
+      "connectionError": "Errore di connessione al server."
+    },
+    "features": {
+      "realTimeDashboard": "Dashboard Real-Time",
+      "aiAutomations": "Automazioni AI-Powered",
+      "advancedAnalytics": "Analytics Avanzate"
+    }
+  },
+  "common": {
+    "language": "Lingua",
+    "switchLanguage": "Cambia lingua",
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "success": "Successo"
+  },
+  "stats": {
+    "averageROI": "ROI Medio",
+    "dealsPerDay": "Deal/Giorno"
+  },
+  "brand": {
+    "name": "AFFLYT PRO",
+    "tagline": "Command Center"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "dealFinder": "Deal Finder",
+    "automations": "Automazioni",
+    "channels": "Canali",
+    "help": "Aiuto",
+    "settings": "Impostazioni",
+    "search": "Cerca...",
+    "live": "Live"
+  },
+  "dashboard": {
+    "loading": "Caricamento dashboard...",
+    "error": "Errore nel caricamento dei dati",
+    "title": "Command Center",
+    "states": {
+      "new": "Benvenuto! Inizia la configurazione per attivare il sistema",
+      "partial": "Configurazione in corso - Completa per sbloccare tutto il potenziale",
+      "active": "Sistema operativo - Tutte le automazioni attive"
+    },
+    "account": {
+      "plan": "Piano",
+      "weeklyActive": "Weekly Active",
+      "automations": "Automazioni",
+      "systemActive": "Sistema Attivo"
+    },
+    "kpi": {
+      "totalPerformance": "Performance Totale",
+      "totalClicks": "Click Totali",
+      "estimatedRevenue": "Revenue Stimata",
+      "vsLastWeek": "vs settimana scorsa",
+      "limitsStatus": "Stato Limiti",
+      "activeRules": "Regole Attive",
+      "sentOffers": "Offerte Inviate",
+      "keepaBudget": "Budget Keepa",
+      "consumed": "Consumato",
+      "remaining": "Rimanente",
+      "daysRemaining": "giorni rimanenti",
+      "lastActivity": "Ultima Attività",
+      "lastClick": "Ultimo Click",
+      "lastDeal": "Ultimo Deal"
+    },
+    "hotDeals": {
+      "title": "Hot Deals in Tempo Reale",
+      "seeAll": "Vedi Tutti",
+      "hot": "HOT"
+    },
+    "quickStats": {
+      "title": "Statistiche Rapide (24h)",
+      "dealsAnalyzed": "Deal Analizzati",
+      "dealsPublished": "Deal Pubblicati",
+      "conversionRate": "Conversion Rate",
+      "averageScore": "Score Medio"
+    }
+  },
+  "deals": {
+    "title": "Deal Finder",
+    "subtitle": "Trova i migliori deal su Amazon con il potere di Keepa",
+    "mockDataWarning": "Utilizzo dati di esempio",
+    "refresh": "Aggiorna",
+    "refreshing": "Aggiornamento...",
+    "dealsFound": "Deals trovati",
+    "searchPlaceholder": "Cerca per ASIN o parola chiave...",
+    "filters": {
+      "title": "Filtri",
+      "category": "Categoria",
+      "minPrice": "Prezzo Min",
+      "maxPrice": "Prezzo Max",
+      "minScore": "Score Minimo"
+    },
+    "categories": {
+      "all": "Tutte le Categorie",
+      "electronics": "Elettronica",
+      "computers": "Informatica",
+      "homeKitchen": "Casa e Cucina",
+      "sportsOutdoors": "Sport e Tempo Libero",
+      "beauty": "Bellezza",
+      "toysGames": "Giochi e Giocattoli"
+    },
+    "table": {
+      "score": "Score",
+      "product": "Prodotto",
+      "price": "Prezzo",
+      "discount": "Sconto",
+      "rating": "Rating",
+      "actions": "Azioni",
+      "reviews": "recensioni",
+      "noDeals": "Nessun deal trovato con i filtri selezionati"
+    },
+    "stats": {
+      "hotDeals": "HOT Deals (≥80)",
+      "goodDeals": "GOOD Deals (60-79)",
+      "averageDiscount": "Sconto Medio"
+    }
+  },
+  "onboarding": {
+    "errors": {
+      "telegramSaveFailed": "Errore nel salvare la configurazione Telegram. Riprova.",
+      "emailSaveFailed": "Errore nel salvare la configurazione Email. Riprova."
+    },
+    "steps": {
+      "welcome": {
+        "label": "Benvenuto",
+        "description": "Personalizza la tua esperienza"
+      },
+      "channels": {
+        "label": "Configura Canali",
+        "description": "Setup Telegram, Email o Discord"
+      },
+      "automation": {
+        "label": "Prima Automazione",
+        "description": "Configura filtri e pubblica"
+      }
+    },
+    "complete": {
+      "title": "🎉 Tutto pronto!",
+      "subtitle": "La tua prima automazione è attiva.",
+      "redirecting": "Ti stiamo portando alla dashboard..."
+    }
+  },
+  "automations": {
+    "title": "Automation Studio",
+    "subtitle": "Mission Control per i tuoi agenti intelligenti",
+    "loading": "Caricamento Mission Control...",
+    "newMission": "Nuova Missione",
+    "searchPlaceholder": "Cerca missioni...",
+    "system": "Sistema",
+    "operational": "OPERATIVO",
+    "activeMissions": "Missioni Attive",
+    "filters": {
+      "all": "Tutte",
+      "active": "Attive",
+      "paused": "In Pausa"
+    },
+    "testSuccess": "Esecuzione completata!\n\nDeals Processati: {processed}\nDeals Pubblicati: {published}\nTempo: {time}ms",
+    "testError": "Errore durante l'esecuzione",
+    "duplicateSuffix": " (Copia)",
+    "deleteModal": {
+      "title": "Eliminare la regola?",
+      "description": "Stai per eliminare:",
+      "noChannel": "Nessun canale",
+      "minScore": "Score min:",
+      "warning": "Questa azione non può essere annullata. Tutti i dati storici relativi a questa automazione verranno persi.",
+      "confirmButton": "Sì, elimina",
+      "cancelButton": "Annulla"
+    },
+    "card": {
+      "performance": {
+        "topPerformer": "TOP PERFORMER",
+        "highPerformance": "ALTA PERFORMANCE",
+        "moderate": "MODERATA",
+        "optimizing": "OTTIMIZZAZIONE"
+      },
+      "time": {
+        "never": "Mai",
+        "now": "Ora",
+        "ago": "fa",
+        "days": "g",
+        "hours": "h",
+        "minutes": "m"
+      },
+      "metrics": {
+        "runs": "Esecuzioni",
+        "found": "Trovati",
+        "published": "Pubblicati",
+        "conv": "Conv"
+      },
+      "actions": {
+        "test": "Test",
+        "edit": "Modifica",
+        "duplicate": "Duplica",
+        "delete": "Elimina",
+        "lastRun": "Ultimo"
+      }
+    },
+    "wizard": {
+      "title": "Nuova Missione di Automazione",
+      "titleEdit": "Modifica Missione",
+      "subtitle": "Configura il tuo agente intelligente",
+      "cancel": "Annulla Missione",
+      "steps": {
+        "mission": {
+          "title": "Missione",
+          "description": "Nome e obiettivo"
+        },
+        "target": {
+          "title": "Target",
+          "description": "Categorie"
+        },
+        "parameters": {
+          "title": "Parametri",
+          "description": "Score e prezzo"
+        },
+        "destination": {
+          "title": "Destinazione",
+          "description": "Dove pubblicare"
+        },
+        "review": {
+          "title": "Revisione",
+          "description": "Conferma missione"
+        }
+      },
+      "step1": {
+        "nameLabel": "Nome Missione *",
+        "namePlaceholder": "es. Hot Deals Elettronica",
+        "descriptionLabel": "Descrizione (Opzionale)",
+        "descriptionPlaceholder": "Descrivi l'obiettivo di questa automazione..."
+      },
+      "step2": {
+        "categoriesLabel": "Seleziona Categorie Target *",
+        "selectedCount": "{count} categorie selezionate"
+      },
+      "step3": {
+        "minScoreLabel": "Deal Score Minimo:",
+        "priceLabel": "Prezzo Massimo (Opzionale)",
+        "pricePlaceholder": "Nessun limite",
+        "hints": {
+          "low": "Includerà molti deal, anche di qualità bassa",
+          "moderate": "Bilancia quantità e qualità",
+          "good": "Solo deal di buona qualità",
+          "excellent": "Solo i migliori deal (pochi ma ottimi)"
+        }
+      },
+      "step4": {
+        "channelLabel": "Dove pubblicare i deal?",
+        "loadingChannels": "Caricamento canali...",
+        "channelActive": "Attivo",
+        "testingOnly": "Solo Testing",
+        "testingOnlyDesc": "Non pubblicare automaticamente",
+        "noChannelsWarning": "Non hai canali configurati. Vai su Impostazioni → Canali per aggiungerne uno.",
+        "hint": "Puoi sempre testare manualmente la regola prima di attivarla"
+      },
+      "step5": {
+        "ready": "Missione Pronta!",
+        "reviewMessage": "Rivedi la configurazione prima di {action}",
+        "activating": "attivare",
+        "updating": "aggiornare",
+        "name": "Nome:",
+        "categories": "Categorie:",
+        "categoriesSelected": "{count} selezionate",
+        "minScore": "Score Minimo:",
+        "maxPrice": "Prezzo Max:",
+        "channel": "Canale:",
+        "selected": "Selezionato",
+        "createAndActivate": "Crea e Attiva Subito",
+        "updateAndActivate": "Aggiorna e Attiva",
+        "createInactive": "Crea ma Non Attivare",
+        "updateKeepState": "Aggiorna (Mantieni Stato)"
+      },
+      "navigation": {
+        "back": "Indietro",
+        "continue": "Continua"
+      },
+      "categories": {
+        "Electronics": "Elettronica",
+        "Computers": "Informatica",
+        "Home": "Casa e Cucina",
+        "Beauty": "Bellezza",
+        "Gaming": "Gaming",
+        "Books": "Libri",
+        "Fashion": "Moda",
+        "Music": "Musica"
+      }
+    }
+  },
+  "help": {
+    "hero": {
+      "title": "Come possiamo aiutarti?",
+      "subtitle": "Cerca nella documentazione o esplora le guide qui sotto",
+      "searchPlaceholder": "Cerca nella documentazione...",
+      "popularLinks": "Link popolari"
+    },
+    "quickLinks": {
+      "telegram": "Come connettere Telegram",
+      "firstAutomation": "Creare la prima automazione",
+      "dealScore": "Capire il Deal Score",
+      "apiLimits": "Gestire i limiti API"
+    },
+    "knowledgeBase": {
+      "title": "Knowledge Base",
+      "readMore": "Leggi la guida"
+    },
+    "sections": {
+      "dashboard": {
+        "title": "Dashboard & Analytics",
+        "description": "Monitora le tue performance in tempo reale",
+        "guides": {
+          "readMetrics": "Leggere le metriche",
+          "readMetricsDesc": "Comprendi tutti i KPI del tuo dashboard",
+          "dealScore": "Interpretare il Deal Score",
+          "dealScoreDesc": "Come funziona l'algoritmo di scoring",
+          "roi": "ROI e conversion tracking",
+          "roiDesc": "Misura il ritorno dei tuoi investimenti",
+          "export": "Export dei dati",
+          "exportDesc": "Esporta statistiche e report"
+        }
+      },
+      "automations": {
+        "title": "Automazioni",
+        "description": "Automatizza la pubblicazione dei deal",
+        "guides": {
+          "createBasic": "Creare regole base",
+          "createBasicDesc": "La tua prima automazione passo-passo",
+          "advancedFilters": "Filtri avanzati",
+          "advancedFiltersDesc": "Targeting preciso per deal di qualità",
+          "scheduling": "Scheduling e timing",
+          "schedulingDesc": "Quando e quanto spesso pubblicare",
+          "troubleshooting": "Troubleshooting automazioni",
+          "troubleshootingDesc": "Risolvi problemi comuni"
+        }
+      },
+      "integrations": {
+        "title": "Integrazioni",
+        "description": "Connetti i tuoi canali di pubblicazione",
+        "guides": {
+          "telegram": "Setup Telegram Bot",
+          "telegramDesc": "Guida completa con screenshot passo-passo",
+          "discord": "Configurare Discord",
+          "discordDesc": "Pubblica deal sul tuo server Discord",
+          "email": "Email automation",
+          "emailDesc": "Invia deal via newsletter",
+          "webhooks": "Webhook personalizzati",
+          "webhooksDesc": "Integra con servizi esterni"
+        }
+      },
+      "monetization": {
+        "title": "Monetizzazione",
+        "description": "Massimizza i tuoi guadagni di affiliazione",
+        "guides": {
+          "bestPractices": "Best practice affiliate",
+          "bestPracticesDesc": "Strategie per aumentare le conversioni",
+          "optimize": "Ottimizzare conversioni",
+          "optimizeDesc": "Tecniche avanzate di ottimizzazione",
+          "compliance": "Compliance Amazon",
+          "complianceDesc": "Rispetta le regole del programma affiliazione",
+          "multiChannel": "Strategia multi-canale",
+          "multiChannelDesc": "Diversifica le tue fonti di traffico"
+        }
+      }
+    },
+    "troubleshooting": {
+      "title": "Troubleshooting Hub",
+      "fullGuide": "Guida completa",
+      "issues": {
+        "telegramNotPublishing": "Il bot Telegram non pubblica",
+        "lowDealScore": "Deal Score sempre basso",
+        "apiLimitsReached": "Limiti API raggiunti"
+      },
+      "solutions": {
+        "checkPermissions": "Verifica permessi amministratore",
+        "verifyToken": "Controlla il token bot",
+        "adjustFilters": "Aggiusta i filtri di targeting",
+        "changeCategories": "Cambia categorie target",
+        "monitorUsage": "Monitora l'utilizzo in tempo reale",
+        "optimizeRules": "Ottimizza le regole per ridurre chiamate"
+      }
+    },
+    "videoLibrary": {
+      "title": "Video Tutorial",
+      "comingSoon": "In arrivo presto!",
+      "comingSoonDesc": "Stiamo preparando video tutorial per aiutarti a ottenere il massimo da Afflyt Pro"
+    },
+    "quickActions": {
+      "title": "Azioni Rapide",
+      "resetPassword": "Reset password",
+      "exportData": "Export dei dati",
+      "regenerateApiKey": "Rigenera API key",
+      "reportIssue": "Segnala problema",
+      "suggestFeature": "Suggerisci feature",
+      "proTip": "💡 Pro tip: Usa Cmd+K per cercare velocemente"
+    },
+    "support": {
+      "title": "Hai bisogno di aiuto?",
+      "subtitle": "Il nostro team è qui per te",
+      "liveChat": "Live Chat (2 min)",
+      "emailSupport": "Email Support",
+      "bookCall": "Prenota Call",
+      "responseTime": "PRO Plan • Tempo di risposta: <2h"
+    },
+    "whatsNew": {
+      "title": "Novità",
+      "viewAll": "Vedi tutte le novità",
+      "telegram": "Bot Telegram integrato",
+      "telegramDesc": "Pubblica automaticamente i deal sul tuo canale Telegram con tracking completo",
+      "dealScore": "Nuovo algoritmo Deal Score 2.0",
+      "dealScoreDesc": "Migliore precisione nel calcolo della qualità dei deal"
+    }
+  },
+  "templates": {
+    "title": "Template Messaggi",
+    "subtitle": "Personalizza i messaggi che verranno pubblicati sui tuoi canali Telegram",
+    "loading": "Caricamento template...",
+    "newTemplate": "Nuovo Template",
+    "backToList": "Torna alla lista",
+    "list": {
+      "noTemplates": "Nessun Template",
+      "noTemplatesDesc": "Inizia creando il tuo primo template personalizzato",
+      "createFirst": "Crea il tuo primo template",
+      "defaultBadge": "DEFAULT",
+      "createdOn": "Creato il",
+      "actions": {
+        "edit": "Modifica",
+        "delete": "Elimina"
+      }
+    },
+    "editor": {
+      "title": "Editor Template",
+      "reset": "Reset",
+      "resetConfirm": "Ripristinare il template predefinito? Tutte le modifiche andranno perse.",
+      "variables": {
+        "title": "Variabili disponibili",
+        "title_var": "Titolo",
+        "price": "Prezzo",
+        "originalPrice": "Prezzo Originale",
+        "discount": "Sconto %",
+        "savings": "Risparmio",
+        "rating": "Rating",
+        "reviewCount": "Recensioni",
+        "category": "Categoria",
+        "aiDescription": "Descrizione AI"
+      },
+      "placeholder": "Scrivi il tuo template qui...",
+      "markdownHint": "Usa *testo* per grassetto, _testo_ per corsivo, ~~testo~~ per barrato",
+      "save": "Salva Template",
+      "saving": "Salvataggio...",
+      "validation": {
+        "titleRequired": "Il template deve contenere almeno la variabile {title}",
+        "aiMissing": "Hai abilitato l'AI ma il template non contiene {aiDescription}. Inseriscilo o disabilita l'AI."
+      }
+    },
+    "ai": {
+      "title": "AI Copy Generator",
+      "proBadge": "PRO+",
+      "enable": "Abilita AI",
+      "toneLabel": "Tono della Descrizione",
+      "tones": {
+        "professional": "Professionale",
+        "enthusiastic": "Entusiasta",
+        "casual": "Casual",
+        "urgent": "Urgente",
+        "technical": "Tecnico"
+      },
+      "customPromptLabel": "Prompt Personalizzato (Opzionale)",
+      "customPromptPlaceholder": "Es: Scrivi una descrizione che enfatizza la qualità del prodotto e il suo rapporto qualità-prezzo...",
+      "generatePreview": "Genera Anteprima AI",
+      "generating": "Generazione...",
+      "hint": "L'AI genererà una descrizione unica per ogni prodotto in base alle sue caratteristiche. Inserisci {aiDescription} nel template dove vuoi che appaia.",
+      "unlock": {
+        "title": "Sblocca l'AI Copy Generator",
+        "description": "Genera descrizioni uniche e persuasive per ogni prodotto con l'intelligenza artificiale.",
+        "upgradeButton": "Upgrade al Piano PRO"
+      }
+    },
+    "preview": {
+      "title": "Telegram Preview",
+      "channel": "Afflyt Deals"
+    },
+    "upgrade": {
+      "feature": "AI Copy Generator",
+      "message": "L'AI per generare descrizioni personalizzate è disponibile solo dal piano PRO.",
+      "benefits": {
+        "descriptions": "Descrizioni prodotto generate con AI",
+        "customize": "Personalizza tono e stile del testo",
+        "prompts": "Prompt personalizzati per ogni template",
+        "testing": "A/B testing dei messaggi"
+      }
+    },
+    "delete": {
+      "confirm": "Eliminare questo template? Questa azione non può essere annullata.",
+      "error": "Errore nell'eliminazione del template",
+      "cannotDeleteDefault": "Non puoi eliminare il template predefinito",
+      "setAnotherFirst": "Imposta prima un altro template come predefinito"
+    },
+    "save": {
+      "success": "Template salvato con successo!",
+      "error": "Errore nel salvataggio. Riprova più tardi."
+    }
+  }
+}

@@ -1,6 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-afflyt-cyan-50: #E6FFFE;
+  --color-afflyt-cyan-100: #B3FFFC;
+  --color-afflyt-cyan-200: #80FFF9;
+  --color-afflyt-cyan-300: #4DFFF6;
+  --color-afflyt-cyan-400: #1AFFF3;
+  --color-afflyt-cyan-500: #00E5E0;
+  --color-afflyt-cyan-600: #00B8B3;
+  --color-afflyt-cyan-700: #008A86;
+  --color-afflyt-cyan-800: #005D5A;
+  --color-afflyt-cyan-900: #002F2D;
+
+  --color-afflyt-plasma-400: #B794F4;
+  --color-afflyt-plasma-500: #9F7AEA;
+  --color-afflyt-plasma-600: #805AD5;
+
+  --color-afflyt-profit-400: #48BB78;
+  --color-afflyt-profit-500: #38A169;
+  --color-afflyt-profit-600: #2F855A;
+
+  --color-afflyt-dark-50: #1A1B23;
+  --color-afflyt-dark-100: #13141B;
+  --color-afflyt-dark-200: #0C0D13;
+  --color-afflyt-dark-300: #23242E;
+  --color-afflyt-dark-400: #2D2E3A;
+
+  --color-afflyt-glass-white: rgba(255, 255, 255, 0.05);
+  --color-afflyt-glass-cyan: rgba(0, 229, 224, 0.1);
+  --color-afflyt-glass-border: rgba(0, 229, 224, 0.2);
+}
 
 :root {
   --foreground-rgb: 255, 255, 255;
@@ -10,10 +39,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
+  background: linear-gradient(to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
 }

@@ -7,7 +7,8 @@ import {
     Zap,
     Moon,
     Sun,
-    Globe
+    Globe,
+    HelpCircle
 } from 'lucide-react';
 
 export const FuturisticSidebar = () => {
@@ -24,6 +25,7 @@ export const FuturisticSidebar = () => {
         { icon: Search, label: 'Deal Finder', path: '/deals' },
         { icon: Zap, label: 'Automazioni', path: '/automations' },
         { icon: CreditCard, label: 'Billing', path: '/billing' },
+        { icon: HelpCircle, label: 'Help', path: '/help' },
         { icon: Settings, label: 'Settings', path: '/settings' }
     ];
 

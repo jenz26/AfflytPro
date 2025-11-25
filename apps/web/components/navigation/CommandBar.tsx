@@ -1,0 +1,313 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
+import {
+    LayoutDashboard,
+    TrendingUp,
+    Zap,
+    Send,
+    Settings,
+    Search,
+    Menu,
+    X,
+    Clock,
+    Shield,
+    Activity,
+    Bell,
+    HelpCircle,
+    ChevronDown,
+    Flame
+} from 'lucide-react';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { CommandPalette } from './CommandPalette';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
+
+export const CommandBar = () => {
+    const pathname = usePathname();
+    const locale = useLocale();
+    const t = useTranslations('navigation');
+    const tBrand = useTranslations('brand');
+    const os = useOperatingSystem();
+    const modKey = getModifierKey(os);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+    // Keyboard shortcut for command palette
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setCommandPaletteOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    const navItems = [
+        {
+            icon: LayoutDashboard,
+            label: t('dashboard'),
+            path: `/${locale}/dashboard`,
+            shortcut: '⌘D'
+        },
+        {
+            icon: TrendingUp,
+            label: t('dealFinder'),
+            path: `/${locale}/dashboard/deals`,
+            shortcut: '⌘F',
+            hot: true,
+            badge: '12'
+        },
+        {
+            icon: Zap,
+            label: t('automations'),
+            path: `/${locale}/dashboard/automations`,
+            shortcut: '⌘A',
+            badge: '3'
+        },
+        {
+            icon: Send,
+            label: t('channels'),
+            path: `/${locale}/dashboard/settings/channels`,
+            shortcut: '⌘C'
+        }
+    ];
+
+    // Live account data (mock - will be replaced with real data)
+    const accountStatus = {
+        ttl: 72,
+        tier: 'PRO',
+        waa: 3,
+        waaTarget: 5,
+        systemStatus: 'active',
+        notifications: 2
+    };
+
+    return (
+        <>
+            {/* Desktop Navigation Bar */}
+            <header className="fixed top-0 left-0 right-0 h-16 bg-afflyt-dark-50/95 backdrop-blur-xl border-b border-afflyt-glass-border z-50 hidden lg:block">
+                <div className="h-full px-6 flex items-center justify-between">
+                    {/* Left Section: Brand + Status */}
+                    <div className="flex items-center gap-8">
+                        {/* Logo */}
+                        <Link href={`/${locale}/dashboard`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            <div className="w-10 h-10 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,229,224,0.3)]">
+                                <span className="text-afflyt-dark-100 font-bold text-xl">A</span>
+                            </div>
+                            <div>
+                                <span className="text-white font-bold text-lg">{tBrand('name')}</span>
+                                <span className="text-afflyt-cyan-400 text-[10px] font-mono uppercase block -mt-1">
+                                    {tBrand('tagline')}
+                                </span>
+                            </div>
+                        </Link>
+
+                        {/* Status Indicators */}
+                        <div className="flex items-center gap-3">
+                            {/* TTL Status */}
+                            <GlassCard className="px-3 py-1.5 flex items-center gap-2">
+                                <Clock className="w-3.5 h-3.5 text-afflyt-cyan-400" />
+                                <span className="text-xs font-mono text-white">{accountStatus.ttl}h</span>
+                                <span className="text-[10px] text-gray-500">TTL</span>
+                            </GlassCard>
+
+                            {/* WAA Progress */}
+                            <GlassCard className="px-3 py-1.5 flex items-center gap-2">
+                                <Zap className="w-3.5 h-3.5 text-afflyt-profit-400" />
+                                <span className="text-xs font-mono text-white">
+                                    {accountStatus.waa}/{accountStatus.waaTarget}
+                                </span>
+                                <span className="text-[10px] text-gray-500">WAA</span>
+                            </GlassCard>
+
+                            {/* System Status */}
+                            <div className="flex items-center gap-2 px-3">
+                                <div className="w-2 h-2 bg-afflyt-profit-400 rounded-full animate-pulse" />
+                                <span className="text-xs text-afflyt-profit-400">{t('live')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Center: Main Navigation */}
+                    <nav className="flex items-center gap-1">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.path;
+
+                            return (
+                                <Link
+                                    key={item.path}
+                                    href={item.path}
+                                    className={`relative px-4 py-2 rounded-lg transition-all group ${isActive
+                                        ? 'bg-afflyt-cyan-500/10 text-afflyt-cyan-300'
+                                        : 'text-gray-400 hover:text-white hover:bg-afflyt-glass-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <item.icon className="w-4 h-4" />
+                                        <span className="text-sm font-medium">{item.label}</span>
+
+                                        {item.hot && (
+                                            <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                                        )}
+
+                                        {item.badge && (
+                                            <span className="px-1.5 py-0.5 bg-afflyt-cyan-500/20 text-afflyt-cyan-300 text-[10px] font-mono rounded">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {isActive && (
+                                        <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-afflyt-cyan-400 rounded-full" />
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-3">
+                        {/* Global Search / Command Palette */}
+                        <button
+                            onClick={() => setCommandPaletteOpen(true)}
+                            className="px-3 py-1.5 bg-afflyt-glass-white border border-afflyt-glass-border rounded-lg hover:border-afflyt-cyan-500/40 transition-all flex items-center gap-2 group"
+                        >
+                            <Search className="w-3.5 h-3.5 text-gray-400 group-hover:text-afflyt-cyan-400" />
+                            <span className="text-sm text-gray-300">{t('search')}</span>
+                            <div className="flex items-center gap-1 ml-8">
+                                <kbd className="px-1.5 py-0.5 bg-afflyt-dark-50 rounded text-[10px] text-gray-500 font-mono">{modKey}</kbd>
+                                <kbd className="px-1.5 py-0.5 bg-afflyt-dark-50 rounded text-[10px] text-gray-500 font-mono">K</kbd>
+                            </div>
+                        </button>
+
+                        {/* Notifications */}
+                        <button className="relative p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors">
+                            <Bell className="w-4 h-4 text-gray-400" />
+                            {accountStatus.notifications > 0 && (
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-afflyt-cyan-500 text-afflyt-dark-100 text-[10px] font-bold rounded-full flex items-center justify-center">
+                                    {accountStatus.notifications}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Language Switcher */}
+                        <LanguageSwitcher />
+
+                        {/* Help */}
+                        <Link
+                            href={`/${locale}/help`}
+                            className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors group"
+                            title={t('help')}
+                        >
+                            <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-afflyt-cyan-400 transition-colors" />
+                        </Link>
+
+                        {/* User Menu */}
+                        <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-afflyt-glass-white rounded-lg transition-colors">
+                            <div className="w-7 h-7 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full" />
+                            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Mobile Navigation */}
+            <header className="fixed top-0 left-0 right-0 h-14 bg-afflyt-dark-50/95 backdrop-blur-xl border-b border-afflyt-glass-border z-50 lg:hidden">
+                <div className="h-full px-4 flex items-center justify-between">
+                    {/* Logo + Menu Toggle */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                        >
+                            {mobileMenuOpen ? (
+                                <X className="w-5 h-5 text-gray-400" />
+                            ) : (
+                                <Menu className="w-5 h-5 text-gray-400" />
+                            )}
+                        </button>
+
+                        <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center">
+                                <span className="text-afflyt-dark-100 font-bold text-sm">A</span>
+                            </div>
+                            <span className="text-white font-bold">AFFLYT</span>
+                        </Link>
+                    </div>
+
+                    {/* Mobile Status */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2 py-1 bg-afflyt-glass-white rounded-lg">
+                            <Clock className="w-3 h-3 text-afflyt-cyan-400" />
+                            <span className="text-xs font-mono text-white">{accountStatus.ttl}h</span>
+                        </div>
+                        <div className="w-1.5 h-1.5 bg-afflyt-profit-400 rounded-full animate-pulse" />
+                    </div>
+                </div>
+
+                {/* Mobile Menu Dropdown */}
+                {mobileMenuOpen && (
+                    <div className="absolute top-14 left-0 right-0 bg-afflyt-dark-50/95 backdrop-blur-xl border-b border-afflyt-glass-border">
+                        <nav className="p-4 space-y-1">
+                            {navItems.map((item) => {
+                                const isActive = pathname === item.path;
+
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        href={item.path}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                                            ? 'bg-afflyt-cyan-500/10 text-afflyt-cyan-300'
+                                            : 'text-gray-400 hover:text-white hover:bg-afflyt-glass-white'
+                                            }`}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        <span className="font-medium">{item.label}</span>
+                                        {item.badge && (
+                                            <span className="ml-auto px-2 py-1 bg-afflyt-cyan-500/20 text-afflyt-cyan-300 text-xs font-mono rounded">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+
+                            {/* Mobile Help Link */}
+                            <Link
+                                href={`/${locale}/help`}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-400 hover:text-white hover:bg-afflyt-glass-white"
+                            >
+                                <HelpCircle className="w-5 h-5" />
+                                <span className="font-medium">{t('help')}</span>
+                            </Link>
+
+                            {/* Mobile Settings Link */}
+                            <Link
+                                href={`/${locale}/dashboard/settings`}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-400 hover:text-white hover:bg-afflyt-glass-white"
+                            >
+                                <Settings className="w-5 h-5" />
+                                <span className="font-medium">{t('settings')}</span>
+                            </Link>
+                        </nav>
+                    </div>
+                )}
+            </header>
+
+            {/* Command Palette */}
+            {commandPaletteOpen && (
+                <CommandPalette onClose={() => setCommandPaletteOpen(false)} />
+            )}
+        </>
+    );
+};
