@@ -221,8 +221,12 @@
       "benefit2": "Deal Score potenziato da AI",
       "benefit3": "ROI medio +247%",
       "stepCompleted": "Completato",
+      "completePreviousStep": "Completa prima lo step precedente",
       "whyImportant": "Perché questi step sono importanti?",
       "whyImportantDesc": "Ogni step sblocca funzionalità critiche: i Canali permettono la pubblicazione, le Credenziali attivano l'accesso ai dati Keepa in tempo reale, e le Automazioni gestiscono tutto automaticamente 24/7. Una volta completata la configurazione, il sistema inizierà immediatamente a generare valore.",
+      "checklistChannels": "Canali configurati",
+      "checklistCredentials": "API Keys aggiunte",
+      "checklistAutomation": "Prima automazione attiva",
       "steps": {
         "connectChannel": {
           "title": "Connetti il tuo Primo Canale",

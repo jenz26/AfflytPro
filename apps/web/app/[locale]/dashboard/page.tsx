@@ -193,6 +193,7 @@ export default function DashboardPage() {
                             positive: true,
                             label: tKPI('vsLastWeek')
                         }}
+                        sparkline={[40, 55, 45, 70, 65, 80, 75]}
                         color="cyan"
                     />
 

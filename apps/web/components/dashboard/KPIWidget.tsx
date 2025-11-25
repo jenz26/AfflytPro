@@ -1,4 +1,4 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 interface KPIWidgetProps {
@@ -25,6 +25,7 @@ interface KPIWidgetProps {
             time: string;
         }>;
     };
+    sparkline?: number[];
     color: 'cyan' | 'plasma' | 'profit' | 'warning';
 }
 
@@ -39,6 +40,7 @@ export const KPIWidget = ({
     progress,
     status,
     activity,
+    sparkline,
     color
 }: KPIWidgetProps) => {
     const colorClasses = {
@@ -89,13 +91,47 @@ export const KPIWidget = ({
                     </div>
                 )}
 
-                {/* Trend */}
+                {/* Trend - Enhanced */}
                 {trend && (
-                    <div className="flex items-center gap-2 text-xs">
-                        <span className={trend.positive ? 'text-afflyt-profit-400' : 'text-red-400'}>
-                            {trend.positive ? '↑' : '↓'} {trend.value}%
-                        </span>
+                    <div className="flex items-center gap-2 text-xs mt-1">
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                            trend.positive
+                                ? 'bg-afflyt-profit-400/10 text-afflyt-profit-400'
+                                : 'bg-red-400/10 text-red-400'
+                        }`}>
+                            {trend.positive ? (
+                                <TrendingUp className="w-3 h-3" />
+                            ) : (
+                                <TrendingDown className="w-3 h-3" />
+                            )}
+                            <span className="font-semibold">{trend.value}%</span>
+                        </div>
                         <span className="text-gray-500">{trend.label}</span>
+                    </div>
+                )}
+
+                {/* Mini Sparkline Chart */}
+                {sparkline && sparkline.length > 0 && (
+                    <div className="h-8 flex items-end gap-0.5 mt-3">
+                        {sparkline.map((value, i) => {
+                            const maxValue = Math.max(...sparkline);
+                            const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+                            return (
+                                <div
+                                    key={i}
+                                    className={`flex-1 rounded-t transition-all duration-300 ${
+                                        color === 'cyan'
+                                            ? 'bg-afflyt-cyan-500/30 hover:bg-afflyt-cyan-500/50'
+                                            : color === 'profit'
+                                                ? 'bg-afflyt-profit-400/30 hover:bg-afflyt-profit-400/50'
+                                                : color === 'plasma'
+                                                    ? 'bg-afflyt-plasma-400/30 hover:bg-afflyt-plasma-400/50'
+                                                    : 'bg-yellow-400/30 hover:bg-yellow-400/50'
+                                    }`}
+                                    style={{ height: `${Math.max(height, 5)}%` }}
+                                />
+                            );
+                        })}
                     </div>
                 )}
 

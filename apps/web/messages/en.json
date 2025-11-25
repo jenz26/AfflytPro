@@ -221,8 +221,12 @@
       "benefit2": "AI-powered Deal Score",
       "benefit3": "Average ROI +247%",
       "stepCompleted": "Completed",
+      "completePreviousStep": "Complete previous step first",
       "whyImportant": "Why are these steps important?",
       "whyImportantDesc": "Each step unlocks critical features: Channels enable publishing, Credentials activate real-time Keepa data access, and Automations manage everything automatically 24/7. Once configuration is complete, the system will immediately start generating value.",
+      "checklistChannels": "Channels configured",
+      "checklistCredentials": "API Keys added",
+      "checklistAutomation": "First automation active",
       "steps": {
         "connectChannel": {
           "title": "Connect Your First Channel",
