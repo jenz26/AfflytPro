@@ -72,10 +72,10 @@ export const CommandBar = () => {
             badge: '3'
         },
         {
-            icon: Send,
-            label: t('channels'),
-            path: `/${locale}/dashboard/settings/channels`,
-            shortcut: '⌘C'
+            icon: Settings,
+            label: t('settings'),
+            path: `/${locale}/settings`,
+            shortcut: '⌘S'
         }
     ];
 
@@ -292,7 +292,7 @@ export const CommandBar = () => {
 
                             {/* Mobile Settings Link */}
                             <Link
-                                href={`/${locale}/dashboard/settings`}
+                                href={`/${locale}/settings`}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-400 hover:text-white hover:bg-afflyt-glass-white"
                             >

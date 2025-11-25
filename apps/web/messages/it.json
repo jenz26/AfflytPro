@@ -1322,5 +1322,278 @@
         "teamAccess": "Accesso Team"
       }
     }
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "subtitle": "Gestisci il tuo account e le preferenze",
+    "tabs": {
+      "profile": "Profilo",
+      "billing": "Fatturazione",
+      "channels": "Canali",
+      "apiKeys": "Chiavi API",
+      "templates": "Template",
+      "notifications": "Notifiche",
+      "security": "Sicurezza"
+    },
+    "hub": {
+      "memberSince": "Membro dal {date}",
+      "ttlUsed": "TTL Usati",
+      "channels": "Canali",
+      "automations": "Automazioni",
+      "manage": "Gestisci",
+      "quickActions": "Azioni Rapide",
+      "descriptions": {
+        "profile": "Info personali e dati di fatturazione",
+        "billing": "Piano, pagamenti e fatture",
+        "channels": "Canali di pubblicazione connessi",
+        "apiKeys": "Chiavi API e integrazioni",
+        "templates": "Template messaggi",
+        "notifications": "Preferenze notifiche",
+        "security": "Password e impostazioni sicurezza"
+      },
+      "actions": {
+        "exportData": "Esporta Dati",
+        "exportDataDesc": "Scarica tutti i tuoi dati",
+        "downloadInvoices": "Scarica Fatture",
+        "downloadInvoicesDesc": "Ottieni tutte le fatture in PDF",
+        "contactSupport": "Contatta Supporto",
+        "contactSupportDesc": "Ricevi aiuto dal nostro team"
+      }
+    },
+    "profile": {
+      "avatarHint": "Clicca per caricare un nuovo avatar",
+      "personalInfo": "Informazioni Personali",
+      "personalInfoDesc": "I tuoi dati account di base",
+      "fullName": "Nome Completo",
+      "email": "Indirizzo Email",
+      "emailLocked": "L'email non può essere modificata",
+      "language": "Lingua",
+      "timezone": "Fuso Orario",
+      "billingInfo": "Dati di Fatturazione",
+      "billingInfoDesc": "Usati per fatture e ricevute",
+      "companyName": "Ragione Sociale",
+      "companyNamePlaceholder": "La Tua Azienda SRL",
+      "vatNumber": "Partita IVA",
+      "fiscalCode": "Codice Fiscale",
+      "address": "Indirizzo",
+      "addressPlaceholder": "Via, Numero civico",
+      "city": "Città",
+      "postalCode": "CAP",
+      "pec": "Email PEC",
+      "sdiCode": "Codice SDI",
+      "saveChanges": "Salva Modifiche",
+      "saved": "Modifiche salvate!"
+    },
+    "billing": {
+      "currentPlan": "Piano Attuale",
+      "month": "mese",
+      "year": "anno",
+      "nextRenewal": "Prossimo rinnovo",
+      "paymentMethod": "Metodo di pagamento",
+      "managePlan": "Gestisci Piano",
+      "cancelPlan": "Cancella Piano",
+      "usageThisMonth": "Utilizzo Questo Mese",
+      "ttlCredits": "Crediti TTL",
+      "channels": "Canali",
+      "automations": "Automazioni",
+      "approachingLimit": "Stai raggiungendo il limite. Considera un upgrade.",
+      "availablePlans": "Piani Disponibili",
+      "monthly": "Mensile",
+      "yearly": "Annuale",
+      "popular": "Più Popolare",
+      "ttlMonth": "TTL/mese",
+      "currentPlanBtn": "Piano Attuale",
+      "upgrade": "Upgrade",
+      "downgrade": "Downgrade",
+      "paymentMethods": "Metodi di Pagamento",
+      "addPaymentMethod": "Aggiungi Metodo",
+      "expires": "Scade",
+      "default": "Predefinito",
+      "remove": "Rimuovi",
+      "invoiceHistory": "Storico Fatture",
+      "viewAll": "Vedi Tutte",
+      "invoice": "Fattura",
+      "date": "Data",
+      "amount": "Importo",
+      "status": "Stato",
+      "invoiceStatus": {
+        "paid": "Pagata",
+        "pending": "In Attesa",
+        "failed": "Fallita"
+      },
+      "plans": {
+        "free": {
+          "feature1": "100 TTL al mese",
+          "feature2": "1 canale di pubblicazione",
+          "feature3": "Template base"
+        },
+        "pro": {
+          "feature1": "1.000 TTL al mese",
+          "feature2": "10 canali di pubblicazione",
+          "feature3": "Template AI-powered",
+          "feature4": "Supporto prioritario"
+        },
+        "enterprise": {
+          "feature1": "10.000 TTL al mese",
+          "feature2": "Canali illimitati",
+          "feature3": "Funzioni AI avanzate",
+          "feature4": "Supporto dedicato",
+          "feature5": "Integrazioni personalizzate"
+        }
+      }
+    },
+    "notifications": {
+      "email": {
+        "title": "Notifiche Email",
+        "description": "Scegli quali email vuoi ricevere",
+        "options": {
+          "newDeal": {
+            "title": "Nuova Offerta Pubblicata",
+            "description": "Ricevi notifica quando viene pubblicata una nuova offerta"
+          },
+          "automationError": {
+            "title": "Errori Automazione",
+            "description": "Ricevi avvisi quando le automazioni falliscono"
+          },
+          "monthlyReport": {
+            "title": "Report Mensile",
+            "description": "Ricevi il riepilogo mensile delle performance"
+          },
+          "weeklyDigest": {
+            "title": "Digest Settimanale",
+            "description": "Panoramica settimanale della tua attività"
+          },
+          "promotional": {
+            "title": "Email Promozionali",
+            "description": "Novità, consigli e offerte speciali"
+          }
+        }
+      },
+      "inApp": {
+        "title": "Notifiche In-App",
+        "description": "Notifiche mostrate nella dashboard",
+        "options": {
+          "realTimeAlerts": {
+            "title": "Alert Offerte Real-time",
+            "description": "Notifiche istantanee per nuove offerte"
+          },
+          "ttlWarnings": {
+            "title": "Avvisi Limite TTL",
+            "description": "Avviso quando ti avvicini ai limiti di utilizzo"
+          },
+          "apiKeyExpiration": {
+            "title": "Scadenza Chiavi API",
+            "description": "Promemoria prima della scadenza delle chiavi"
+          }
+        }
+      },
+      "push": {
+        "title": "Notifiche Push",
+        "description": "Notifiche sul tuo dispositivo mobile",
+        "enable": "Abilita Notifiche Push",
+        "enableDescription": "Ricevi notifiche sul telefono",
+        "notEnabled": "Le notifiche push non sono abilitate. Connetti un dispositivo per ricevere avvisi mobile.",
+        "connectDevice": "Connetti Dispositivo"
+      },
+      "digest": {
+        "title": "Digest Notifiche",
+        "description": "Riepilogo consolidato delle notifiche",
+        "frequency": "Frequenza",
+        "frequencies": {
+          "daily": "Giornaliero",
+          "weekly": "Settimanale",
+          "never": "Mai"
+        },
+        "time": "Orario di Invio"
+      },
+      "saved": "Preferenze salvate!",
+      "saveChanges": "Salva Modifiche"
+    },
+    "security": {
+      "password": {
+        "title": "Password",
+        "lastChanged": "Ultima modifica: {time}",
+        "current": "Password Attuale",
+        "new": "Nuova Password",
+        "confirm": "Conferma Nuova Password",
+        "change": "Cambia Password",
+        "mismatch": "Le password non corrispondono",
+        "changed": "Password cambiata con successo"
+      },
+      "twoFactor": {
+        "title": "Autenticazione a Due Fattori",
+        "description": "Aggiungi un ulteriore livello di sicurezza al tuo account",
+        "status": "Stato 2FA",
+        "enabled": "Abilitato",
+        "disabled": "Disabilitato",
+        "enable": "Abilita 2FA",
+        "disable": "Disabilita 2FA",
+        "recommendation": "Ti consigliamo di abilitare il 2FA per maggiore sicurezza"
+      },
+      "sessions": {
+        "title": "Sessioni Attive",
+        "description": "Dispositivi attualmente connessi al tuo account",
+        "current": "Attuale",
+        "revoke": "Revoca",
+        "revokeAll": "Revoca Tutte"
+      },
+      "danger": {
+        "title": "Zona Pericolosa",
+        "description": "Azioni irreversibili e distruttive",
+        "export": {
+          "title": "Esporta i Tuoi Dati",
+          "description": "Scarica tutti i tuoi dati in formato JSON",
+          "button": "Richiedi Export"
+        },
+        "delete": {
+          "title": "Elimina Account",
+          "description": "Elimina permanentemente il tuo account e tutti i dati",
+          "button": "Elimina Account",
+          "modal": {
+            "title": "Eliminare l'Account?",
+            "warning": "Questa azione non può essere annullata. Verranno eliminati permanentemente:",
+            "item1": "Tutti i tuoi canali e automazioni",
+            "item2": "Tutti i tuoi template e credenziali",
+            "item3": "L'abbonamento e lo storico fatturazione",
+            "final": "Sei assolutamente sicuro?",
+            "confirm": "Sì, Elimina il Mio Account"
+          }
+        }
+      }
+    },
+    "credentials": {
+      "title": "Chiavi API",
+      "subtitle": "Gestisci le tue credenziali API in sicurezza",
+      "addCredential": "Aggiungi Chiave API",
+      "secureVault": "Vault Sicuro",
+      "secureVaultDesc": "Tutte le credenziali sono criptate con AES-256 e mai esposte in chiaro",
+      "types": {
+        "telegram": "Bot Telegram",
+        "keepa": "API Keepa",
+        "amazon": "Amazon PA-API"
+      },
+      "telegramDesc": "Token bot per pubblicare sui canali Telegram",
+      "keepaDesc": "Chiave API per dati prodotti e tracking prezzi",
+      "amazonDesc": "Chiavi di accesso per Amazon Product Advertising API",
+      "nameLabel": "Etichetta",
+      "namePlaceholder": "es. Bot Principale, Chiave Produzione",
+      "valueLabel": "Chiave API / Token",
+      "save": "Salva in Sicurezza",
+      "saving": "Salvataggio...",
+      "saveFailed": "Salvataggio credenziale fallito",
+      "connectionError": "Errore di connessione",
+      "statusActive": "Attiva",
+      "statusInactive": "Inattiva",
+      "decryptionHint": "Le chiavi non possono essere visualizzate per sicurezza",
+      "typeLabel": "Tipo",
+      "createdLabel": "Creata",
+      "noCredentials": "Nessuna Chiave API",
+      "noCredentialsDesc": "Aggiungi la tua prima chiave API per iniziare a usare le integrazioni",
+      "addFirst": "Aggiungi Prima Chiave",
+      "deleteTitle": "Eliminare Credenziale?",
+      "deleteAboutTo": "Stai per eliminare:",
+      "deleteWarning": "Questo rimuoverà la chiave da tutti i canali e automazioni connessi.",
+      "deleteConfirmButton": "Sì, Elimina"
+    }
   }
 }
