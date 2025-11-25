@@ -177,18 +177,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
             </GlassCard>
 
             {/* Steps Grid */}
-            <div className="relative">
-                {/* Connection Lines - Rendered behind cards */}
-                <div className="hidden lg:flex absolute top-12 left-0 right-0 items-center justify-center z-0 px-[16.67%]">
-                    <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${
-                        progress.channelConnected ? 'bg-afflyt-profit-400' : 'bg-gray-700'
-                    }`} />
-                    <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${
-                        progress.credentialsSet ? 'bg-afflyt-profit-400' : 'bg-gray-700'
-                    }`} />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {steps.map((step, index) => {
                         const isActive = !step.completed &&
                             (index === 0 || steps[index - 1].completed);
@@ -336,7 +325,6 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                         </div>
                     );
                 })}
-                </div>
             </div>
 
             {/* Actionable Next Steps Card */}
