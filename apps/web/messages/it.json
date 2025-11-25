@@ -213,6 +213,16 @@
     "onboarding": {
       "welcome": "Benvenuto nel Command Center di Afflyt Pro",
       "completeSetup": "Completa la configurazione per sbloccare tutto il potenziale",
+      "configProgress": "Progresso Configurazione",
+      "completed": "Completati",
+      "estimatedTime": "Tempo stimato rimanente: {minutes} minuti",
+      "whatYouGet": "Cosa otterrai:",
+      "benefit1": "Pubblicazione automatica 24/7",
+      "benefit2": "Deal Score potenziato da AI",
+      "benefit3": "ROI medio +247%",
+      "stepCompleted": "Completato",
+      "whyImportant": "Perché questi step sono importanti?",
+      "whyImportantDesc": "Ogni step sblocca funzionalità critiche: i Canali permettono la pubblicazione, le Credenziali attivano l'accesso ai dati Keepa in tempo reale, e le Automazioni gestiscono tutto automaticamente 24/7. Una volta completata la configurazione, il sistema inizierà immediatamente a generare valore.",
       "steps": {
         "connectChannel": {
           "title": "Connetti il tuo Primo Canale",
