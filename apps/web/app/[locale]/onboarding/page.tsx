@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import {
@@ -26,12 +26,62 @@ interface SurveyData {
     channels: string[];
 }
 
+// Helper to load/save onboarding state from localStorage
+const ONBOARDING_STATE_KEY = 'onboarding_state';
+
+interface OnboardingState {
+    currentStep: OnboardingStep;
+    surveyData: SurveyData | null;
+    selectedChannels: string[];
+    selectedPlan: PlanType | null;
+    progress: {
+        welcomeSurveyCompleted: boolean;
+        planSelected: boolean;
+        channelsSelected: string[];
+        telegramSetupCompleted: boolean;
+        emailSetupCompleted: boolean;
+        discordSetupCompleted: boolean;
+        firstAutomationCreated: boolean;
+        totalTimeSpent: number;
+    };
+}
+
+const loadOnboardingState = (): OnboardingState | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const saved = localStorage.getItem(ONBOARDING_STATE_KEY);
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Failed to load onboarding state:', e);
+    }
+    return null;
+};
+
+const saveOnboardingState = (state: OnboardingState) => {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error('Failed to save onboarding state:', e);
+    }
+};
+
+const clearOnboardingState = () => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(ONBOARDING_STATE_KEY);
+};
+
 export default function OnboardingPage() {
     const router = useRouter();
     const locale = useLocale();
     const tErrors = useTranslations('onboarding.errors');
     const tSteps = useTranslations('onboarding.steps');
     const tComplete = useTranslations('onboarding.complete');
+
+    // Load saved state on mount
+    const [isInitialized, setIsInitialized] = useState(false);
     const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
     const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
@@ -46,6 +96,31 @@ export default function OnboardingPage() {
         firstAutomationCreated: false,
         totalTimeSpent: 0
     });
+
+    // Load saved state on mount
+    useEffect(() => {
+        const savedState = loadOnboardingState();
+        if (savedState) {
+            setCurrentStep(savedState.currentStep);
+            setSurveyData(savedState.surveyData);
+            setSelectedChannels(savedState.selectedChannels);
+            setSelectedPlan(savedState.selectedPlan);
+            setProgress(savedState.progress);
+        }
+        setIsInitialized(true);
+    }, []);
+
+    // Save state whenever it changes
+    useEffect(() => {
+        if (!isInitialized) return;
+        saveOnboardingState({
+            currentStep,
+            surveyData,
+            selectedChannels,
+            selectedPlan,
+            progress
+        });
+    }, [isInitialized, currentStep, surveyData, selectedChannels, selectedPlan, progress]);
 
     const handleWelcomeComplete = (data: SurveyData) => {
         console.log('Survey completed:', data);
@@ -200,9 +275,10 @@ export default function OnboardingPage() {
         setProgress(prev => ({ ...prev, firstAutomationCreated: true }));
         setCurrentStep('complete');
 
-        // Mark onboarding as completed
+        // Mark onboarding as completed and clear saved state
         if (typeof window !== 'undefined') {
             localStorage.setItem('onboarding_completed', 'true');
+            clearOnboardingState();
         }
 
         // Redirect to dashboard after 2 seconds
@@ -225,9 +301,10 @@ export default function OnboardingPage() {
     };
 
     const handleSkipAutomation = () => {
-        // Mark onboarding as completed even when skipping
+        // Mark onboarding as completed even when skipping and clear saved state
         if (typeof window !== 'undefined') {
             localStorage.setItem('onboarding_completed', 'true');
+            clearOnboardingState();
         }
         router.push(`/${locale}/dashboard`);
     };
@@ -298,6 +375,18 @@ export default function OnboardingPage() {
         if (currentStep === 'plan') return 'welcome'; // Show welcome context during plan selection
         return currentStep as 'welcome' | 'telegram' | 'email' | 'automation';
     };
+
+    // Loading state while restoring saved progress
+    if (!isInitialized) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-afflyt-dark-100 to-afflyt-dark-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-afflyt-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-gray-400">Loading...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Don't use layout for complete step
     if (currentStep === 'complete') {

@@ -1,4 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load .env file from api directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const prisma = new PrismaClient();
 
@@ -16,12 +21,13 @@ const ONBOARDING_TEMPLATES = [
         estimatedRevenue: '€500-2000/mese',
         schedule: '0 */6 * * *', // Every 6 hours
         minScore: 85,
-        categories: JSON.stringify(['Electronics', 'Home']),
+        categories: ['Electronics', 'Home'],
         maxPrice: 100,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@techdeals', metric: 'Revenue/mese', value: '€1,847' },
             { user: '@offerte24', metric: 'Click rate', value: '12.3%' }
-        ])
+        ]
     },
     {
         name: '☀️ Morning Deal Drop',
@@ -32,11 +38,12 @@ const ONBOARDING_TEMPLATES = [
         estimatedRevenue: '€300-1000/mese',
         schedule: '0 9 * * *', // Every day at 9:00
         minScore: 75,
-        categories: JSON.stringify(['All']),
+        categories: ['All'],
         maxPrice: null,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@dailydeals', metric: 'Iscritti +', value: '+2.3k/mese' }
-        ])
+        ]
     },
     {
         name: '💎 Luxury for Less',
@@ -47,11 +54,12 @@ const ONBOARDING_TEMPLATES = [
         estimatedRevenue: '€800-3000/mese',
         schedule: '0 */12 * * *', // Every 12 hours
         minScore: 90,
-        categories: JSON.stringify(['Fashion', 'Beauty', 'Watches']),
+        categories: ['Fashion', 'Beauty', 'Watches'],
         maxPrice: 500,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@luxdeals', metric: 'Conv. rate', value: '8.7%' }
-        ])
+        ]
     }
 ];
 
@@ -68,11 +76,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€400-1500/mese',
         schedule: '*/30 * * * *', // Every 30 minutes
         minScore: 80,
-        categories: JSON.stringify(['All']),
+        categories: ['All'],
         maxPrice: null,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@flashdeals_it', metric: 'Engagement', value: '15.2%' }
-        ])
+        ]
     },
     {
         name: '🎮 Gaming Deals',
@@ -83,11 +92,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€600-2500/mese',
         schedule: '0 */8 * * *', // Every 8 hours
         minScore: 82,
-        categories: JSON.stringify(['Video Games', 'Computers', 'Electronics']),
+        categories: ['Video Games', 'Computers', 'Electronics'],
         maxPrice: 200,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@gamingdeals', metric: 'CTR', value: '9.8%' }
-        ])
+        ]
     },
     {
         name: '🏠 Home & Living',
@@ -98,11 +108,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€300-1200/mese',
         schedule: '0 10,18 * * *', // 10:00 and 18:00
         minScore: 78,
-        categories: JSON.stringify(['Home & Kitchen', 'Home', 'Furniture']),
+        categories: ['Home & Kitchen', 'Home', 'Furniture'],
         maxPrice: 150,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@homedecor_deals', metric: 'Revenue/mese', value: '€892' }
-        ])
+        ]
     },
     {
         name: '💪 Fitness & Wellness',
@@ -113,11 +124,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€500-1800/mese',
         schedule: '0 7,19 * * *', // 7:00 and 19:00
         minScore: 80,
-        categories: JSON.stringify(['Sports', 'Health & Household', 'Beauty']),
+        categories: ['Sports', 'Health & Household', 'Beauty'],
         maxPrice: 120,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@fitdeals', metric: 'Conversion', value: '7.2%' }
-        ])
+        ]
     },
     {
         name: '🎁 Gift Ideas',
@@ -128,11 +140,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€700-2800/mese',
         schedule: '0 12 * * *', // Every day at 12:00
         minScore: 85,
-        categories: JSON.stringify(['All']),
+        categories: ['All'],
         maxPrice: 80,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@giftideas_it', metric: 'Iscritti +', value: '+1.8k/mese' }
-        ])
+        ]
     },
     {
         name: '📱 Tech Gadgets',
@@ -143,11 +156,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€900-3500/mese',
         schedule: '0 */6 * * *', // Every 6 hours
         minScore: 88,
-        categories: JSON.stringify(['Electronics', 'Computers', 'Cell Phones & Accessories']),
+        categories: ['Electronics', 'Computers', 'Cell Phones & Accessories'],
         maxPrice: 300,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@techgadgets', metric: 'Revenue/mese', value: '€2,134' }
-        ])
+        ]
     },
     {
         name: '👶 Baby & Kids',
@@ -158,11 +172,12 @@ const ADVANCED_TEMPLATES = [
         estimatedRevenue: '€400-1400/mese',
         schedule: '0 9,16 * * *', // 9:00 and 16:00
         minScore: 80,
-        categories: JSON.stringify(['Baby Products', 'Toys & Games']),
+        categories: ['Baby Products', 'Toys & Games'],
         maxPrice: 100,
-        successStories: JSON.stringify([
+        isActive: true,
+        successStories: [
             { user: '@mamme_risparmio', metric: 'Engagement', value: '11.3%' }
-        ])
+        ]
     }
 ];
 
@@ -180,7 +195,20 @@ async function seedTemplates() {
         let insertedCount = 0;
         for (const template of ALL_TEMPLATES) {
             await prisma.automationTemplate.create({
-                data: template
+                data: {
+                    name: template.name,
+                    description: template.description,
+                    category: template.category,
+                    difficulty: template.difficulty,
+                    popularity: template.popularity,
+                    estimatedRevenue: template.estimatedRevenue,
+                    schedule: template.schedule,
+                    minScore: template.minScore,
+                    categories: { set: template.categories },
+                    maxPrice: template.maxPrice,
+                    isActive: template.isActive,
+                    successStories: template.successStories
+                }
             });
             insertedCount++;
             console.log(`✅ Created template: ${template.name}`);

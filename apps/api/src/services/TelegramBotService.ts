@@ -156,16 +156,36 @@ _#Ad | Deal trovato da Afflyt Pro 🤖_
   }
 
   /**
-   * Test connection with sample message
+   * Test connection with sample message that looks like a real deal
    */
   static async sendTestMessage(channelId: string, token: string) {
     try {
       const bot = new Telegraf(token);
 
-      await bot.telegram.sendMessage(channelId,
-        '✅ *Connessione riuscita!*\n\nIl tuo bot Afflyt Pro è configurato correttamente e può pubblicare in questo canale. 🎉',
-        { parse_mode: 'Markdown' }
-      );
+      // Send a realistic-looking test message
+      const testMessage = `
+🔥 *HOT DEAL ALERT!*
+
+Apple AirPods Pro (2ª generazione) con custodia MagSafe
+
+💰 *Prezzo:* €199.99 ~€279.99~
+💸 *Risparmi:* €80.00 (-29%)
+⭐ *Rating:* 4.8/5 (12,847 recensioni)
+
+✅ *Connessione riuscita!*
+Il tuo bot Afflyt Pro è configurato correttamente.
+
+_#Ad | Messaggio di test da Afflyt Pro 🤖_
+      `.trim();
+
+      await bot.telegram.sendMessage(channelId, testMessage, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🛒 Vai su Amazon', url: 'https://afflyt.io' }]
+          ]
+        }
+      });
 
       return { success: true };
     } catch (error: any) {
