@@ -192,8 +192,8 @@
       "limitsStatus": "Limits Status",
       "activeRules": "Active Rules",
       "sentOffers": "Sent Offers",
-      "keepaBudget": "Keepa Budget",
-      "consumed": "Consumed",
+      "afflytCredits": "Afflyt Credits",
+      "consumed": "Used",
       "remaining": "Remaining",
       "daysRemaining": "days remaining",
       "lastActivity": "Last Activity",
@@ -225,7 +225,7 @@
       "stepCompleted": "Completed",
       "completePreviousStep": "Complete previous step first",
       "whyImportant": "Why are these steps important?",
-      "whyImportantDesc": "Each step unlocks critical features: Channels enable publishing, Credentials activate real-time Keepa data access, and Automations manage everything automatically 24/7. Once configuration is complete, the system will immediately start generating value.",
+      "whyImportantDesc": "Each step unlocks critical features: Channels enable publishing, API Keys activate deal data access, and Automations manage everything automatically 24/7. Once configuration is complete, the system will immediately start generating value.",
       "checklistChannels": "Channels configured",
       "checklistCredentials": "API Keys added",
       "checklistAutomation": "First automation active",
@@ -240,12 +240,12 @@
           "time": "3 min"
         },
         "credentials": {
-          "title": "Setup API Credentials",
-          "description": "Configure Keepa and your Amazon affiliate tags",
+          "title": "Add Your Amazon Tag",
+          "description": "Configure your Amazon affiliate tag to start earning",
           "button": "Add Credentials",
-          "step1": "Add your Keepa API key",
-          "step2": "Configure Amazon affiliate tag",
-          "step3": "Test the connection",
+          "step1": "Enter your Amazon Associate tag",
+          "step2": "Select your marketplace",
+          "step3": "Verify your account",
           "time": "2 min"
         },
         "automation": {
@@ -262,7 +262,7 @@
   },
   "deals": {
     "title": "Deal Finder",
-    "subtitle": "Find the best deals on Amazon powered by Keepa",
+    "subtitle": "Find the best deals on Amazon with AI-powered scoring",
     "mockDataWarning": "Using mock data",
     "refresh": "Refresh",
     "refreshing": "Refreshing...",
@@ -549,10 +549,8 @@
       "lastUsed": "Last used",
       "never": "Never",
       "telegramDesc": "Token from @BotFather on Telegram",
-      "keepaDesc": "API Key for Keepa data access",
-      "amazonDesc": "Amazon Product Advertising credentials",
+      "amazonDesc": "Your Amazon Associates affiliate tag",
       "types": {
-        "keepa": "Keepa API",
         "amazon": "Amazon Affiliate Tag",
         "telegram": "Telegram Bot Token",
         "discord": "Discord Webhook",
@@ -1136,7 +1134,7 @@
       },
       "addCredentials": {
         "label": "Add API credentials",
-        "description": "Configure Keepa or other API keys"
+        "description": "Configure your Amazon affiliate tag"
       },
       "generateLink": {
         "label": "Generate affiliate link",
@@ -1300,7 +1298,7 @@
       "automationRules": "Automation Rules",
       "activeAutomations": "Active Automations",
       "channels": "Channels",
-      "keepaTokens": "Keepa Tokens (this month)"
+      "afflytCredits": "Afflyt Credits (this month)"
     },
     "features": {
       "free": {
@@ -1571,12 +1569,10 @@
       "secureVaultDesc": "All credentials are encrypted with AES-256 and never exposed in plain text",
       "types": {
         "telegram": "Telegram Bot",
-        "keepa": "Keepa API",
-        "amazon": "Amazon PA-API"
+        "amazon": "Amazon Affiliate Tag"
       },
       "telegramDesc": "Bot token for publishing to Telegram channels",
-      "keepaDesc": "API key for product data and price tracking",
-      "amazonDesc": "Access keys for Amazon Product Advertising API",
+      "amazonDesc": "Your Amazon Associates affiliate tag",
       "nameLabel": "Label",
       "namePlaceholder": "e.g., Main Bot, Production Key",
       "valueLabel": "API Key / Token",

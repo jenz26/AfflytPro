@@ -11,7 +11,6 @@ import {
     Trash2,
     Shield,
     Bot,
-    Cloud,
     ShoppingBag,
     ArrowLeft,
     Lock,
@@ -137,26 +136,18 @@ export default function CredentialsPage() {
             placeholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz...'
         },
         {
-            type: 'KEEPA',
-            label: t('types.keepa'),
-            icon: Cloud,
-            description: t('keepaDesc'),
-            placeholder: 'kp_xxxxxxxxxxxxx...'
-        },
-        {
-            type: 'AMAZON_PA',
+            type: 'AMAZON_TAG',
             label: t('types.amazon'),
             icon: ShoppingBag,
             description: t('amazonDesc'),
-            placeholder: 'AKIA...'
+            placeholder: 'mytag-21'
         }
     ];
 
     const getIcon = (provider: string) => {
         switch (provider) {
             case 'TELEGRAM_BOT': return Bot;
-            case 'KEEPA': return Cloud;
-            case 'AMAZON_PA': return ShoppingBag;
+            case 'AMAZON_TAG': return ShoppingBag;
             default: return Key;
         }
     };

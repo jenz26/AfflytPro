@@ -11,7 +11,7 @@ import { StandardEmptyState } from '@/components/ui/StandardEmptyState';
 import { DealDetailPanel } from '@/components/deals/DealDetailPanel';
 import { searchDeals, Deal } from '@/lib/api/deals';
 
-// Mock data - will be replaced with real Keepa API calls
+// Mock data - will be replaced with real API calls
 const mockDeals = [
   {
     asin: 'B08N5WRWNW',
@@ -127,11 +127,11 @@ export default function DealsPage() {
       });
 
       if (response.success && response.deals.length > 0) {
-        // Real data from Keepa API
+        // Real data from API
         setDeals(response.deals);
       } else {
-        // No data from API (no API key or no results) - use mock data
-        setApiError('No Keepa API key configured or no results found');
+        // No data from API - use mock data
+        setApiError('No API key configured or no results found');
         setDeals(mockDeals);
       }
     } catch (error: any) {

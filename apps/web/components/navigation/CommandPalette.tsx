@@ -168,7 +168,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             description: t('actions.addCredentials.description'),
             icon: Plus,
             action: () => router.push('/dashboard/settings/credentials?action=new'),
-            keywords: ['api', 'key', 'keepa', 'credentials']
+            keywords: ['api', 'key', 'amazon', 'credentials', 'tag']
         },
         {
             id: 'action-generate-link',

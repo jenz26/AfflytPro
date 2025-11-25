@@ -192,9 +192,9 @@
       "limitsStatus": "Stato Limiti",
       "activeRules": "Regole Attive",
       "sentOffers": "Offerte Inviate",
-      "keepaBudget": "Budget Keepa",
-      "consumed": "Consumato",
-      "remaining": "Rimanente",
+      "afflytCredits": "Crediti Afflyt",
+      "consumed": "Utilizzati",
+      "remaining": "Rimanenti",
       "daysRemaining": "giorni rimanenti",
       "lastActivity": "Ultima Attività",
       "lastClick": "Ultimo Click",
@@ -225,7 +225,7 @@
       "stepCompleted": "Completato",
       "completePreviousStep": "Completa prima lo step precedente",
       "whyImportant": "Perché questi step sono importanti?",
-      "whyImportantDesc": "Ogni step sblocca funzionalità critiche: i Canali permettono la pubblicazione, le Credenziali attivano l'accesso ai dati Keepa in tempo reale, e le Automazioni gestiscono tutto automaticamente 24/7. Una volta completata la configurazione, il sistema inizierà immediatamente a generare valore.",
+      "whyImportantDesc": "Ogni step sblocca funzionalità critiche: i Canali permettono la pubblicazione, le API Keys attivano l'accesso ai dati delle offerte, e le Automazioni gestiscono tutto automaticamente 24/7. Una volta completata la configurazione, il sistema inizierà immediatamente a generare valore.",
       "checklistChannels": "Canali configurati",
       "checklistCredentials": "API Keys aggiunte",
       "checklistAutomation": "Prima automazione attiva",
@@ -240,12 +240,12 @@
           "time": "3 min"
         },
         "credentials": {
-          "title": "Imposta le Credenziali API",
-          "description": "Configura Keepa e i tuoi Tag Amazon per l'affiliazione",
+          "title": "Aggiungi il tuo Tag Amazon",
+          "description": "Configura il tuo tag affiliato Amazon per iniziare a guadagnare",
           "button": "Aggiungi Credenziali",
-          "step1": "Aggiungi la tua API key Keepa",
-          "step2": "Configura il tag affiliato Amazon",
-          "step3": "Testa la connessione",
+          "step1": "Inserisci il tuo tag Amazon Associates",
+          "step2": "Seleziona il tuo marketplace",
+          "step3": "Verifica il tuo account",
           "time": "2 min"
         },
         "automation": {
@@ -262,7 +262,7 @@
   },
   "deals": {
     "title": "Deal Finder",
-    "subtitle": "Trova i migliori deal su Amazon con il potere di Keepa",
+    "subtitle": "Trova i migliori deal su Amazon con scoring AI-powered",
     "mockDataWarning": "Utilizzo dati di esempio",
     "refresh": "Aggiorna",
     "refreshing": "Aggiornamento...",
@@ -549,10 +549,8 @@
       "lastUsed": "Ultimo utilizzo",
       "never": "Mai",
       "telegramDesc": "Token del tuo bot Telegram da @BotFather",
-      "keepaDesc": "Chiave API per accesso ai dati Keepa",
-      "amazonDesc": "Credenziali Amazon Product Advertising",
+      "amazonDesc": "Il tuo tag affiliato Amazon Associates",
       "types": {
-        "keepa": "Keepa API",
         "amazon": "Tag Affiliato Amazon",
         "telegram": "Telegram Bot Token",
         "discord": "Discord Webhook",
@@ -1136,7 +1134,7 @@
       },
       "addCredentials": {
         "label": "Aggiungi credenziali API",
-        "description": "Configura Keepa o altre API keys"
+        "description": "Configura il tuo tag affiliato Amazon"
       },
       "generateLink": {
         "label": "Genera link affiliato",
@@ -1300,7 +1298,7 @@
       "automationRules": "Regole Automazione",
       "activeAutomations": "Automazioni Attive",
       "channels": "Canali",
-      "keepaTokens": "Token Keepa (questo mese)"
+      "afflytCredits": "Crediti Afflyt (questo mese)"
     },
     "features": {
       "free": {
@@ -1571,12 +1569,10 @@
       "secureVaultDesc": "Tutte le credenziali sono criptate con AES-256 e mai esposte in chiaro",
       "types": {
         "telegram": "Bot Telegram",
-        "keepa": "API Keepa",
-        "amazon": "Amazon PA-API"
+        "amazon": "Tag Affiliato Amazon"
       },
       "telegramDesc": "Token bot per pubblicare sui canali Telegram",
-      "keepaDesc": "Chiave API per dati prodotti e tracking prezzi",
-      "amazonDesc": "Chiavi di accesso per Amazon Product Advertising API",
+      "amazonDesc": "Il tuo tag affiliato Amazon Associates",
       "nameLabel": "Etichetta",
       "namePlaceholder": "es. Bot Principale, Chiave Produzione",
       "valueLabel": "Chiave API / Token",

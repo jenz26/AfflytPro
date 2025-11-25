@@ -213,17 +213,17 @@ export default function DashboardPage() {
                         color="plasma"
                     />
 
-                    {/* Keepa Budget Widget */}
+                    {/* Afflyt Credits Widget */}
                     <KPIWidget
-                        title={tKPI('keepaBudget')}
+                        title={tKPI('afflytCredits')}
                         icon={DollarSign}
-                        mainValue={`€${accountData.keepaBudget.used.toFixed(2)}`}
+                        mainValue={`${accountData.credits?.used || 0}`}
                         mainLabel={tKPI('consumed')}
-                        subValue={`€${(accountData.keepaBudget.total - accountData.keepaBudget.used).toFixed(2)}`}
+                        subValue={`${accountData.credits?.remaining || 0}`}
                         subLabel={tKPI('remaining')}
                         progress={{
-                            value: (accountData.keepaBudget.used / accountData.keepaBudget.total) * 100,
-                            label: `${accountData.keepaBudget.daysRemaining} ${tKPI('daysRemaining')}`
+                            value: accountData.credits ? (accountData.credits.used / accountData.credits.total) * 100 : 0,
+                            label: `${accountData.credits?.daysRemaining || 30} ${tKPI('daysRemaining')}`
                         }}
                         color="profit"
                     />

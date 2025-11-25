@@ -18,7 +18,7 @@ interface UsageDashboardProps {
     automations: UsageItem;
     activeAutomations: UsageItem;
     channels: UsageItem;
-    keepaTokens?: UsageItem;
+    afflytCredits?: UsageItem;
   };
   className?: string;
 }
@@ -126,12 +126,12 @@ export function UsageDashboard({ plan, usage, className = '' }: UsageDashboardPr
           label={t('labels.channels')}
         />
 
-        {/* Keepa Tokens (if provided) */}
-        {usage.keepaTokens && (
+        {/* Afflyt Credits (if provided) */}
+        {usage.afflytCredits && (
           <ProgressBar
-            value={usage.keepaTokens.used}
-            max={usage.keepaTokens.max}
-            label={t('labels.keepaTokens')}
+            value={usage.afflytCredits.used}
+            max={usage.afflytCredits.max}
+            label={t('labels.afflytCredits')}
             showWarning
             warningText={t('approachingLimit')}
           />
