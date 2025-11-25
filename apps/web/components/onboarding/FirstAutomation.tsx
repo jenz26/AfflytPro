@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
+import { API_BASE } from '@/lib/api/config';
 
 interface AutomationTemplate {
     id: string;
@@ -55,7 +56,7 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
         try {
             setIsLoading(true);
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const response = await fetch('http://localhost:3001/automation/templates', {
+            const response = await fetch('${API_BASE}/automation/templates', {
                 headers: {
                     ...(token && { 'Authorization': `Bearer ${token}` })
                 }
@@ -73,7 +74,7 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
         try {
             setIsCreating(true);
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const response = await fetch('http://localhost:3001/automation/from-template', {
+            const response = await fetch('${API_BASE}/automation/from-template', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

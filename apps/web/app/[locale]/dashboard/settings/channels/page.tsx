@@ -20,6 +20,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { API_BASE } from '@/lib/api/config';
 
 interface Channel {
     id: string;
@@ -56,7 +57,7 @@ export default function ChannelsPage() {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const res = await fetch('http://localhost:3001/user/channels', {
+            const res = await fetch('${API_BASE}/user/channels', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -74,7 +75,7 @@ export default function ChannelsPage() {
         try {
             const token = localStorage.getItem('token');
             // Call TSK-066 API to save credential
-            const res = await fetch('http://localhost:3001/user/credentials', {
+            const res = await fetch('${API_BASE}/user/credentials', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ export default function ChannelsPage() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3001/user/channels', {
+            const res = await fetch('${API_BASE}/user/channels', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -146,7 +147,7 @@ export default function ChannelsPage() {
         setIsDeleting(true);
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:3001/user/channels/${channelToDelete.id}`, {
+            await fetch(`${API_BASE}/user/channels/${channelToDelete.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

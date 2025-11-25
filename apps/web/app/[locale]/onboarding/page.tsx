@@ -13,6 +13,7 @@ import {
     ProgressTracker,
     ContextPreview
 } from '@/components/onboarding';
+import { API_BASE } from '@/lib/api/config';
 
 type OnboardingStep = 'welcome' | 'telegram' | 'email' | 'automation' | 'complete';
 
@@ -71,7 +72,7 @@ export default function OnboardingPage() {
         try {
             // 1. Save bot token as Credential
             const token = localStorage.getItem('token');
-            const credentialResponse = await fetch('http://localhost:3001/user/credentials', {
+            const credentialResponse = await fetch('${API_BASE}/user/credentials', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +94,7 @@ export default function OnboardingPage() {
             const credentialData = await credentialResponse.json();
 
             // 2. Create Channel linked to the credential
-            const channelResponse = await fetch('http://localhost:3001/user/channels', {
+            const channelResponse = await fetch('${API_BASE}/user/channels', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ export default function OnboardingPage() {
         try {
             // 1. Save API key as Credential
             const token = localStorage.getItem('token');
-            const credentialResponse = await fetch('http://localhost:3001/user/credentials', {
+            const credentialResponse = await fetch('${API_BASE}/user/credentials', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -154,7 +155,7 @@ export default function OnboardingPage() {
             const credentialData = await credentialResponse.json();
 
             // 2. Create Channel for email
-            const channelResponse = await fetch('http://localhost:3001/user/channels', {
+            const channelResponse = await fetch('${API_BASE}/user/channels', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

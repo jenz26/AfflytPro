@@ -20,6 +20,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { API_BASE } from '@/lib/api/config';
 
 interface EmailSetupProps {
     onComplete: (data: EmailSetupData) => void;
@@ -84,7 +85,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('http://localhost:3001/validate/email-key', {
+            const response = await fetch('${API_BASE}/validate/email-key', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ apiKey: key, provider: prov })

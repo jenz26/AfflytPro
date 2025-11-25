@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { API_BASE } from '@/lib/api/config';
 
 export const useAnalytics = () => {
   const sessionId = useRef(
@@ -22,7 +23,7 @@ export const useAnalytics = () => {
   ) => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      await fetch('http://localhost:3001/analytics/track', {
+      await fetch(`${API_BASE}/analytics/track`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

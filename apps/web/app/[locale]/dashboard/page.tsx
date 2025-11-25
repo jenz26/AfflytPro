@@ -18,6 +18,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow';
 import { KPIWidget } from '@/components/dashboard/KPIWidget';
+import { API_BASE } from '@/lib/api/config';
 
 export default function DashboardPage() {
     const locale = useLocale();
@@ -43,7 +44,7 @@ export default function DashboardPage() {
                     return;
                 }
 
-                const response = await fetch('http://localhost:3001/user/dashboard/stats', {
+                const response = await fetch(`${API_BASE}/user/dashboard/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

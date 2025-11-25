@@ -20,6 +20,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { API_BASE } from '@/lib/api/config';
 
 interface TelegramSetupProps {
     onComplete: (data: TelegramSetupData) => void;
@@ -67,7 +68,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('http://localhost:3001/validate/telegram-token', {
+            const response = await fetch('${API_BASE}/validate/telegram-token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token })
@@ -100,7 +101,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('http://localhost:3001/validate/telegram-channel', {
+            const response = await fetch('${API_BASE}/validate/telegram-channel', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, channelId })
@@ -129,7 +130,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
 
         try {
             const token = localStorage.getItem('token'); // Get auth token
-            const response = await fetch('http://localhost:3001/validate/telegram-test', {
+            const response = await fetch('${API_BASE}/validate/telegram-test', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

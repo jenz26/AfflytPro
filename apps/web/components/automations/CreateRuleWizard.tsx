@@ -16,6 +16,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
+import { API_BASE } from '@/lib/api/config';
 
 interface WizardProps {
     onComplete: (rule: any) => void;
@@ -58,7 +59,7 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         const fetchChannels = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:3001/user/channels', {
+                const response = await fetch('${API_BASE}/user/channels', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

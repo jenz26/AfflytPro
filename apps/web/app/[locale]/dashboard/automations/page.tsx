@@ -17,6 +17,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RuleCard } from '@/components/automations/RuleCard';
 import { CreateRuleWizard } from '@/components/automations/CreateRuleWizard';
 import { EmptyState } from '@/components/automations/EmptyState';
+import { API_BASE } from '@/lib/api/config';
 
 interface AutomationRule {
     id: string;
@@ -60,7 +61,7 @@ export default function AutomationStudioPage() {
     const fetchRules = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/automation/rules', {
+            const response = await fetch('${API_BASE}/automation/rules', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -80,7 +81,7 @@ export default function AutomationStudioPage() {
 
             // If editing, use PUT instead of POST
             if (editingRule) {
-                const response = await fetch(`http://localhost:3001/automation/rules/${editingRule.id}`, {
+                const response = await fetch(`${API_BASE}/automation/rules/${editingRule.id}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -106,7 +107,7 @@ export default function AutomationStudioPage() {
                 }
             } else {
                 // Create new rule
-                const response = await fetch('http://localhost:3001/automation/rules', {
+                const response = await fetch('${API_BASE}/automation/rules', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -139,7 +140,7 @@ export default function AutomationStudioPage() {
 
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:3001/automation/rules/${id}`, {
+            await fetch(`${API_BASE}/automation/rules/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -156,7 +157,7 @@ export default function AutomationStudioPage() {
     const handleTest = async (id: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:3001/automation/rules/${id}/run`, {
+            const response = await fetch(`${API_BASE}/automation/rules/${id}/run`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -189,7 +190,7 @@ export default function AutomationStudioPage() {
         setIsDeleting(true);
         try {
             const token = localStorage.getItem('token');
-            await fetch(`http://localhost:3001/automation/rules/${ruleToDelete.id}`, {
+            await fetch(`${API_BASE}/automation/rules/${ruleToDelete.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -218,7 +219,7 @@ export default function AutomationStudioPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3001/automation/rules', {
+            const response = await fetch('${API_BASE}/automation/rules', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

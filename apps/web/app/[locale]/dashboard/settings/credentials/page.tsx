@@ -19,6 +19,7 @@ import {
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { API_BASE } from '@/lib/api/config';
 
 interface Credential {
     id: string;
@@ -53,7 +54,7 @@ export default function CredentialsPage() {
             const token = localStorage.getItem('token'); // Simple assumption for FVD
             if (!token) return;
 
-            const res = await fetch('http://localhost:3001/user/credentials', {
+            const res = await fetch('${API_BASE}/user/credentials', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -74,7 +75,7 @@ export default function CredentialsPage() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:3001/user/credentials', {
+            const res = await fetch('${API_BASE}/user/credentials', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -108,7 +109,7 @@ export default function CredentialsPage() {
         setIsDeleting(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:3001/user/credentials/${credentialToDelete.id}`, {
+            const res = await fetch(`${API_BASE}/user/credentials/${credentialToDelete.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
