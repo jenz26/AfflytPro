@@ -159,7 +159,9 @@
     "settings": "Settings",
     "search": "Search...",
     "live": "Live",
-    "billing": "Billing"
+    "billing": "Billing",
+    "profile": "Profile",
+    "logout": "Logout"
   },
   "sidebar": {
     "accountStatus": "Account Status",

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
     User,
     CreditCard,
-    Send,
     Key,
     FileText,
     Bell,
@@ -34,7 +33,6 @@ export default function SettingsLayout({
     const tabs: SettingsTab[] = [
         { key: 'profile', icon: User, path: `/${locale}/settings/profile` },
         { key: 'billing', icon: CreditCard, path: `/${locale}/settings/billing` },
-        { key: 'channels', icon: Send, path: `/${locale}/settings/channels` },
         { key: 'apiKeys', icon: Key, path: `/${locale}/settings/api-keys` },
         { key: 'templates', icon: FileText, path: `/${locale}/settings/templates` },
         { key: 'notifications', icon: Bell, path: `/${locale}/settings/notifications` },

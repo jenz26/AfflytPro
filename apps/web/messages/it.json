@@ -159,7 +159,9 @@
     "settings": "Impostazioni",
     "search": "Cerca...",
     "live": "Live",
-    "billing": "Fatturazione"
+    "billing": "Fatturazione",
+    "profile": "Profilo",
+    "logout": "Esci"
   },
   "sidebar": {
     "accountStatus": "Stato Account",

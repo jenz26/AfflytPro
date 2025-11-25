@@ -7,7 +7,6 @@ import Link from 'next/link';
 import {
     User,
     CreditCard,
-    Send,
     Key,
     FileText,
     Bell,
@@ -42,13 +41,6 @@ export default function SettingsHubPage() {
             path: `/${locale}/settings/billing`,
             color: 'from-afflyt-profit-400 to-afflyt-profit-500',
             stat: 'PRO'
-        },
-        {
-            key: 'channels',
-            icon: Send,
-            path: `/${locale}/settings/channels`,
-            color: 'from-afflyt-cyan-400 to-afflyt-cyan-600',
-            stat: '3'
         },
         {
             key: 'apiKeys',

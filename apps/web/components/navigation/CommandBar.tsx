@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
@@ -14,12 +14,13 @@ import {
     Menu,
     X,
     Clock,
-    Shield,
-    Activity,
     Bell,
     HelpCircle,
     ChevronDown,
-    Flame
+    Flame,
+    User,
+    LogOut,
+    CreditCard
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CommandPalette } from './CommandPalette';
@@ -35,6 +36,19 @@ export const CommandBar = () => {
     const modKey = getModifierKey(os);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Keyboard shortcut for command palette
     useEffect(() => {
@@ -72,10 +86,10 @@ export const CommandBar = () => {
             badge: '3'
         },
         {
-            icon: Settings,
-            label: t('settings'),
-            path: `/${locale}/settings`,
-            shortcut: '⌘S'
+            icon: Send,
+            label: t('channels'),
+            path: `/${locale}/settings/channels`,
+            shortcut: '⌘C'
         }
     ];
 
@@ -210,10 +224,83 @@ export const CommandBar = () => {
                         </Link>
 
                         {/* User Menu */}
-                        <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-afflyt-glass-white rounded-lg transition-colors">
-                            <div className="w-7 h-7 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full" />
-                            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                        </button>
+                        <div className="relative" ref={userMenuRef}>
+                            <button
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                            >
+                                <div className="w-8 h-8 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center">
+                                    <User className="w-4 h-4 text-white" />
+                                </div>
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* User Dropdown Menu */}
+                            {userMenuOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-64 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-xl shadow-xl overflow-hidden z-50">
+                                    {/* User Info */}
+                                    <div className="p-4 border-b border-afflyt-glass-border">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center">
+                                                <User className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-medium">Marco R.</p>
+                                                <p className="text-xs text-gray-500">marco@contindigital.it</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <span className="px-2 py-0.5 bg-afflyt-profit-400/20 text-afflyt-profit-400 text-xs font-semibold rounded">
+                                                PRO
+                                            </span>
+                                            <span className="text-xs text-gray-500">847 / 1,000 TTL</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Menu Items */}
+                                    <div className="p-2">
+                                        <Link
+                                            href={`/${locale}/settings/profile`}
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span className="text-sm">{t('profile')}</span>
+                                        </Link>
+                                        <Link
+                                            href={`/${locale}/settings/billing`}
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                                        >
+                                            <CreditCard className="w-4 h-4" />
+                                            <span className="text-sm">{t('billing')}</span>
+                                        </Link>
+                                        <Link
+                                            href={`/${locale}/settings`}
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                                        >
+                                            <Settings className="w-4 h-4" />
+                                            <span className="text-sm">{t('settings')}</span>
+                                        </Link>
+                                    </div>
+
+                                    {/* Logout */}
+                                    <div className="p-2 border-t border-afflyt-glass-border">
+                                        <button
+                                            onClick={() => {
+                                                setUserMenuOpen(false);
+                                                // TODO: Implement logout
+                                            }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            <span className="text-sm">{t('logout')}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </header>
@@ -290,15 +377,36 @@ export const CommandBar = () => {
                                 <span className="font-medium">{t('help')}</span>
                             </Link>
 
-                            {/* Mobile Settings Link */}
-                            <Link
-                                href={`/${locale}/settings`}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-400 hover:text-white hover:bg-afflyt-glass-white"
-                            >
-                                <Settings className="w-5 h-5" />
-                                <span className="font-medium">{t('settings')}</span>
-                            </Link>
+                            {/* Mobile User Section */}
+                            <div className="mt-4 pt-4 border-t border-afflyt-glass-border">
+                                <div className="flex items-center gap-3 px-4 py-2 mb-2">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center">
+                                        <User className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-medium text-sm">Marco R.</p>
+                                        <p className="text-xs text-gray-500">PRO Plan</p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href={`/${locale}/settings`}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-400 hover:text-white hover:bg-afflyt-glass-white"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                    <span className="font-medium">{t('settings')}</span>
+                                </Link>
+                                <button
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        // TODO: Implement logout
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    <span className="font-medium">{t('logout')}</span>
+                                </button>
+                            </div>
                         </nav>
                     </div>
                 )}
