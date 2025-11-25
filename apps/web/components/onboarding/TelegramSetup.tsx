@@ -21,6 +21,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { API_BASE } from '@/lib/api/config';
+import { useTranslations } from 'next-intl';
 
 interface TelegramSetupProps {
     onComplete: (data: TelegramSetupData) => void;
@@ -43,6 +44,7 @@ interface TelegramSetupData {
 type ValidationStatus = 'idle' | 'validating' | 'valid' | 'invalid';
 
 export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
+    const t = useTranslations('telegramSetup');
     const [step, setStep] = useState(0);
     const [botToken, setBotToken] = useState('');
     const [channelId, setChannelId] = useState('');
@@ -60,7 +62,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
     const validateBotToken = async (token: string) => {
         if (!token || token.length < 30) {
             setBotValidation('invalid');
-            setValidationError('Il token deve essere di almeno 30 caratteri');
+            setValidationError(t('errors.tokenTooShort'));
             return;
         }
 
@@ -82,18 +84,18 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                 track('telegram_token_validated', 'onboarding', { botUsername: data.botInfo.username });
             } else {
                 setBotValidation('invalid');
-                setValidationError(data.error || 'Token non valido');
+                setValidationError(data.error || t('errors.invalidToken'));
             }
         } catch (error) {
             setBotValidation('invalid');
-            setValidationError('Errore di connessione al server');
+            setValidationError(t('errors.connectionError'));
         }
     };
 
     const validateChannelConnection = async (token: string, channelId: string) => {
         if (!channelId) {
             setChannelValidation('invalid');
-            setValidationError('Inserisci un Channel ID o username');
+            setValidationError(t('errors.enterChannelId'));
             return;
         }
 
@@ -115,11 +117,11 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                 track('telegram_channel_validated', 'onboarding', { channelId });
             } else {
                 setChannelValidation('invalid');
-                setValidationError(data.error || 'Il bot non può postare in questo canale');
+                setValidationError(data.error || t('errors.cantPost'));
             }
         } catch (error) {
             setChannelValidation('invalid');
-            setValidationError('Errore di connessione al server');
+            setValidationError(t('errors.connectionError'));
         }
     };
 
@@ -146,11 +148,11 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                 track('telegram_test_message_sent', 'onboarding', { channelId });
             } else {
                 setTestMessageStatus('failed');
-                setValidationError(data.error || 'Invio messaggio fallito');
+                setValidationError(data.error || t('errors.messageFailed'));
             }
         } catch (error) {
             setTestMessageStatus('failed');
-            setValidationError('Errore di connessione al server');
+            setValidationError(t('errors.connectionError'));
         }
     };
 
@@ -200,31 +202,31 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                             <Send className="w-8 h-8 text-white" />
                         </div>
                         <h2 className="text-3xl font-bold text-white mb-4 text-center">
-                            Configurazione Telegram
+                            {t('title')}
                         </h2>
                         <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                            Collega il tuo canale o gruppo Telegram per pubblicare deal automaticamente
+                            {t('subtitle')}
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
                                 <div className="text-2xl font-bold text-afflyt-cyan-400 mb-2">3 min</div>
-                                <div className="text-sm text-gray-400">Tempo configurazione</div>
+                                <div className="text-sm text-gray-400">{t('stats.setupTime')}</div>
                             </div>
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
-                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-2">Gratis</div>
-                                <div className="text-sm text-gray-400">100% gratuito</div>
+                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-2">{t('stats.free')}</div>
+                                <div className="text-sm text-gray-400">{t('stats.freeDesc')}</div>
                             </div>
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
                                 <div className="text-2xl font-bold text-afflyt-plasma-400 mb-2">24/7</div>
-                                <div className="text-sm text-gray-400">Pubblicazione continua</div>
+                                <div className="text-sm text-gray-400">{t('stats.continuous')}</div>
                             </div>
                         </div>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6">
                             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                 <Info className="w-5 h-5 text-afflyt-cyan-400" />
-                                Cosa serve:
+                                {t('requirements.title')}
                             </h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
@@ -232,8 +234,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 text-sm font-bold">1</span>
                                     </div>
                                     <div>
-                                        <p className="text-white font-medium">Un bot Telegram</p>
-                                        <p className="text-sm text-gray-400">Lo creeremo insieme tramite @BotFather</p>
+                                        <p className="text-white font-medium">{t('requirements.bot')}</p>
+                                        <p className="text-sm text-gray-400">{t('requirements.botDesc')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -241,8 +243,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 text-sm font-bold">2</span>
                                     </div>
                                     <div>
-                                        <p className="text-white font-medium">Un canale o gruppo Telegram</p>
-                                        <p className="text-sm text-gray-400">Dove vuoi pubblicare i deal (anche privato)</p>
+                                        <p className="text-white font-medium">{t('requirements.channel')}</p>
+                                        <p className="text-sm text-gray-400">{t('requirements.channelDesc')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -250,8 +252,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 text-sm font-bold">3</span>
                                     </div>
                                     <div>
-                                        <p className="text-white font-medium">Diritti di amministratore</p>
-                                        <p className="text-sm text-gray-400">Per permettere al bot di pubblicare messaggi</p>
+                                        <p className="text-white font-medium">{t('requirements.admin')}</p>
+                                        <p className="text-sm text-gray-400">{t('requirements.adminDesc')}</p>
                                     </div>
                                 </li>
                             </ul>
@@ -266,25 +268,25 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Crea il Bot Telegram</h2>
-                        <p className="text-gray-400 mb-6">Segui questi passaggi per ottenere il token del bot</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('createBot.title')}</h2>
+                        <p className="text-gray-400 mb-6">{t('createBot.subtitle')}</p>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Istruzioni:</h3>
+                            <h3 className="text-lg font-semibold text-white mb-4">{t('createBot.instructions')}</h3>
                             <ol className="space-y-4">
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-lg bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0">
                                         <span className="text-afflyt-cyan-400 font-bold">1</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-2">Apri Telegram e cerca @BotFather</p>
+                                        <p className="text-white font-medium mb-2">{t('createBot.step1')}</p>
                                         <a
                                             href="https://t.me/BotFather"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center gap-2 px-3 py-1.5 bg-afflyt-cyan-500/10 text-afflyt-cyan-400 rounded-lg text-sm hover:bg-afflyt-cyan-500/20 transition"
                                         >
-                                            Apri @BotFather
+                                            {t('createBot.openBotFather')}
                                             <ExternalLink className="w-3 h-3" />
                                         </a>
                                     </div>
@@ -294,7 +296,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 font-bold">2</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-2">Invia il comando /newbot</p>
+                                        <p className="text-white font-medium mb-2">{t('createBot.step2')}</p>
                                         <button
                                             onClick={() => copyToClipboard('/newbot')}
                                             className="inline-flex items-center gap-2 px-3 py-1.5 bg-afflyt-dark-100 text-gray-300 rounded-lg text-sm hover:bg-afflyt-dark-200 transition"
@@ -309,8 +311,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 font-bold">3</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-1">Scegli un nome e uno username per il bot</p>
-                                        <p className="text-sm text-gray-400">Lo username deve finire con "bot" (es: MioAffiliateBot)</p>
+                                        <p className="text-white font-medium mb-1">{t('createBot.step3')}</p>
+                                        <p className="text-sm text-gray-400">{t('createBot.step3Hint')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -318,8 +320,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 font-bold">4</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-1">Copia il token API che ricevi</p>
-                                        <p className="text-sm text-gray-400">Sarà simile a: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz</p>
+                                        <p className="text-white font-medium mb-1">{t('createBot.step4')}</p>
+                                        <p className="text-sm text-gray-400">{t('createBot.step4Hint')}</p>
                                     </div>
                                 </li>
                             </ol>
@@ -327,7 +329,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
 
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Bot Token
+                                {t('createBot.botToken')}
                             </label>
                             <div className="relative">
                                 <input
@@ -364,7 +366,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                 <div className="mt-3 p-3 bg-afflyt-profit-400/10 border border-afflyt-profit-400/30 rounded-lg flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-afflyt-profit-400 shrink-0" />
                                     <div>
-                                        <p className="text-sm font-medium text-white">Bot validato con successo!</p>
+                                        <p className="text-sm font-medium text-white">{t('createBot.botValidated')}</p>
                                         <p className="text-xs text-gray-400">@{botInfo.username} - {botInfo.firstName}</p>
                                     </div>
                                 </div>
@@ -382,7 +384,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                     onClick={() => validateBotToken(botToken)}
                                     className="mt-3 text-sm text-afflyt-cyan-400 hover:text-afflyt-cyan-300 transition"
                                 >
-                                    Clicca per validare
+                                    {t('createBot.clickToValidate')}
                                 </button>
                             )}
                         </div>
@@ -396,20 +398,20 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Collega il Canale/Gruppo</h2>
-                        <p className="text-gray-400 mb-6">Configura dove il bot pubblicherà i deal</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('connectChannel.title')}</h2>
+                        <p className="text-gray-400 mb-6">{t('connectChannel.subtitle')}</p>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Passaggi:</h3>
+                            <h3 className="text-lg font-semibold text-white mb-4">{t('connectChannel.steps')}</h3>
                             <ol className="space-y-4">
                                 <li className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-lg bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0">
                                         <span className="text-afflyt-cyan-400 font-bold">1</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-1">Aggiungi il bot al tuo canale/gruppo</p>
+                                        <p className="text-white font-medium mb-1">{t('connectChannel.step1')}</p>
                                         <p className="text-sm text-gray-400">
-                                            Vai nelle impostazioni del canale → Amministratori → Aggiungi amministratore → Cerca @{botInfo?.username || 'tuo_bot'}
+                                            {t('connectChannel.step1Hint', { bot: botInfo?.username || 'your_bot' })}
                                         </p>
                                     </div>
                                 </li>
@@ -418,8 +420,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 font-bold">2</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-1">Assegna i permessi di pubblicazione</p>
-                                        <p className="text-sm text-gray-400">Abilita "Pubblicare messaggi" nelle impostazioni amministratore</p>
+                                        <p className="text-white font-medium mb-1">{t('connectChannel.step2')}</p>
+                                        <p className="text-sm text-gray-400">{t('connectChannel.step2Hint')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
@@ -427,11 +429,11 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         <span className="text-afflyt-cyan-400 font-bold">3</span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white font-medium mb-1">Ottieni il Channel ID</p>
+                                        <p className="text-white font-medium mb-1">{t('connectChannel.step3')}</p>
                                         <p className="text-sm text-gray-400">
-                                            Per canali pubblici: usa @username (es: @mio_canale_deal)
+                                            {t('connectChannel.step3HintPublic')}
                                             <br />
-                                            Per canali privati: usa il numeric ID (es: -1001234567890)
+                                            {t('connectChannel.step3HintPrivate')}
                                         </p>
                                     </div>
                                 </li>
@@ -441,24 +443,24 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Nome del Canale
+                                    {t('connectChannel.channelName')}
                                     <span className="text-red-400 ml-1">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={channelName}
                                     onChange={(e) => setChannelName(e.target.value)}
-                                    placeholder="es. Canale Tech Deals"
+                                    placeholder={t('connectChannel.channelNamePlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border-2 border-afflyt-glass-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-afflyt-cyan-500 transition"
                                 />
                                 <p className="text-xs text-gray-400 mt-1">
-                                    Un nome descrittivo per riconoscere facilmente il canale
+                                    {t('connectChannel.channelNameHint')}
                                 </p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Channel ID o Username
+                                    {t('connectChannel.channelId')}
                                     <span className="text-red-400 ml-1">*</span>
                                 </label>
                                 <div className="relative">
@@ -470,7 +472,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                             setChannelValidation('idle');
                                         }}
                                         onBlur={() => channelId && validateChannelConnection(botToken, channelId)}
-                                        placeholder="@mio_canale o -1001234567890"
+                                        placeholder={t('connectChannel.channelIdPlaceholder')}
                                         className={`w-full px-4 py-3 bg-afflyt-dark-50 border-2 rounded-lg text-white placeholder-gray-500 focus:outline-none transition ${
                                             channelValidation === 'valid'
                                                 ? 'border-afflyt-profit-400 focus:border-afflyt-profit-400'
@@ -496,8 +498,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                 <div className="mt-3 p-3 bg-afflyt-profit-400/10 border border-afflyt-profit-400/30 rounded-lg flex items-center gap-3">
                                     <CheckCircle className="w-5 h-5 text-afflyt-profit-400 shrink-0" />
                                     <div>
-                                        <p className="text-sm font-medium text-white">Canale connesso con successo!</p>
-                                        <p className="text-xs text-gray-400">Il bot può pubblicare messaggi</p>
+                                        <p className="text-sm font-medium text-white">{t('connectChannel.channelConnected')}</p>
+                                        <p className="text-xs text-gray-400">{t('connectChannel.botCanPost')}</p>
                                     </div>
                                 </div>
                             )}
@@ -508,7 +510,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                     <div className="flex-1">
                                         <p className="text-sm text-red-300 mb-1">{validationError}</p>
                                         <p className="text-xs text-gray-400">
-                                            Assicurati che il bot sia amministratore con permessi di pubblicazione
+                                            {t('connectChannel.ensureAdmin')}
                                         </p>
                                     </div>
                                 </div>
@@ -519,7 +521,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                     onClick={() => validateChannelConnection(botToken, channelId)}
                                     className="mt-3 text-sm text-afflyt-cyan-400 hover:text-afflyt-cyan-300 transition"
                                 >
-                                    Clicca per validare connessione
+                                    {t('connectChannel.clickToValidate')}
                                 </button>
                             )}
                         </div>
@@ -534,8 +536,8 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Test della Configurazione</h2>
-                        <p className="text-gray-400 mb-6">Verifichiamo che tutto funzioni correttamente</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('testConfig.title')}</h2>
+                        <p className="text-gray-400 mb-6">{t('testConfig.subtitle')}</p>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6 mb-6">
                             <div className="flex items-center gap-3 mb-4">
@@ -543,19 +545,19 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                     <MessageCircle className="w-6 h-6 text-afflyt-cyan-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">Messaggio di Test</h3>
-                                    <p className="text-sm text-gray-400">Invieremo un messaggio di prova al tuo canale</p>
+                                    <h3 className="text-lg font-semibold text-white">{t('testConfig.testMessage')}</h3>
+                                    <p className="text-sm text-gray-400">{t('testConfig.testMessageDesc')}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center gap-3 text-sm">
                                     <CheckCircle className="w-4 h-4 text-afflyt-profit-400" />
-                                    <span className="text-gray-300">Bot: @{botInfo?.username}</span>
+                                    <span className="text-gray-300">{t('testConfig.bot')}: @{botInfo?.username}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
                                     <CheckCircle className="w-4 h-4 text-afflyt-profit-400" />
-                                    <span className="text-gray-300">Canale: {channelId}</span>
+                                    <span className="text-gray-300">{t('testConfig.channel')}: {channelId}</span>
                                 </div>
                             </div>
 
@@ -566,14 +568,14 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                     className="w-full justify-center gap-2"
                                 >
                                     <Send className="w-4 h-4" />
-                                    Invia Messaggio di Test
+                                    {t('testConfig.sendTestMessage')}
                                 </CyberButton>
                             )}
 
                             {testMessageStatus === 'sending' && (
                                 <div className="flex items-center justify-center gap-3 py-3">
                                     <Loader2 className="w-5 h-5 text-afflyt-cyan-400 animate-spin" />
-                                    <span className="text-gray-300">Invio in corso...</span>
+                                    <span className="text-gray-300">{t('testConfig.sending')}</span>
                                 </div>
                             )}
 
@@ -584,12 +586,12 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                             <Sparkles className="w-5 h-5 text-afflyt-profit-400" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-white">Test completato!</p>
-                                            <p className="text-sm text-gray-300">Controlla il tuo canale Telegram</p>
+                                            <p className="font-semibold text-white">{t('testConfig.testCompleted')}</p>
+                                            <p className="text-sm text-gray-300">{t('testConfig.checkChannel')}</p>
                                         </div>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-3">
-                                        Se hai ricevuto il messaggio, la configurazione è corretta. Puoi procedere!
+                                        {t('testConfig.successHint')}
                                     </p>
                                 </div>
                             )}
@@ -598,7 +600,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                 <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                                     <div className="flex items-center gap-3 mb-2">
                                         <XCircle className="w-5 h-5 text-red-400" />
-                                        <p className="font-semibold text-white">Invio fallito</p>
+                                        <p className="font-semibold text-white">{t('testConfig.failed')}</p>
                                     </div>
                                     <p className="text-sm text-red-300 mb-3">{validationError}</p>
                                     <CyberButton
@@ -607,7 +609,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                         className="w-full justify-center gap-2"
                                         size="sm"
                                     >
-                                        Riprova
+                                        {t('testConfig.retry')}
                                     </CyberButton>
                                 </div>
                             )}
@@ -618,7 +620,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                                 <div className="flex items-start gap-2">
                                     <Info className="w-4 h-4 text-afflyt-cyan-400 mt-0.5 shrink-0" />
                                     <p className="text-sm text-gray-300">
-                                        D'ora in poi, Afflyt pubblicherà automaticamente i deal migliori nel tuo canale Telegram secondo le regole che configurerai.
+                                        {t('testConfig.successMessage')}
                                     </p>
                                 </div>
                             </div>
@@ -636,7 +638,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
             {/* Progress Indicator */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-400">Passo {step + 1} di 4</span>
+                    <span className="text-sm text-gray-400">{t('navigation.step', { current: step + 1, total: 4 })}</span>
                     <span className="text-sm font-mono text-afflyt-cyan-400">
                         {Math.round(((step + 1) / 4) * 100)}%
                     </span>
@@ -668,7 +670,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                             className="gap-2"
                         >
                             <ChevronLeft className="w-4 h-4" />
-                            Indietro
+                            {t('navigation.back')}
                         </CyberButton>
                     )}
                 </div>
@@ -679,7 +681,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                             variant="ghost"
                             onClick={onSkip}
                         >
-                            Salta per ora
+                            {t('navigation.skipForNow')}
                         </CyberButton>
                     )}
 
@@ -690,7 +692,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                             disabled={!canProceedStep()}
                             className="gap-2"
                         >
-                            {step === 0 ? 'Inizia' : 'Continua'}
+                            {step === 0 ? t('navigation.start') : t('navigation.continue')}
                             <ChevronRight className="w-4 h-4" />
                         </CyberButton>
                     ) : (
@@ -701,7 +703,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                             className="gap-2"
                         >
                             <Check className="w-4 h-4" />
-                            Completa Configurazione
+                            {t('navigation.complete')}
                         </CyberButton>
                     )}
                 </div>

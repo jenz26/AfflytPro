@@ -1,5 +1,112 @@
 {
   "auth": {
+    "titles": {
+      "login": "Accedi al Command Center",
+      "register": "Crea il tuo Account",
+      "magicLink": "Accesso Istantaneo",
+      "forgotPassword": "Recupera Password"
+    },
+    "subtitles": {
+      "login": "Il tuo hub di controllo per l'affiliate marketing",
+      "register": "Inizia a monetizzare in pochi minuti",
+      "magicLink": "Ricevi un link sicuro via email",
+      "forgotPassword": "Ti invieremo le istruzioni via email"
+    },
+    "tabs": {
+      "magicLink": "Magic Link",
+      "password": "Password"
+    },
+    "fields": {
+      "nameLabel": "Nome (opzionale)",
+      "namePlaceholder": "Il tuo nome",
+      "emailLabel": "Email",
+      "emailPlaceholder": "tu@esempio.com",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Conferma Password",
+      "passwordHint": "Min. 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero"
+    },
+    "buttons": {
+      "login": "Accedi",
+      "register": "Registrati",
+      "sendMagicLink": "Invia Magic Link",
+      "sendEmail": "Invia Email",
+      "processing": "Elaborazione..."
+    },
+    "links": {
+      "forgotPassword": "Password dimenticata?",
+      "noAccount": "Non hai un account?",
+      "hasAccount": "Hai già un account?",
+      "register": "Registrati",
+      "login": "Accedi",
+      "backToLogin": "Torna al login"
+    },
+    "badges": {
+      "noPasswordRequired": "Nessuna password richiesta",
+      "secureAccess": "Accesso sicuro via email"
+    },
+    "emailSent": {
+      "title": "Controlla la tua email!",
+      "verifyAccount": "Ti abbiamo inviato un link per verificare il tuo account.",
+      "accessLink": "Ti abbiamo inviato un link di accesso.",
+      "resetInstructions": "Ti abbiamo inviato le istruzioni per il reset."
+    },
+    "messages": {
+      "loginSuccess": "Login effettuato con successo!",
+      "invalidCredentials": "Credenziali non valide",
+      "connectionError": "Errore di connessione al server",
+      "passwordsMismatch": "Le password non coincidono",
+      "passwordRequirements": "La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero",
+      "registrationError": "Errore durante la registrazione"
+    },
+    "verifyEmail": {
+      "missingToken": "Token di verifica mancante.",
+      "verificationFailed": "Verifica fallita.",
+      "connectionError": "Errore di connessione al server.",
+      "verifying": "Verificando...",
+      "verifyingDescription": "Stiamo verificando la tua email.",
+      "successTitle": "Email Verificata!",
+      "goToDashboard": "Vai alla Dashboard",
+      "errorTitle": "Verifica Fallita",
+      "backToLogin": "Torna al Login"
+    },
+    "resetPassword": {
+      "title": "Nuova Password",
+      "subtitle": "Scegli una nuova password sicura.",
+      "newPasswordLabel": "Nuova Password",
+      "confirmPasswordLabel": "Conferma Password",
+      "passwordHint": "Min. 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero",
+      "resetButton": "Reimposta Password",
+      "resetting": "Reimpostando...",
+      "successTitle": "Password Reimpostata!",
+      "goToLogin": "Vai al Login",
+      "errorTitle": "Errore",
+      "retry": "Riprova",
+      "invalidLinkTitle": "Link Non Valido",
+      "invalidLinkDescription": "Il link di reset password non è valido o è scaduto.",
+      "backToLogin": "Torna al Login",
+      "passwordsMismatch": "Le password non coincidono.",
+      "passwordRequirements": "La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero.",
+      "resetFailed": "Reset fallito.",
+      "connectionError": "Errore di connessione al server."
+    },
+    "magicLink": {
+      "title": "Magic Link",
+      "verifying": "Stiamo verificando il tuo accesso...",
+      "welcomeTitle": "Benvenuto!",
+      "loginSuccess": "Accesso effettuato con successo!",
+      "redirecting": "Reindirizzamento alla dashboard...",
+      "invalidLinkTitle": "Link Non Valido",
+      "invalidOrMissing": "Link magico non valido o mancante.",
+      "invalidOrExpired": "Link magico non valido o scaduto.",
+      "connectionError": "Errore di connessione al server.",
+      "requestNewLink": "Richiedi Nuovo Link",
+      "expiryNote": "I magic link scadono dopo 15 minuti per sicurezza."
+    },
+    "features": {
+      "realTimeDashboard": "Dashboard Real-Time",
+      "aiAutomations": "Automazioni AI-Powered",
+      "advancedAnalytics": "Analytics Avanzate"
+    },
     "login": {
       "title": "Accedi al Command Center",
       "subtitle": "Il tuo hub di controllo per l'affiliate marketing intelligente",
@@ -16,11 +123,6 @@
       "processing": "Elaborazione...",
       "loginFailed": "Login fallito. Controlla le credenziali.",
       "connectionError": "Errore di connessione al server."
-    },
-    "features": {
-      "realTimeDashboard": "Dashboard Real-Time",
-      "aiAutomations": "Automazioni AI-Powered",
-      "advancedAnalytics": "Analytics Avanzate"
     }
   },
   "common": {
@@ -28,7 +130,17 @@
     "switchLanguage": "Cambia lingua",
     "loading": "Caricamento...",
     "error": "Errore",
-    "success": "Successo"
+    "success": "Successo",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "add": "Aggiungi",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "back": "Indietro",
+    "next": "Avanti",
+    "copy": "Copia"
   },
   "stats": {
     "averageROI": "ROI Medio",
@@ -46,7 +158,14 @@
     "help": "Aiuto",
     "settings": "Impostazioni",
     "search": "Cerca...",
-    "live": "Live"
+    "live": "Live",
+    "billing": "Fatturazione"
+  },
+  "sidebar": {
+    "accountStatus": "Stato Account",
+    "dataTTL": "Data TTL",
+    "days": "giorni",
+    "logout": "Esci"
   },
   "dashboard": {
     "loading": "Caricamento dashboard...",
@@ -90,6 +209,39 @@
       "dealsPublished": "Deal Pubblicati",
       "conversionRate": "Conversion Rate",
       "averageScore": "Score Medio"
+    },
+    "onboarding": {
+      "welcome": "Benvenuto nel Command Center di Afflyt Pro",
+      "completeSetup": "Completa la configurazione per sbloccare tutto il potenziale",
+      "steps": {
+        "connectChannel": {
+          "title": "Connetti il tuo Primo Canale",
+          "description": "Collega Telegram o Discord per pubblicare le offerte",
+          "button": "Configura Canale",
+          "step1": "Crea un bot Telegram via @BotFather",
+          "step2": "Copia il token del bot",
+          "step3": "Aggiungi il bot come admin al tuo canale",
+          "time": "3 min"
+        },
+        "credentials": {
+          "title": "Imposta le Credenziali API",
+          "description": "Configura Keepa e i tuoi Tag Amazon per l'affiliazione",
+          "button": "Aggiungi Credenziali",
+          "step1": "Aggiungi la tua API key Keepa",
+          "step2": "Configura il tag affiliato Amazon",
+          "step3": "Testa la connessione",
+          "time": "2 min"
+        },
+        "automation": {
+          "title": "Crea la tua Prima Automazione",
+          "description": "Configura i filtri e inizia a pubblicare deal automaticamente",
+          "button": "Crea Prima Automazione",
+          "step1": "Seleziona le categorie prodotto",
+          "step2": "Imposta il deal score minimo",
+          "step3": "Attiva la pubblicazione automatica",
+          "time": "5 min"
+        }
+      }
     }
   },
   "deals": {
@@ -98,8 +250,9 @@
     "mockDataWarning": "Utilizzo dati di esempio",
     "refresh": "Aggiorna",
     "refreshing": "Aggiornamento...",
-    "dealsFound": "Deals trovati",
+    "dealsFound": "Deal trovati",
     "searchPlaceholder": "Cerca per ASIN o parola chiave...",
+    "emptyState": "Prova a modificare i filtri o la ricerca per trovare più deal",
     "filters": {
       "title": "Filtri",
       "category": "Categoria",
@@ -152,7 +305,7 @@
       }
     },
     "complete": {
-      "title": "🎉 Tutto pronto!",
+      "title": "Tutto pronto!",
       "subtitle": "La tua prima automazione è attiva.",
       "redirecting": "Ti stiamo portando alla dashboard..."
     }
@@ -302,12 +455,109 @@
       }
     }
   },
+  "settings": {
+    "channels": {
+      "title": "Canali di Pubblicazione",
+      "subtitle": "Gestisci i canali Telegram e Discord dove pubblicare le offerte",
+      "addChannel": "Aggiungi Canale",
+      "newTelegram": "Nuova Connessione Telegram",
+      "instructions": "Istruzioni:",
+      "instruction1": "Cerca @BotFather su Telegram",
+      "instruction2": "Invia /newbot",
+      "instruction3": "Copia il token ricevuto",
+      "botToken": "Bot Token",
+      "botTokenPlaceholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
+      "botTokenRequired": "Inserisci il token",
+      "tokenSaveError": "Errore nel salvataggio del token",
+      "connectionError": "Errore di connessione",
+      "channelCreateError": "Errore nella creazione del canale",
+      "channelName": "Nome Canale",
+      "channelNamePlaceholder": "es. Offerte Tech",
+      "channelId": "Channel ID / Username",
+      "channelIdPlaceholder": "@offertetech o -100...",
+      "addBotAsAdmin": "Ricorda di aggiungere il bot come amministratore del canale!",
+      "readyToConnect": "Pronto per la connessione",
+      "connectingBot": "Stiamo per collegare il bot {name} al canale {channelId}.",
+      "platformLabel": "Piattaforma",
+      "credentialLabel": "Credenziale",
+      "savedInVault": "Salvata nel Vault",
+      "confirmAndConnect": "Conferma e Collega",
+      "saveAndContinue": "Salva e Continua",
+      "testConnection": "Testa Connessione",
+      "testing": "Testando...",
+      "saveChannel": "Salva Canale",
+      "saving": "Salvando...",
+      "testSuccess": "Connessione riuscita! Bot connesso a:",
+      "testFailed": "Connessione fallita. Controlla il token e riprova.",
+      "noChannels": "Nessun Canale Configurato",
+      "noChannelsDesc": "Nessun canale configurato. Aggiungine uno per iniziare a pubblicare.",
+      "addFirst": "Aggiungi il tuo primo canale",
+      "connected": "Connesso",
+      "disconnected": "Disconnesso",
+      "deleteTitle": "Eliminare il canale?",
+      "deleteAboutTo": "Stai per eliminare:",
+      "deleteWarning": "Questa azione non può essere annullata. Tutte le automazioni associate a questo canale verranno disattivate.",
+      "deleteConfirmButton": "Sì, elimina",
+      "platform": {
+        "telegram": "Telegram",
+        "discord": "Discord",
+        "email": "Email"
+      }
+    },
+    "credentials": {
+      "title": "Credenziali API Vault",
+      "subtitle": "Gestione sicura delle tue chiavi API (BYOK - Bring Your Own Key)",
+      "secureVault": "Vault Sicuro End-to-End",
+      "secureVaultDesc": "Le tue credenziali sono crittografate con AES-256 e mai condivise. Solo tu hai accesso alle tue chiavi API.",
+      "addCredential": "Nuova Credenziale",
+      "nameLabel": "Nome Identificativo",
+      "namePlaceholder": "es. Bot Produzione",
+      "valueLabel": "Valore Chiave/Token",
+      "valuePlaceholder": "Incolla qui la tua API key o token",
+      "typeLabel": "Tipo",
+      "createdLabel": "Creato",
+      "save": "Salva nel Vault",
+      "saving": "Salvando...",
+      "saveFailed": "Errore nell'aggiunta della credenziale",
+      "connectionError": "Errore nell'aggiunta della credenziale",
+      "noCredentials": "Nessuna Credenziale Salvata",
+      "noCredentialsDesc": "Nessuna credenziale salvata.",
+      "addFirst": "Aggiungi la tua prima credenziale",
+      "statusActive": "Attiva",
+      "statusInactive": "Inattiva",
+      "decryptionHint": "Decrittazione disponibile solo all'utilizzo",
+      "deleteTitle": "Eliminare la credenziale?",
+      "deleteAboutTo": "Stai per eliminare:",
+      "deleteWarning": "Questa azione non può essere annullata. Tutti i canali associati a questa credenziale smetteranno di funzionare.",
+      "deleteConfirmButton": "Sì, elimina",
+      "lastUsed": "Ultimo utilizzo",
+      "never": "Mai",
+      "telegramDesc": "Token del tuo bot Telegram da @BotFather",
+      "keepaDesc": "Chiave API per accesso ai dati Keepa",
+      "amazonDesc": "Credenziali Amazon Product Advertising",
+      "types": {
+        "keepa": "Keepa API",
+        "amazon": "Tag Affiliato Amazon",
+        "telegram": "Telegram Bot Token",
+        "discord": "Discord Webhook",
+        "custom": "Personalizzato"
+      }
+    }
+  },
   "help": {
     "hero": {
       "title": "Come possiamo aiutarti?",
       "subtitle": "Cerca nella documentazione o esplora le guide qui sotto",
       "searchPlaceholder": "Cerca nella documentazione...",
-      "popularLinks": "Link popolari"
+      "popularLinks": "Link popolari",
+      "stats": {
+        "guides": "Guide disponibili",
+        "avgSolutionTime": "Tempo medio soluzione",
+        "satisfaction": "Soddisfazione utenti"
+      }
+    },
+    "badges": {
+      "new": "NUOVO"
     },
     "quickLinks": {
       "telegram": "Come connettere Telegram",
@@ -318,6 +568,12 @@
     "knowledgeBase": {
       "title": "Knowledge Base",
       "readMore": "Leggi la guida"
+    },
+    "guides": {
+      "backToHelp": "Torna all'Help Center",
+      "needHelp": "Hai bisogno di aiuto?",
+      "needHelpDesc": "Se hai problemi con questa guida, il nostro team è qui per aiutarti",
+      "contactSupport": "Contatta il Supporto"
     },
     "sections": {
       "dashboard": {
@@ -406,7 +662,7 @@
       "regenerateApiKey": "Rigenera API key",
       "reportIssue": "Segnala problema",
       "suggestFeature": "Suggerisci feature",
-      "proTip": "💡 Pro tip: Usa Cmd+K per cercare velocemente"
+      "proTip": "Pro tip: Usa Cmd+K per cercare velocemente"
     },
     "support": {
       "title": "Hai bisogno di aiuto?",
@@ -414,7 +670,7 @@
       "liveChat": "Live Chat (2 min)",
       "emailSupport": "Email Support",
       "bookCall": "Prenota Call",
-      "responseTime": "PRO Plan • Tempo di risposta: <2h"
+      "responseTime": "PRO Plan - Tempo di risposta: <2h"
     },
     "whatsNew": {
       "title": "Novità",
@@ -423,6 +679,314 @@
       "telegramDesc": "Pubblica automaticamente i deal sul tuo canale Telegram con tracking completo",
       "dealScore": "Nuovo algoritmo Deal Score 2.0",
       "dealScoreDesc": "Migliore precisione nel calcolo della qualità dei deal"
+    }
+  },
+  "telegramSetup": {
+    "title": "Configurazione Telegram",
+    "subtitle": "Collega il tuo canale o gruppo Telegram per pubblicare deal automaticamente",
+    "stats": {
+      "setupTime": "Tempo configurazione",
+      "free": "Gratis",
+      "freeDesc": "100% gratuito",
+      "continuous": "Pubblicazione continua"
+    },
+    "requirements": {
+      "title": "Cosa serve:",
+      "bot": "Un bot Telegram",
+      "botDesc": "Lo creeremo insieme tramite @BotFather",
+      "channel": "Un canale o gruppo Telegram",
+      "channelDesc": "Dove vuoi pubblicare i deal (anche privato)",
+      "admin": "Diritti di amministratore",
+      "adminDesc": "Per permettere al bot di pubblicare messaggi"
+    },
+    "createBot": {
+      "title": "Crea il Bot Telegram",
+      "subtitle": "Segui questi passaggi per ottenere il token del bot",
+      "instructions": "Istruzioni:",
+      "step1": "Apri Telegram e cerca @BotFather",
+      "openBotFather": "Apri @BotFather",
+      "step2": "Invia il comando /newbot",
+      "step3": "Scegli un nome e uno username per il bot",
+      "step3Hint": "Lo username deve finire con \"bot\" (es: MioAffiliateBot)",
+      "step4": "Copia il token API che ricevi",
+      "step4Hint": "Sarà simile a: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+      "botToken": "Bot Token",
+      "botValidated": "Bot validato con successo!",
+      "clickToValidate": "Clicca per validare"
+    },
+    "connectChannel": {
+      "title": "Collega il Canale/Gruppo",
+      "subtitle": "Configura dove il bot pubblicherà i deal",
+      "steps": "Passaggi:",
+      "step1": "Aggiungi il bot al tuo canale/gruppo",
+      "step1Hint": "Vai nelle impostazioni del canale → Amministratori → Aggiungi amministratore → Cerca @{bot}",
+      "step2": "Assegna i permessi di pubblicazione",
+      "step2Hint": "Abilita \"Pubblicare messaggi\" nelle impostazioni amministratore",
+      "step3": "Ottieni il Channel ID",
+      "step3HintPublic": "Per canali pubblici: usa @username (es: @mio_canale_deal)",
+      "step3HintPrivate": "Per canali privati: usa il numeric ID (es: -1001234567890)",
+      "channelName": "Nome del Canale",
+      "channelNamePlaceholder": "es. Canale Tech Deals",
+      "channelNameHint": "Un nome descrittivo per riconoscere facilmente il canale",
+      "channelId": "Channel ID o Username",
+      "channelIdPlaceholder": "@mio_canale o -1001234567890",
+      "channelConnected": "Canale connesso con successo!",
+      "botCanPost": "Il bot può pubblicare messaggi",
+      "ensureAdmin": "Assicurati che il bot sia amministratore con permessi di pubblicazione",
+      "clickToValidate": "Clicca per validare connessione"
+    },
+    "testConfig": {
+      "title": "Test della Configurazione",
+      "subtitle": "Verifichiamo che tutto funzioni correttamente",
+      "testMessage": "Messaggio di Test",
+      "testMessageDesc": "Invieremo un messaggio di prova al tuo canale",
+      "bot": "Bot",
+      "channel": "Canale",
+      "sendTestMessage": "Invia Messaggio di Test",
+      "sending": "Invio in corso...",
+      "testCompleted": "Test completato!",
+      "checkChannel": "Controlla il tuo canale Telegram",
+      "successHint": "Se hai ricevuto il messaggio, la configurazione è corretta. Puoi procedere!",
+      "failed": "Invio fallito",
+      "retry": "Riprova",
+      "successMessage": "D'ora in poi, Afflyt pubblicherà automaticamente i deal migliori nel tuo canale Telegram secondo le regole che configurerai."
+    },
+    "navigation": {
+      "step": "Passo {current} di {total}",
+      "back": "Indietro",
+      "skipForNow": "Salta per ora",
+      "start": "Inizia",
+      "continue": "Continua",
+      "complete": "Completa Configurazione"
+    },
+    "errors": {
+      "tokenTooShort": "Il token deve essere di almeno 30 caratteri",
+      "invalidToken": "Token non valido",
+      "connectionError": "Errore di connessione al server",
+      "enterChannelId": "Inserisci un Channel ID o username",
+      "cantPost": "Il bot non può postare in questo canale",
+      "messageFailed": "Invio messaggio fallito"
+    }
+  },
+  "progressDashboard": {
+    "stats": {
+      "completion": "Completamento",
+      "steps": "passi",
+      "achievement": "Achievement",
+      "unlocked": "sbloccati",
+      "time": "Tempo",
+      "timeSpent": "tempo speso",
+      "channels": "Canali",
+      "configured": "configurati"
+    },
+    "progress": {
+      "title": "Il Tuo Percorso",
+      "completed": "Fantastico! Hai completato l'onboarding",
+      "stepsRemaining": "{count, plural, one {Ancora # passo al completamento} other {Ancora # passi al completamento}}",
+      "nextStep": "Prossimo passo",
+      "continue": "Continua",
+      "onboardingCompleted": "Onboarding Completato!",
+      "readyToEarn": "Sei pronto per iniziare a guadagnare con le automazioni"
+    },
+    "actions": {
+      "completeWelcome": "Completa il benvenuto",
+      "configureTelegram": "Configura Telegram",
+      "configureEmail": "Configura Email",
+      "configureDiscord": "Configura Discord",
+      "createAutomation": "Crea prima automazione",
+      "goToDashboard": "Vai alla Dashboard"
+    },
+    "achievements": {
+      "firstStep": {
+        "title": "Primo Passo",
+        "description": "Completato il questionario iniziale"
+      },
+      "telegramMaster": {
+        "title": "Telegram Master",
+        "description": "Configurato canale Telegram"
+      },
+      "emailPro": {
+        "title": "Email Pro",
+        "description": "Configurato sistema email"
+      },
+      "automationWizard": {
+        "title": "Automation Wizard",
+        "description": "Creata la prima automazione"
+      },
+      "setupComplete": {
+        "title": "Setup Completo",
+        "description": "Onboarding completato al 100%"
+      }
+    },
+    "achievementsSection": {
+      "title": "Achievement"
+    },
+    "checklist": {
+      "title": "Checklist Setup",
+      "optional": "opzionale",
+      "completed": "Completato",
+      "welcome": {
+        "title": "Benvenuto e Questionario",
+        "description": "Personalizza la tua esperienza"
+      },
+      "telegram": {
+        "title": "Configura Telegram",
+        "description": "Collega il tuo canale o gruppo"
+      },
+      "email": {
+        "title": "Configura Email",
+        "description": "Setup provider e newsletter"
+      },
+      "discord": {
+        "title": "Configura Discord",
+        "description": "Connetti il tuo server"
+      },
+      "automation": {
+        "title": "Crea Prima Automazione",
+        "description": "Imposta filtri e inizia a pubblicare"
+      }
+    },
+    "profile": {
+      "title": "Profilo Personalizzato",
+      "goal": "Obiettivo",
+      "audience": "Audience",
+      "experience": "Esperienza"
+    }
+  },
+  "dealDetail": {
+    "title": "Dettagli Deal",
+    "currentPrice": "Prezzo Attuale",
+    "originalPrice": "Prezzo Originale",
+    "updated": "Aggiornato",
+    "discount": "di sconto",
+    "productStats": "Statistiche Prodotto",
+    "stars": "stelle",
+    "reviews": "recensioni",
+    "salesRank": "Sales Rank",
+    "inCategory": "in",
+    "scoreBreakdown": "Dettaglio Score",
+    "breakdown": {
+      "discount": "Sconto",
+      "salesRank": "Sales Rank",
+      "rating": "Rating",
+      "reviews": "Recensioni"
+    },
+    "sendToChannel": "Invia al Canale",
+    "noChannels": "Nessun canale configurato",
+    "addChannel": "Aggiungi Canale",
+    "channel": "Canale",
+    "selectChannel": "Seleziona un canale...",
+    "amazonTag": "Amazon Associate Tag",
+    "amazonTagPlaceholder": "es. afflytpro-21",
+    "amazonTagHint": "Il tuo tag Amazon Associates per il tracciamento",
+    "generating": "Generazione...",
+    "linkCopied": "Link Copiato!",
+    "generateLink": "Genera Link Affiliato",
+    "linkCopiedMessage": "Link copiato negli appunti con timestamp compliant Amazon",
+    "viewOnAmazon": "Visualizza su Amazon"
+  },
+  "emailSetup": {
+    "title": "Configurazione Email",
+    "subtitle": "Invia newsletter automatiche con i deal migliori direttamente nella inbox dei tuoi iscritti",
+    "stats": {
+      "quickSetup": "Setup veloce",
+      "perDay": "g",
+      "freeEmails": "Email gratis al giorno",
+      "deliverability": "Deliverability"
+    },
+    "whyEmail": {
+      "title": "Perché configurare l'email?",
+      "directReach": "Reach diretto",
+      "directReachDesc": "Le email arrivano direttamente nella inbox, senza algoritmi",
+      "highConversion": "Conversione alta",
+      "highConversionDesc": "CTR medio 15-25% con deal personalizzati",
+      "fullAutomation": "Automazione completa",
+      "fullAutomationDesc": "Template HTML responsive generati automaticamente"
+    },
+    "providers": {
+      "sendgrid": {
+        "description": "Soluzione enterprise-grade di Twilio",
+        "pricing": "Gratis fino a 100 email/giorno",
+        "features": {
+          "templates": "Template avanzati",
+          "analytics": "Analytics integrato",
+          "deliverability": "Deliverability alta"
+        }
+      },
+      "resend": {
+        "description": "Moderno e developer-friendly",
+        "pricing": "Gratis fino a 100 email/giorno",
+        "features": {
+          "quickSetup": "Setup veloce",
+          "reactEmail": "React Email templates",
+          "modernDashboard": "Dashboard moderna"
+        }
+      }
+    },
+    "chooseProvider": {
+      "title": "Scegli il Provider Email",
+      "subtitle": "Entrambi offrono piani gratuiti generosi per iniziare",
+      "signup": "Registrati",
+      "docs": "Docs"
+    },
+    "configure": {
+      "title": "Configura {provider}",
+      "subtitle": "Inserisci le credenziali e le informazioni del mittente",
+      "howToGetKey": "Come ottenere la chiave API:",
+      "sendgrid": {
+        "step1": "Accedi a",
+        "step2": "Vai in Settings → API Keys",
+        "step3": "Clicca \"Create API Key\"",
+        "step4": "Seleziona \"Full Access\" come permesso",
+        "step5": "Copia la chiave generata (appare una sola volta!)"
+      },
+      "resend": {
+        "step1": "Accedi a",
+        "step2": "Vai nella sezione \"API Keys\"",
+        "step3": "Clicca \"Create API Key\"",
+        "step4": "Dai un nome alla chiave e seleziona i permessi",
+        "step5": "Copia la chiave generata"
+      },
+      "apiKeyLabel": "Chiave API {provider}",
+      "apiKeyValidated": "Chiave API validata con successo",
+      "senderEmail": "Email Mittente",
+      "senderEmailPlaceholder": "deals@tuodominio.com",
+      "senderEmailHint": "Deve essere un dominio verificato nel tuo account {provider}",
+      "senderName": "Nome Mittente",
+      "senderNamePlaceholder": "Il Tuo Brand - Deal Alert",
+      "senderNameHint": "Il nome che apparirà come mittente delle email"
+    },
+    "testEmail": {
+      "title": "Test Email",
+      "subtitle": "Inviamo un'email di prova per verificare che tutto funzioni",
+      "testEmailTitle": "Email di Test",
+      "testEmailDesc": "Riceverai un esempio di deal email",
+      "provider": "Provider",
+      "from": "Da",
+      "sendTo": "Invia email di test a:",
+      "emailPlaceholder": "tua@email.com",
+      "send": "Invia",
+      "sending": "Invio in corso...",
+      "sent": "Email inviata!",
+      "checkInbox": "Controlla la tua casella di posta",
+      "sentTo": "Email inviata a",
+      "failed": "Invio fallito",
+      "retry": "Riprova",
+      "successMessage": "Perfetto! D'ora in poi potrai inviare newsletter automatiche ai tuoi iscritti con i deal migliori, usando template HTML responsive generati automaticamente."
+    },
+    "navigation": {
+      "step": "Passo {current} di {total}",
+      "back": "Indietro",
+      "skipForNow": "Salta per ora",
+      "start": "Inizia",
+      "continue": "Continua",
+      "complete": "Completa Configurazione"
+    },
+    "errors": {
+      "apiKeyTooShort": "La chiave API deve essere di almeno 10 caratteri",
+      "invalidApiKey": "Chiave API non valida",
+      "connectionError": "Errore di connessione al server",
+      "emailSendFailed": "Invio email fallito"
     }
   },
   "templates": {
@@ -513,6 +1077,118 @@
     "save": {
       "success": "Template salvato con successo!",
       "error": "Errore nel salvataggio. Riprova più tardi."
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Cerca comandi, deal, automazioni...",
+    "groups": {
+      "recent": "Recenti",
+      "navigation": "Navigazione",
+      "actions": "Azioni",
+      "results": "Risultati"
+    },
+    "navigation": {
+      "dashboard": {
+        "label": "Dashboard",
+        "description": "Torna al Command Center"
+      },
+      "deals": {
+        "label": "Deal Finder",
+        "description": "Trova offerte con alto Deal Score"
+      },
+      "automations": {
+        "label": "Automazioni",
+        "description": "Gestisci le tue automazioni"
+      },
+      "channels": {
+        "label": "Canali",
+        "description": "Gestisci canali di pubblicazione"
+      },
+      "settings": {
+        "label": "Impostazioni",
+        "description": "Impostazioni e configurazioni"
+      }
+    },
+    "actions": {
+      "createAutomation": {
+        "label": "Crea Automazione",
+        "description": "Configura una nuova regola di pubblicazione"
+      },
+      "connectChannel": {
+        "label": "Connetti canale Telegram",
+        "description": "Aggiungi un nuovo canale di pubblicazione"
+      },
+      "addCredentials": {
+        "label": "Aggiungi credenziali API",
+        "description": "Configura Keepa o altre API keys"
+      },
+      "generateLink": {
+        "label": "Genera link affiliato",
+        "description": "Crea un link Amazon con il tuo tag"
+      }
+    },
+    "quickStats": {
+      "revenue": {
+        "label": "Mostra revenue ultimo mese",
+        "description": "Visualizza entrate e conversioni"
+      },
+      "performance": {
+        "label": "Performance automazioni",
+        "description": "Statistiche delle automazioni attive"
+      },
+      "ttl": {
+        "label": "Stato TTL e limiti",
+        "description": "Verifica TTL e consumo API"
+      }
+    },
+    "context": {
+      "filterHotDeals": "Filtra solo Hot Deals (Score > 85)",
+      "filterByCategory": "Filtra per categoria",
+      "completeSetup": {
+        "label": "Completa configurazione",
+        "description": "Continua il setup guidato"
+      }
+    },
+    "search": {
+      "resultDescription": "Score: {score} • Sconto: {discount}%"
+    },
+    "footer": {
+      "navigation": "Usa ↑↓ per navigare, ↵ per selezionare",
+      "close": "ESC per chiudere"
+    }
+  },
+  "usageDashboard": {
+    "yourPlan": "Il tuo Piano",
+    "upgrade": "Upgrade",
+    "approachingLimit": "Stai raggiungendo il limite. Considera un upgrade del piano.",
+    "planFeatures": "Funzionalità del Piano",
+    "labels": {
+      "automationRules": "Regole Automazione",
+      "activeAutomations": "Automazioni Attive",
+      "channels": "Canali",
+      "keepaTokens": "Token Keepa (questo mese)"
+    },
+    "features": {
+      "free": {
+        "dealScore": "Deal Score: solo ≥85 (Hot Deals)",
+        "frequency": "Frequenza: Ogni 6 ore",
+        "aiCopy": "AI Copy",
+        "abTesting": "A/B Testing"
+      },
+      "pro": {
+        "dealScore": "Deal Score: ≥70 (regolabile)",
+        "frequency": "Frequenza: Ogni 2-3 ore",
+        "aiCopy": "AI Copy & Template Personalizzati",
+        "abTesting": "A/B Testing"
+      },
+      "business": {
+        "dealScore": "Deal Score: Qualsiasi (0-100)",
+        "frequency": "Frequenza: Ogni 30-90 minuti",
+        "aiCopy": "AI Copy Avanzato",
+        "abTesting": "A/B Testing Avanzato",
+        "apiAccess": "Accesso API & Webhooks",
+        "teamAccess": "Accesso Team"
+      }
     }
   }
 }

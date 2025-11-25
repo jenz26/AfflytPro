@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
     Key,
     Plus,
@@ -31,6 +32,9 @@ interface Credential {
 }
 
 export default function CredentialsPage() {
+    const t = useTranslations('settings.credentials');
+    const tCommon = useTranslations('common');
+
     const [credentials, setCredentials] = useState<Credential[]>([]);
     const [showValues, setShowValues] = useState<Record<string, boolean>>({});
     const [isAddingNew, setIsAddingNew] = useState(false);
@@ -49,12 +53,10 @@ export default function CredentialsPage() {
 
     const fetchCredentials = async () => {
         try {
-            // In a real app, use a proper fetch wrapper with auth token
-            // For now, assuming dev environment or token in localStorage/cookie
-            const token = localStorage.getItem('token'); // Simple assumption for FVD
+            const token = localStorage.getItem('token');
             if (!token) return;
 
-            const res = await fetch('${API_BASE}/user/credentials', {
+            const res = await fetch(`${API_BASE}/user/credentials`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -63,7 +65,7 @@ export default function CredentialsPage() {
                 const data = await res.json();
                 setCredentials(data.map((d: any) => ({
                     ...d,
-                    status: 'active' // Default status for now
+                    status: 'active'
                 })));
             }
         } catch (error) {
@@ -75,7 +77,7 @@ export default function CredentialsPage() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('${API_BASE}/user/credentials', {
+            const res = await fetch(`${API_BASE}/user/credentials`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,11 +91,11 @@ export default function CredentialsPage() {
                 setNewCredential({ provider: '', label: '', key: '' });
                 fetchCredentials();
             } else {
-                alert('Failed to add credential');
+                alert(t('saveFailed'));
             }
         } catch (error) {
             console.error(error);
-            alert('Error adding credential');
+            alert(t('connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -129,23 +131,23 @@ export default function CredentialsPage() {
     const credentialTypes = [
         {
             type: 'TELEGRAM_BOT',
-            label: 'Telegram Bot Token',
+            label: t('types.telegram'),
             icon: Bot,
-            description: 'Token del tuo bot Telegram da @BotFather',
+            description: t('telegramDesc'),
             placeholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz...'
         },
         {
             type: 'KEEPA',
-            label: 'Keepa API',
+            label: t('types.keepa'),
             icon: Cloud,
-            description: 'Chiave API per accesso ai dati Keepa',
+            description: t('keepaDesc'),
             placeholder: 'kp_xxxxxxxxxxxxx...'
         },
         {
             type: 'AMAZON_PA',
-            label: 'Amazon PA API',
+            label: t('types.amazon'),
             icon: ShoppingBag,
-            description: 'Credenziali Amazon Product Advertising',
+            description: t('amazonDesc'),
             placeholder: 'AKIA...'
         }
     ];
@@ -174,17 +176,17 @@ export default function CredentialsPage() {
                         <div>
                             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                                 <Key className="w-6 h-6 text-afflyt-cyan-400" />
-                                Credenziali API Vault
+                                {t('title')}
                             </h1>
                             <p className="text-sm text-gray-400 mt-1">
-                                Gestione sicura delle tue chiavi API (BYOK - Bring Your Own Key)
+                                {t('subtitle')}
                             </p>
                         </div>
                     </div>
 
                     <CyberButton onClick={() => setIsAddingNew(true)} variant="primary">
                         <Plus className="w-4 h-4" />
-                        Aggiungi Credenziale
+                        {t('addCredential')}
                     </CyberButton>
                 </div>
             </div>
@@ -196,11 +198,10 @@ export default function CredentialsPage() {
                         <Shield className="w-5 h-5 text-afflyt-cyan-400 mt-0.5" />
                         <div className="flex-1">
                             <p className="text-sm text-afflyt-cyan-300 font-medium">
-                                Vault Sicuro End-to-End
+                                {t('secureVault')}
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
-                                Le tue credenziali sono crittografate con AES-256 e mai condivise.
-                                Solo tu hai accesso alle tue chiavi API.
+                                {t('secureVaultDesc')}
                             </p>
                         </div>
                     </div>
@@ -211,7 +212,7 @@ export default function CredentialsPage() {
             {isAddingNew && (
                 <GlassCard className="mb-6 p-6 border-afflyt-cyan-500/40">
                     <h3 className="text-lg font-semibold text-white mb-4">
-                        Nuova Credenziale
+                        {t('addCredential')}
                     </h3>
 
                     {/* Type Selection */}
@@ -237,20 +238,20 @@ export default function CredentialsPage() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Nome Identificativo
+                                        {t('nameLabel')}
                                     </label>
                                     <input
                                         type="text"
                                         value={newCredential.label}
                                         onChange={(e) => setNewCredential({ ...newCredential, label: e.target.value })}
-                                        placeholder="es. Bot Produzione"
+                                        placeholder={t('namePlaceholder')}
                                         className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500 focus:ring-1 focus:ring-afflyt-cyan-500/50"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Valore Chiave/Token
+                                        {t('valueLabel')}
                                     </label>
                                     <div className="relative">
                                         <input
@@ -267,10 +268,10 @@ export default function CredentialsPage() {
 
                             <div className="flex gap-3">
                                 <CyberButton variant="primary" className="flex-1" onClick={handleAddCredential}>
-                                    {isLoading ? 'Saving...' : (
+                                    {isLoading ? t('saving') : (
                                         <>
                                             <Lock className="w-4 h-4" />
-                                            Salva nel Vault
+                                            {t('save')}
                                         </>
                                     )}
                                 </CyberButton>
@@ -281,7 +282,7 @@ export default function CredentialsPage() {
                                         setNewCredential({ provider: '', label: '', key: '' });
                                     }}
                                 >
-                                    Annulla
+                                    {tCommon('cancel')}
                                 </CyberButton>
                             </div>
                         </div>
@@ -312,7 +313,7 @@ export default function CredentialsPage() {
                                                     ? 'bg-afflyt-profit-400/20 text-afflyt-profit-400'
                                                     : 'bg-yellow-400/20 text-yellow-400'
                                                 }`}>
-                                                {cred.status === 'active' ? 'Attiva' : 'Inattiva'}
+                                                {cred.status === 'active' ? t('statusActive') : t('statusInactive')}
                                             </span>
                                         </div>
 
@@ -324,7 +325,7 @@ export default function CredentialsPage() {
 
                                             <button
                                                 className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors cursor-not-allowed opacity-50"
-                                                title="Decryption only available on usage"
+                                                title={t('decryptionHint')}
                                             >
                                                 <EyeOff className="w-4 h-4 text-gray-400" />
                                             </button>
@@ -338,9 +339,9 @@ export default function CredentialsPage() {
                                         </div>
 
                                         <div className="flex items-center gap-4 text-xs text-gray-500">
-                                            <span>Tipo: {cred.provider.replace('_', ' ').toUpperCase()}</span>
+                                            <span>{t('typeLabel')}: {cred.provider.replace('_', ' ').toUpperCase()}</span>
                                             <span>•</span>
-                                            <span>Creato: {new Date(cred.createdAt).toLocaleDateString()}</span>
+                                            <span>{t('createdLabel')}: {new Date(cred.createdAt).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -357,7 +358,7 @@ export default function CredentialsPage() {
                 })}
                 {credentials.length === 0 && !isAddingNew && (
                     <div className="text-center text-gray-500 py-8">
-                        Nessuna credenziale salvata.
+                        {t('noCredentialsDesc')}
                     </div>
                 )}
             </div>
@@ -367,23 +368,23 @@ export default function CredentialsPage() {
                 isOpen={credentialToDelete !== null}
                 onClose={() => setCredentialToDelete(null)}
                 onConfirm={handleDeleteConfirm}
-                title="Eliminare la credenziale?"
+                title={t('deleteTitle')}
                 message={
                     credentialToDelete ? (
                         <div className="space-y-2">
-                            <p>Stai per eliminare:</p>
+                            <p>{t('deleteAboutTo')}</p>
                             <div className="bg-gray-800 p-3 rounded-lg border border-gray-700">
                                 <p className="font-semibold text-white">{credentialToDelete.label || credentialToDelete.provider}</p>
                                 <p className="text-xs text-gray-400">{credentialToDelete.provider} • {credentialToDelete.maskedKey}</p>
                             </div>
                             <p className="text-sm text-red-300">
-                                Questa azione non può essere annullata. Tutti i canali associati a questa credenziale smetteranno di funzionare.
+                                {t('deleteWarning')}
                             </p>
                         </div>
                     ) : ''
                 }
-                confirmText="Sì, elimina"
-                cancelText="Annulla"
+                confirmText={t('deleteConfirmButton')}
+                cancelText={tCommon('cancel')}
                 variant="danger"
                 isLoading={isDeleting}
             />

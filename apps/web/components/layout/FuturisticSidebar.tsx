@@ -1,4 +1,7 @@
+'use client';
+
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
     BarChart3,
     Search,
@@ -12,6 +15,10 @@ import {
 } from 'lucide-react';
 
 export const FuturisticSidebar = () => {
+    const t = useTranslations('navigation');
+    const tSidebar = useTranslations('sidebar');
+    const tBrand = useTranslations('brand');
+
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [language, setLanguage] = useState<'it' | 'en'>('it');
 
@@ -21,12 +28,12 @@ export const FuturisticSidebar = () => {
     const ttlPercentage = (ttlHours / 24) * 100;
 
     const navItems = [
-        { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
-        { icon: Search, label: 'Deal Finder', path: '/deals' },
-        { icon: Zap, label: 'Automazioni', path: '/automations' },
-        { icon: CreditCard, label: 'Billing', path: '/billing' },
-        { icon: HelpCircle, label: 'Help', path: '/help' },
-        { icon: Settings, label: 'Settings', path: '/settings' }
+        { icon: BarChart3, label: t('dashboard'), path: '/dashboard' },
+        { icon: Search, label: t('dealFinder'), path: '/deals' },
+        { icon: Zap, label: t('automations'), path: '/automations' },
+        { icon: CreditCard, label: t('billing'), path: '/billing' },
+        { icon: HelpCircle, label: t('help'), path: '/help' },
+        { icon: Settings, label: t('settings'), path: '/settings' }
     ];
 
     return (
@@ -38,8 +45,8 @@ export const FuturisticSidebar = () => {
                         <span className="text-afflyt-dark-100 font-bold text-xl">A</span>
                     </div>
                     <div>
-                        <h1 className="text-white font-bold text-xl tracking-tight">AFFLYT PRO</h1>
-                        <p className="text-afflyt-cyan-400 text-xs font-mono uppercase">Command Center</p>
+                        <h1 className="text-white font-bold text-xl tracking-tight">{tBrand('name')}</h1>
+                        <p className="text-afflyt-cyan-400 text-xs font-mono uppercase">{tBrand('tagline')}</p>
                     </div>
                 </div>
             </div>
@@ -47,7 +54,7 @@ export const FuturisticSidebar = () => {
             {/* Tier & TTL Status */}
             <div className="p-4 mx-4 mt-4 bg-afflyt-glass-white rounded-lg border border-afflyt-glass-border">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs text-gray-400 uppercase tracking-wider">Account Status</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wider">{tSidebar('accountStatus')}</span>
                     <span className="px-2 py-1 bg-afflyt-plasma-500/20 text-afflyt-plasma-400 text-xs font-mono rounded">
                         {userTier}
                     </span>
@@ -56,7 +63,7 @@ export const FuturisticSidebar = () => {
                 {/* TTL Bar */}
                 <div className="space-y-1">
                     <div className="flex justify-between items-center">
-                        <span className="text-xs text-gray-500">Data TTL</span>
+                        <span className="text-xs text-gray-500">{tSidebar('dataTTL')}</span>
                         <span className="text-xs font-mono text-afflyt-cyan-400">{ttlHours}h</span>
                     </div>
                     <div className="h-1 bg-afflyt-dark-50 rounded-full overflow-hidden">

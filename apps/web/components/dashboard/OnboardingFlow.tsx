@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import {
     Send,
     Key,
@@ -22,57 +23,60 @@ interface OnboardingFlowProps {
 }
 
 export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowProps) => {
+    const t = useTranslations('dashboard.onboarding');
+    const tSteps = useTranslations('dashboard.onboarding.steps');
+
     const steps = [
         {
             id: 1,
-            title: 'Connetti il tuo Primo Canale',
-            description: 'Collega Telegram o Discord per pubblicare le offerte',
+            title: tSteps('connectChannel.title'),
+            description: tSteps('connectChannel.description'),
             icon: Send,
             completed: progress.channelConnected,
             action: {
-                label: 'Configura Canale',
+                label: tSteps('connectChannel.button'),
                 path: '/dashboard/settings/channels'
             },
             details: [
-                'Crea un bot Telegram con @BotFather',
-                'Aggiungi il bot al tuo canale',
-                'Inserisci le credenziali in Afflyt'
+                tSteps('connectChannel.step1'),
+                tSteps('connectChannel.step2'),
+                tSteps('connectChannel.step3')
             ],
-            estimatedTime: '3 min'
+            estimatedTime: tSteps('connectChannel.time')
         },
         {
             id: 2,
-            title: 'Imposta le Credenziali API',
-            description: 'Configura Keepa e i tuoi Tag Amazon per l\'affiliazione',
+            title: tSteps('credentials.title'),
+            description: tSteps('credentials.description'),
             icon: Key,
             completed: progress.credentialsSet,
             action: {
-                label: 'Aggiungi Credenziali',
+                label: tSteps('credentials.button'),
                 path: '/dashboard/settings/credentials'
             },
             details: [
-                'Inserisci la tua Keepa API Key',
-                'Configura i Tag Amazon di affiliazione',
-                'Opzionale: aggiungi credenziali extra'
+                tSteps('credentials.step1'),
+                tSteps('credentials.step2'),
+                tSteps('credentials.step3')
             ],
-            estimatedTime: '2 min'
+            estimatedTime: tSteps('credentials.time')
         },
         {
             id: 3,
-            title: 'Crea la tua Prima Automazione',
-            description: 'Configura i filtri e inizia a pubblicare deal automaticamente',
+            title: tSteps('automation.title'),
+            description: tSteps('automation.description'),
             icon: Zap,
             completed: progress.automationCreated,
             action: {
-                label: 'Crea prima automazione',
+                label: tSteps('automation.button'),
                 path: '/dashboard/automations'
             },
             details: [
-                'Imposta i filtri (Score minimo, Categorie)',
-                'Seleziona i canali di destinazione',
-                'Attiva e lascia che Afflyt faccia il resto!'
+                tSteps('automation.step1'),
+                tSteps('automation.step2'),
+                tSteps('automation.step3')
             ],
-            estimatedTime: '5 min'
+            estimatedTime: tSteps('automation.time')
         }
     ];
 
@@ -91,10 +95,10 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-white">
-                                    Benvenuto nel Command Center di Afflyt Pro
+                                    {t('welcome')}
                                 </h2>
                                 <p className="text-gray-400 mt-1">
-                                    Configura il sistema in 3 semplici passi e inizia a monetizzare
+                                    {t('completeSetup')}
                                 </p>
                             </div>
                         </div>
@@ -102,9 +106,9 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                         {/* Progress Bar */}
                         <div className="mt-6">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-400">Progresso Configurazione</span>
+                                <span className="text-sm text-gray-400">{t('configProgress')}</span>
                                 <span className="text-sm font-mono text-afflyt-cyan-400">
-                                    {completedSteps}/3 Completati
+                                    {completedSteps}/3 {t('completed')}
                                 </span>
                             </div>
                             <div className="h-2 bg-afflyt-dark-50 rounded-full overflow-hidden">
@@ -114,7 +118,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                                 />
                             </div>
                             <p className="text-xs text-gray-500 mt-2">
-                                Tempo stimato rimanente: {10 - (completedSteps * 3)} minuti
+                                {t('estimatedTime', { minutes: 10 - (completedSteps * 3) })}
                             </p>
                         </div>
                     </div>
@@ -122,20 +126,20 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                     {/* Value Proposition */}
                     <div className="ml-8 p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                         <h3 className="text-sm font-medium text-afflyt-cyan-300 mb-3">
-                            Cosa otterrai:
+                            {t('whatYouGet')}
                         </h3>
                         <ul className="space-y-2">
                             <li className="flex items-start gap-2 text-sm text-gray-300">
                                 <CheckCircle className="w-4 h-4 text-afflyt-profit-400 mt-0.5" />
-                                <span>Pubblicazione automatica 24/7</span>
+                                <span>{t('benefit1')}</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-300">
                                 <CheckCircle className="w-4 h-4 text-afflyt-profit-400 mt-0.5" />
-                                <span>Deal Score AI-powered</span>
+                                <span>{t('benefit2')}</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-300">
                                 <CheckCircle className="w-4 h-4 text-afflyt-profit-400 mt-0.5" />
-                                <span>ROI medio +247%</span>
+                                <span>{t('benefit3')}</span>
                             </li>
                         </ul>
                     </div>
@@ -244,7 +248,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                                 ) : (
                                     <div className="flex items-center justify-center gap-2 py-2 text-afflyt-profit-400">
                                         <CheckCircle className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Completato</span>
+                                        <span className="text-sm font-medium">{t('stepCompleted')}</span>
                                     </div>
                                 )}
                             </GlassCard>
@@ -259,13 +263,10 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                     <Info className="w-5 h-5 text-afflyt-cyan-400 mt-0.5" />
                     <div>
                         <p className="text-sm font-medium text-white mb-1">
-                            Perché questi passi sono importanti?
+                            {t('whyImportant')}
                         </p>
                         <p className="text-xs text-gray-400">
-                            Ogni passo sblocca funzionalità critiche: i Canali permettono la pubblicazione,
-                            le Credenziali attivano l'accesso ai dati Keepa in tempo reale,
-                            e le Automazioni gestiscono tutto in automatico 24/7.
-                            Una volta completata la configurazione, il sistema inizierà immediatamente a generare valore.
+                            {t('whyImportantDesc')}
                         </p>
                     </div>
                 </div>

@@ -6,8 +6,7 @@ import { CyberButton } from '@/components/ui/CyberButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_BASE } from '@/lib/api/config';
 
 type AuthMode = 'login' | 'register' | 'magic-link' | 'forgot-password';
 type AlertType = 'error' | 'success' | 'info';
@@ -28,7 +27,7 @@ export default function AuthPage() {
     const [alert, setAlert] = useState<AlertState | null>(null);
     const [emailSent, setEmailSent] = useState(false);
 
-    const t = useTranslations('auth.login');
+    const t = useTranslations('auth');
     const tFeatures = useTranslations('auth.features');
     const tStats = useTranslations('stats');
     const tBrand = useTranslations('brand');
@@ -55,7 +54,7 @@ export default function AuthPage() {
         setAlert(null);
 
         try {
-            const res = await fetch(`${API_URL}/auth/login`, {
+            const res = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
@@ -65,7 +64,7 @@ export default function AuthPage() {
 
             if (res.ok) {
                 localStorage.setItem('token', data.token);
-                showAlert('success', 'Login effettuato con successo!');
+                showAlert('success', t('messages.loginSuccess'));
                 setTimeout(() => {
                     window.location.href = `/${locale}/dashboard`;
                 }, 1000);
@@ -74,11 +73,11 @@ export default function AuthPage() {
             } else if (res.status === 423) {
                 showAlert('error', data.message);
             } else {
-                showAlert('error', data.message || 'Credenziali non valide');
+                showAlert('error', data.message || t('messages.invalidCredentials'));
             }
         } catch (error) {
             console.error('Login error:', error);
-            showAlert('error', 'Errore di connessione al server');
+            showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -89,23 +88,21 @@ export default function AuthPage() {
         setIsLoading(true);
         setAlert(null);
 
-        // Validate password match
         if (password !== confirmPassword) {
-            showAlert('error', 'Le password non coincidono');
+            showAlert('error', t('messages.passwordsMismatch'));
             setIsLoading(false);
             return;
         }
 
-        // Validate password strength
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(password)) {
-            showAlert('error', 'La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero');
+            showAlert('error', t('messages.passwordRequirements'));
             setIsLoading(false);
             return;
         }
 
         try {
-            const res = await fetch(`${API_URL}/auth/register`, {
+            const res = await fetch(`${API_BASE}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password, name: name || undefined })
@@ -120,11 +117,11 @@ export default function AuthPage() {
                 const errorMessages = data.errors.map((e: any) => e.message).join('. ');
                 showAlert('error', errorMessages);
             } else {
-                showAlert('error', data.message || 'Errore durante la registrazione');
+                showAlert('error', data.message || t('messages.registrationError'));
             }
         } catch (error) {
             console.error('Register error:', error);
-            showAlert('error', 'Errore di connessione al server');
+            showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -136,7 +133,7 @@ export default function AuthPage() {
         setAlert(null);
 
         try {
-            const res = await fetch(`${API_URL}/auth/magic-link`, {
+            const res = await fetch(`${API_BASE}/auth/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -147,7 +144,7 @@ export default function AuthPage() {
             showAlert('success', data.message);
         } catch (error) {
             console.error('Magic link error:', error);
-            showAlert('error', 'Errore di connessione al server');
+            showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -159,7 +156,7 @@ export default function AuthPage() {
         setAlert(null);
 
         try {
-            const res = await fetch(`${API_URL}/auth/forgot-password`, {
+            const res = await fetch(`${API_BASE}/auth/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -170,7 +167,7 @@ export default function AuthPage() {
             showAlert('success', data.message);
         } catch (error) {
             console.error('Forgot password error:', error);
-            showAlert('error', 'Errore di connessione al server');
+            showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -206,26 +203,26 @@ export default function AuthPage() {
     const getTitle = () => {
         switch (authMode) {
             case 'login':
-                return 'Accedi al Command Center';
+                return t('titles.login');
             case 'register':
-                return 'Crea il tuo Account';
+                return t('titles.register');
             case 'magic-link':
-                return 'Accesso Istantaneo';
+                return t('titles.magicLink');
             case 'forgot-password':
-                return 'Recupera Password';
+                return t('titles.forgotPassword');
         }
     };
 
     const getSubtitle = () => {
         switch (authMode) {
             case 'login':
-                return 'Il tuo hub di controllo per l\'affiliate marketing';
+                return t('subtitles.login');
             case 'register':
-                return 'Inizia a monetizzare in pochi minuti';
+                return t('subtitles.register');
             case 'magic-link':
-                return 'Ricevi un link sicuro via email';
+                return t('subtitles.magicLink');
             case 'forgot-password':
-                return 'Ti invieremo le istruzioni via email';
+                return t('subtitles.forgotPassword');
         }
     };
 
@@ -299,7 +296,7 @@ export default function AuthPage() {
                                                 : 'text-gray-400 hover:text-gray-200'
                                             }`}
                                         >
-                                            Magic Link
+                                            {t('tabs.magicLink')}
                                         </button>
                                         <button
                                             onClick={() => switchMode('login')}
@@ -308,7 +305,7 @@ export default function AuthPage() {
                                                 : 'text-gray-400 hover:text-gray-200'
                                             }`}
                                         >
-                                            Password
+                                            {t('tabs.password')}
                                         </button>
                                     </div>
                                 )}
@@ -318,7 +315,7 @@ export default function AuthPage() {
                                     {authMode === 'register' && (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                                Nome (opzionale)
+                                                {t('fields.nameLabel')}
                                             </label>
                                             <div className="relative">
                                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -326,7 +323,7 @@ export default function AuthPage() {
                                                     type="text"
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
-                                                    placeholder="Il tuo nome"
+                                                    placeholder={t('fields.namePlaceholder')}
                                                     className="w-full pl-12 pr-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500 focus:ring-1 focus:ring-afflyt-cyan-500/50 transition-all"
                                                 />
                                             </div>
@@ -336,7 +333,7 @@ export default function AuthPage() {
                                     {/* Email field */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                                            Email
+                                            {t('fields.emailLabel')}
                                         </label>
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -344,7 +341,7 @@ export default function AuthPage() {
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
-                                                placeholder="tu@esempio.com"
+                                                placeholder={t('fields.emailPlaceholder')}
                                                 required
                                                 className="w-full pl-12 pr-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500 focus:ring-1 focus:ring-afflyt-cyan-500/50 transition-all"
                                             />
@@ -355,7 +352,7 @@ export default function AuthPage() {
                                     {(authMode === 'login' || authMode === 'register') && (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                                Password
+                                                {t('fields.passwordLabel')}
                                             </label>
                                             <div className="relative">
                                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -378,7 +375,7 @@ export default function AuthPage() {
                                             </div>
                                             {authMode === 'register' && (
                                                 <p className="mt-1 text-xs text-gray-500">
-                                                    Min. 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero
+                                                    {t('fields.passwordHint')}
                                                 </p>
                                             )}
                                         </div>
@@ -388,7 +385,7 @@ export default function AuthPage() {
                                     {authMode === 'register' && (
                                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                                Conferma Password
+                                                {t('fields.confirmPasswordLabel')}
                                             </label>
                                             <div className="relative">
                                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -412,7 +409,7 @@ export default function AuthPage() {
                                                 onClick={() => switchMode('forgot-password')}
                                                 className="text-sm text-afflyt-cyan-400 hover:text-afflyt-cyan-300 transition-colors"
                                             >
-                                                Password dimenticata?
+                                                {t('links.forgotPassword')}
                                             </button>
                                         </div>
                                     )}
@@ -428,16 +425,16 @@ export default function AuthPage() {
                                         {isLoading ? (
                                             <div className="flex items-center gap-2">
                                                 <div className="w-4 h-4 border-2 border-afflyt-dark-100 border-t-transparent rounded-full animate-spin" />
-                                                <span>Elaborazione...</span>
+                                                <span>{t('buttons.processing')}</span>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <Sparkles className="w-4 h-4" />
                                                 <span>
-                                                    {authMode === 'login' && 'Accedi'}
-                                                    {authMode === 'register' && 'Registrati'}
-                                                    {authMode === 'magic-link' && 'Invia Magic Link'}
-                                                    {authMode === 'forgot-password' && 'Invia Email'}
+                                                    {authMode === 'login' && t('buttons.login')}
+                                                    {authMode === 'register' && t('buttons.register')}
+                                                    {authMode === 'magic-link' && t('buttons.sendMagicLink')}
+                                                    {authMode === 'forgot-password' && t('buttons.sendEmail')}
                                                 </span>
                                                 <ArrowRight className="w-4 h-4" />
                                             </div>
@@ -449,23 +446,23 @@ export default function AuthPage() {
                                 <div className="mt-6 text-center text-sm">
                                     {(authMode === 'login' || authMode === 'magic-link') && (
                                         <p className="text-gray-400">
-                                            Non hai un account?{' '}
+                                            {t('links.noAccount')}{' '}
                                             <button
                                                 onClick={() => switchMode('register')}
                                                 className="text-afflyt-cyan-400 hover:text-afflyt-cyan-300 font-medium"
                                             >
-                                                Registrati
+                                                {t('links.register')}
                                             </button>
                                         </p>
                                     )}
                                     {authMode === 'register' && (
                                         <p className="text-gray-400">
-                                            Hai già un account?{' '}
+                                            {t('links.hasAccount')}{' '}
                                             <button
                                                 onClick={() => switchMode('login')}
                                                 className="text-afflyt-cyan-400 hover:text-afflyt-cyan-300 font-medium"
                                             >
-                                                Accedi
+                                                {t('links.login')}
                                             </button>
                                         </p>
                                     )}
@@ -475,7 +472,7 @@ export default function AuthPage() {
                                                 onClick={() => switchMode('login')}
                                                 className="text-afflyt-cyan-400 hover:text-afflyt-cyan-300 font-medium"
                                             >
-                                                Torna al login
+                                                {t('links.backToLogin')}
                                             </button>
                                         </p>
                                     )}
@@ -486,10 +483,10 @@ export default function AuthPage() {
                                     <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-500 animate-in fade-in duration-500">
                                         <span className="flex items-center gap-1">
                                             <div className="w-2 h-2 bg-afflyt-profit-400 rounded-full animate-pulse" />
-                                            Nessuna password richiesta
+                                            {t('badges.noPasswordRequired')}
                                         </span>
                                         <span>•</span>
-                                        <span>Accesso sicuro via email</span>
+                                        <span>{t('badges.secureAccess')}</span>
                                     </div>
                                 )}
                             </>
@@ -499,11 +496,11 @@ export default function AuthPage() {
                                 <div className="w-16 h-16 bg-afflyt-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <Mail className="w-8 h-8 text-afflyt-cyan-400" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-2">Controlla la tua email!</h3>
+                                <h3 className="text-2xl font-bold text-white mb-2">{t('emailSent.title')}</h3>
                                 <p className="text-gray-400 mb-2">
-                                    {authMode === 'register' && 'Ti abbiamo inviato un link per verificare il tuo account.'}
-                                    {authMode === 'magic-link' && 'Ti abbiamo inviato un link di accesso.'}
-                                    {authMode === 'forgot-password' && 'Ti abbiamo inviato le istruzioni per il reset.'}
+                                    {authMode === 'register' && t('emailSent.verifyAccount')}
+                                    {authMode === 'magic-link' && t('emailSent.accessLink')}
+                                    {authMode === 'forgot-password' && t('emailSent.resetInstructions')}
                                 </p>
                                 <p className="text-afflyt-cyan-400 font-mono">{email}</p>
 
@@ -515,7 +512,7 @@ export default function AuthPage() {
                                         }}
                                         className="text-sm text-gray-400 hover:text-afflyt-cyan-400 transition-colors"
                                     >
-                                        Torna al login
+                                        {t('links.backToLogin')}
                                     </button>
                                 </div>
                             </div>

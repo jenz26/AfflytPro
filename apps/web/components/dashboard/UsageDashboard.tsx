@@ -5,6 +5,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import Link from 'next/link';
 import { ArrowUpRight, AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface UsageItem {
   used: number;
@@ -26,12 +27,14 @@ function ProgressBar({
   value,
   max,
   label,
-  showWarning = false
+  showWarning = false,
+  warningText
 }: {
   value: number;
   max: number;
   label: string;
   showWarning?: boolean;
+  warningText?: string;
 }) {
   const isUnlimited = max === -1;
   const percentage = isUnlimited ? 0 : (value / max) * 100;
@@ -64,10 +67,10 @@ function ProgressBar({
             />
           </div>
 
-          {isNearLimit && (
+          {isNearLimit && warningText && (
             <p className="text-xs text-yellow-500 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
-              Approaching limit. Consider upgrading your plan.
+              {warningText}
             </p>
           )}
         </>
@@ -77,20 +80,21 @@ function ProgressBar({
 }
 
 export function UsageDashboard({ plan, usage, className = '' }: UsageDashboardProps) {
+  const t = useTranslations('usageDashboard');
   const canUpgrade = plan !== 'BUSINESS';
 
   return (
     <GlassCard className={className} padding="lg">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h3 className="text-lg font-bold text-white mb-2">Your Plan</h3>
+          <h3 className="text-lg font-bold text-white mb-2">{t('yourPlan')}</h3>
           <PlanBadge plan={plan} size="lg" />
         </div>
         {canUpgrade && (
           <Link href="/settings/subscription">
             <CyberButton variant="primary" size="sm">
               <ArrowUpRight className="w-4 h-4 mr-1" />
-              Upgrade
+              {t('upgrade')}
             </CyberButton>
           </Link>
         )}
@@ -101,23 +105,25 @@ export function UsageDashboard({ plan, usage, className = '' }: UsageDashboardPr
         <ProgressBar
           value={usage.automations.used}
           max={usage.automations.max}
-          label="Automation Rules"
+          label={t('labels.automationRules')}
           showWarning
+          warningText={t('approachingLimit')}
         />
 
         {/* Active Automations */}
         <ProgressBar
           value={usage.activeAutomations.used}
           max={usage.activeAutomations.max}
-          label="Active Automations"
+          label={t('labels.activeAutomations')}
           showWarning
+          warningText={t('approachingLimit')}
         />
 
         {/* Channels */}
         <ProgressBar
           value={usage.channels.used}
           max={usage.channels.max}
-          label="Channels"
+          label={t('labels.channels')}
         />
 
         {/* Keepa Tokens (if provided) */}
@@ -125,40 +131,41 @@ export function UsageDashboard({ plan, usage, className = '' }: UsageDashboardPr
           <ProgressBar
             value={usage.keepaTokens.used}
             max={usage.keepaTokens.max}
-            label="Keepa Tokens (this month)"
+            label={t('labels.keepaTokens')}
             showWarning
+            warningText={t('approachingLimit')}
           />
         )}
       </div>
 
       {/* Plan Benefits Summary */}
       <div className="mt-6 pt-6 border-t border-gray-700">
-        <h4 className="text-sm font-bold text-white mb-3">Plan Features</h4>
+        <h4 className="text-sm font-bold text-white mb-3">{t('planFeatures')}</h4>
         <div className="space-y-2 text-sm">
           {plan === 'FREE' && (
             <>
-              <Feature>Deal Score: ≥85 only (Hot Deals)</Feature>
-              <Feature>Frequency: Every 6 hours</Feature>
-              <Feature disabled>AI Copy</Feature>
-              <Feature disabled>A/B Testing</Feature>
+              <Feature>{t('features.free.dealScore')}</Feature>
+              <Feature>{t('features.free.frequency')}</Feature>
+              <Feature disabled>{t('features.free.aiCopy')}</Feature>
+              <Feature disabled>{t('features.free.abTesting')}</Feature>
             </>
           )}
           {plan === 'PRO' && (
             <>
-              <Feature>Deal Score: ≥70 (adjustable)</Feature>
-              <Feature>Frequency: Every 2-3 hours</Feature>
-              <Feature>AI Copy & Custom Templates</Feature>
-              <Feature>A/B Testing</Feature>
+              <Feature>{t('features.pro.dealScore')}</Feature>
+              <Feature>{t('features.pro.frequency')}</Feature>
+              <Feature>{t('features.pro.aiCopy')}</Feature>
+              <Feature>{t('features.pro.abTesting')}</Feature>
             </>
           )}
           {plan === 'BUSINESS' && (
             <>
-              <Feature>Deal Score: Any (0-100)</Feature>
-              <Feature>Frequency: Every 30-90 minutes</Feature>
-              <Feature>AI Copy Advanced</Feature>
-              <Feature>A/B Testing Advanced</Feature>
-              <Feature>API Access & Webhooks</Feature>
-              <Feature>Team Access</Feature>
+              <Feature>{t('features.business.dealScore')}</Feature>
+              <Feature>{t('features.business.frequency')}</Feature>
+              <Feature>{t('features.business.aiCopy')}</Feature>
+              <Feature>{t('features.business.abTesting')}</Feature>
+              <Feature>{t('features.business.apiAccess')}</Feature>
+              <Feature>{t('features.business.teamAccess')}</Feature>
             </>
           )}
         </div>

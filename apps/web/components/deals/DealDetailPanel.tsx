@@ -6,6 +6,7 @@ import { DealScoreIndicator } from './DealScoreIndicator';
 import { useState, useEffect } from 'react';
 import { getChannels, Channel } from '@/lib/api/channels';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface DealDetailPanelProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface DealDetailPanelProps {
 }
 
 export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps) {
+  const t = useTranslations('dealDetail');
   const [selectedChannel, setSelectedChannel] = useState<string>('');
   const [amazonTag, setAmazonTag] = useState<string>('afflytpro-21'); // Default tag
   const [linkCopied, setLinkCopied] = useState(false);
@@ -116,7 +118,7 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
             {/* Header */}
             <div className="sticky top-0 bg-gray-900/95 backdrop-blur-md border-b border-afflyt-cyan-500/30 p-6 flex items-center justify-between z-10">
               <div>
-                <h2 className="text-xl font-bold text-white">Deal Details</h2>
+                <h2 className="text-xl font-bold text-white">{t('title')}</h2>
                 <p className="text-sm text-gray-400 mt-1">ASIN: {deal.asin}</p>
               </div>
               <button
@@ -152,50 +154,50 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                 <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-4 border border-gray-700">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingDown className="w-4 h-4 text-afflyt-cyan-400" />
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">Prezzo Attuale</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">{t('currentPrice')}</span>
                   </div>
                   <p className="text-2xl font-bold text-white">€{deal.currentPrice.toFixed(2)}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Aggiornato {formatDate(deal.lastPriceCheckAt)}
+                    {t('updated')} {formatDate(deal.lastPriceCheckAt)}
                   </p>
                 </div>
 
                 <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-4 border border-gray-700">
                   <div className="flex items-center gap-2 mb-2">
                     <Package className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">Prezzo Originale</span>
+                    <span className="text-xs text-gray-400 uppercase tracking-wide">{t('originalPrice')}</span>
                   </div>
                   <p className="text-2xl font-bold text-gray-400 line-through">€{deal.originalPrice.toFixed(2)}</p>
                   <p className="text-xs text-green-400 mt-1 font-semibold">
-                    -{deal.discount}% di sconto
+                    -{deal.discount}% {t('discount')}
                   </p>
                 </div>
               </div>
 
               {/* Product Stats */}
               <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-4 border border-gray-700 space-y-3">
-                <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Statistiche Prodotto</h4>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wide">{t('productStats')}</h4>
 
                 <div className="grid grid-cols-2 gap-4">
                   {deal.rating && (
                     <div className="flex items-center gap-2">
                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-sm text-gray-300">{deal.rating.toFixed(1)} stelle</span>
+                      <span className="text-sm text-gray-300">{deal.rating.toFixed(1)} {t('stars')}</span>
                     </div>
                   )}
                   {deal.reviewCount && (
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-300">{deal.reviewCount.toLocaleString()} recensioni</span>
+                      <span className="text-sm text-gray-300">{deal.reviewCount.toLocaleString()} {t('reviews')}</span>
                     </div>
                   )}
                 </div>
 
                 {deal.salesRank && (
                   <div className="pt-3 border-t border-gray-700">
-                    <p className="text-xs text-gray-400">Sales Rank</p>
+                    <p className="text-xs text-gray-400">{t('salesRank')}</p>
                     <p className="text-sm font-semibold text-afflyt-cyan-400">
-                      #{deal.salesRank.toLocaleString()} in {deal.category}
+                      #{deal.salesRank.toLocaleString()} {t('inCategory')} {deal.category}
                     </p>
                   </div>
                 )}
@@ -203,13 +205,13 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
 
               {/* Deal Score Breakdown */}
               <div className="bg-gradient-to-br from-gray-800 to-gray-800/50 rounded-xl p-4 border border-gray-700 space-y-3">
-                <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Score Breakdown</h4>
+                <h4 className="text-sm font-semibold text-white uppercase tracking-wide">{t('scoreBreakdown')}</h4>
 
                 <div className="space-y-2">
-                  <ScoreBar label="Discount" value={Math.min(deal.discount, 100)} color="green" />
-                  <ScoreBar label="Sales Rank" value={deal.salesRank ? Math.max(0, 100 - (deal.salesRank / 100)) : 50} color="blue" />
-                  <ScoreBar label="Rating" value={deal.rating ? (deal.rating / 5) * 100 : 0} color="yellow" />
-                  <ScoreBar label="Reviews" value={deal.reviewCount ? Math.min((deal.reviewCount / 1000) * 100, 100) : 0} color="purple" />
+                  <ScoreBar label={t('breakdown.discount')} value={Math.min(deal.discount, 100)} color="green" />
+                  <ScoreBar label={t('breakdown.salesRank')} value={deal.salesRank ? Math.max(0, 100 - (deal.salesRank / 100)) : 50} color="blue" />
+                  <ScoreBar label={t('breakdown.rating')} value={deal.rating ? (deal.rating / 5) * 100 : 0} color="yellow" />
+                  <ScoreBar label={t('breakdown.reviews')} value={deal.reviewCount ? Math.min((deal.reviewCount / 1000) * 100, 100) : 0} color="purple" />
                 </div>
               </div>
 
@@ -217,7 +219,7 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
               <div className="bg-gradient-to-br from-afflyt-cyan-500/10 to-blue-500/10 rounded-xl p-4 border border-afflyt-cyan-500/30 space-y-4">
                 <h4 className="text-sm font-semibold text-white uppercase tracking-wide flex items-center gap-2">
                   <Send className="w-4 h-4 text-afflyt-cyan-400" />
-                  Invia al Canale
+                  {t('sendToChannel')}
                 </h4>
 
                 {isLoadingChannels ? (
@@ -230,25 +232,25 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                   </div>
                 ) : channels.length === 0 ? (
                   <div className="text-center py-4 space-y-3">
-                    <p className="text-sm text-gray-400">Nessun canale configurato</p>
+                    <p className="text-sm text-gray-400">{t('noChannels')}</p>
                     <Link
                       href="/dashboard/settings"
                       className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm px-4 py-2 rounded-lg transition-all"
                     >
                       <Plus className="w-4 h-4" />
-                      Aggiungi Canale
+                      {t('addChannel')}
                     </Link>
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label className="block text-xs text-gray-400 mb-2">Canale</label>
+                      <label className="block text-xs text-gray-400 mb-2">{t('channel')}</label>
                       <select
                         value={selectedChannel}
                         onChange={(e) => setSelectedChannel(e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-afflyt-cyan-500 transition-colors"
                       >
-                        <option value="">Seleziona un canale...</option>
+                        <option value="">{t('selectChannel')}</option>
                         {channels.map(channel => (
                           <option key={channel.id} value={channel.id}>
                             {channel.name} ({channel.platform})
@@ -258,15 +260,15 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                     </div>
 
                     <div>
-                      <label className="block text-xs text-gray-400 mb-2">Amazon Associate Tag</label>
+                      <label className="block text-xs text-gray-400 mb-2">{t('amazonTag')}</label>
                       <input
                         type="text"
                         value={amazonTag}
                         onChange={(e) => setAmazonTag(e.target.value)}
-                        placeholder="es. afflytpro-21"
+                        placeholder={t('amazonTagPlaceholder')}
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-afflyt-cyan-500 transition-colors"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Il tuo tag Amazon Associates per il tracciamento</p>
+                      <p className="text-xs text-gray-500 mt-1">{t('amazonTagHint')}</p>
                     </div>
 
                     <button
@@ -281,17 +283,17 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                             className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                           />
-                          Generazione...
+                          {t('generating')}
                         </>
                       ) : linkCopied ? (
                         <>
                           <Check className="w-5 h-5" />
-                          Link Copiato!
+                          {t('linkCopied')}
                         </>
                       ) : (
                         <>
                           <Copy className="w-5 h-5" />
-                          Genera Link Affiliato
+                          {t('generateLink')}
                         </>
                       )}
                     </button>
@@ -302,7 +304,7 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                         animate={{ opacity: 1, y: 0 }}
                         className="text-xs text-afflyt-cyan-400 text-center"
                       >
-                        Link copiato negli appunti con timestamp compliant Amazon
+                        {t('linkCopiedMessage')}
                       </motion.p>
                     )}
                   </>
@@ -317,7 +319,7 @@ export function DealDetailPanel({ isOpen, onClose, deal }: DealDetailPanelProps)
                 className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2"
               >
                 <ExternalLink className="w-5 h-5" />
-                Visualizza su Amazon
+                {t('viewOnAmazon')}
               </a>
             </div>
           </motion.div>

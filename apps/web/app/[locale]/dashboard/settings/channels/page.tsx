@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
     Send,
     Plus,
@@ -35,6 +36,9 @@ interface Channel {
 }
 
 export default function ChannelsPage() {
+    const t = useTranslations('settings.channels');
+    const tCommon = useTranslations('common');
+
     const [channels, setChannels] = useState<Channel[]>([]);
     const [isAddingChannel, setIsAddingChannel] = useState(false);
     const [setupStep, setSetupStep] = useState(1);
@@ -57,7 +61,7 @@ export default function ChannelsPage() {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
-            const res = await fetch('${API_BASE}/user/channels', {
+            const res = await fetch(`${API_BASE}/user/channels`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -70,12 +74,11 @@ export default function ChannelsPage() {
     };
 
     const handleStep1_SaveToken = async () => {
-        if (!newChannel.botToken) return alert('Inserisci il token');
+        if (!newChannel.botToken) return alert(t('botTokenRequired'));
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            // Call TSK-066 API to save credential
-            const res = await fetch('${API_BASE}/user/credentials', {
+            const res = await fetch(`${API_BASE}/user/credentials`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,11 +96,11 @@ export default function ChannelsPage() {
                 setNewChannel(prev => ({ ...prev, credentialId: cred.id }));
                 setSetupStep(2);
             } else {
-                alert('Errore nel salvataggio del token');
+                alert(t('tokenSaveError'));
             }
         } catch (error) {
             console.error(error);
-            alert('Errore di connessione');
+            alert(t('connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -107,7 +110,7 @@ export default function ChannelsPage() {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('${API_BASE}/user/channels', {
+            const res = await fetch(`${API_BASE}/user/channels`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,11 +130,11 @@ export default function ChannelsPage() {
                 setNewChannel({ platform: 'TELEGRAM', name: '', channelId: '', botToken: '', credentialId: '' });
                 fetchChannels();
             } else {
-                alert('Errore nella creazione del canale');
+                alert(t('channelCreateError'));
             }
         } catch (error) {
             console.error(error);
-            alert('Errore di connessione');
+            alert(t('connectionError'));
         } finally {
             setIsLoading(false);
         }
@@ -175,17 +178,17 @@ export default function ChannelsPage() {
                         <div>
                             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
                                 <Send className="w-6 h-6 text-afflyt-cyan-400" />
-                                Canali di Pubblicazione
+                                {t('title')}
                             </h1>
                             <p className="text-sm text-gray-400 mt-1">
-                                Gestisci i canali Telegram e Discord dove pubblicare le offerte
+                                {t('subtitle')}
                             </p>
                         </div>
                     </div>
 
                     <CyberButton onClick={() => setIsAddingChannel(true)} variant="primary">
                         <Plus className="w-4 h-4" />
-                        Aggiungi Canale
+                        {t('addChannel')}
                     </CyberButton>
                 </div>
             </div>
@@ -194,7 +197,7 @@ export default function ChannelsPage() {
             {isAddingChannel && (
                 <GlassCard className="mb-8 p-6 border-afflyt-cyan-500/40">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-white">Nuova Connessione Telegram</h3>
+                        <h3 className="text-lg font-semibold text-white">{t('newTelegram')}</h3>
                         <div className="flex items-center gap-2">
                             {[1, 2, 3].map(step => (
                                 <div key={step} className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${setupStep === step
@@ -213,27 +216,27 @@ export default function ChannelsPage() {
                     {setupStep === 1 && (
                         <div className="space-y-4">
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
-                                <h4 className="text-sm font-medium text-white mb-3">Istruzioni:</h4>
+                                <h4 className="text-sm font-medium text-white mb-3">{t('instructions')}</h4>
                                 <ol className="list-decimal list-inside text-sm text-gray-400 space-y-1">
-                                    <li>Cerca @BotFather su Telegram</li>
-                                    <li>Invia /newbot</li>
-                                    <li>Copia il token ricevuto</li>
+                                    <li>{t('instruction1')}</li>
+                                    <li>{t('instruction2')}</li>
+                                    <li>{t('instruction3')}</li>
                                 </ol>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Bot Token</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">{t('botToken')}</label>
                                 <input
                                     type="password"
                                     value={newChannel.botToken}
                                     onChange={(e) => setNewChannel({ ...newChannel, botToken: e.target.value })}
-                                    placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                                    placeholder={t('botTokenPlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none"
                                 />
                             </div>
                             <div className="flex justify-end gap-3">
-                                <CyberButton variant="ghost" onClick={() => setIsAddingChannel(false)}>Annulla</CyberButton>
+                                <CyberButton variant="ghost" onClick={() => setIsAddingChannel(false)}>{tCommon('cancel')}</CyberButton>
                                 <CyberButton variant="primary" onClick={handleStep1_SaveToken} disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salva e Continua'}
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('saveAndContinue')}
                                 </CyberButton>
                             </div>
                         </div>
@@ -243,32 +246,32 @@ export default function ChannelsPage() {
                     {setupStep === 2 && (
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Nome Canale</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">{t('channelName')}</label>
                                 <input
                                     type="text"
                                     value={newChannel.name}
                                     onChange={(e) => setNewChannel({ ...newChannel, name: e.target.value })}
-                                    placeholder="es. Offerte Tech"
+                                    placeholder={t('channelNamePlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white focus:border-afflyt-cyan-500 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Channel ID / Username</label>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">{t('channelId')}</label>
                                 <input
                                     type="text"
                                     value={newChannel.channelId}
                                     onChange={(e) => setNewChannel({ ...newChannel, channelId: e.target.value })}
-                                    placeholder="@offertetech o -100..."
+                                    placeholder={t('channelIdPlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none"
                                 />
                                 <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" />
-                                    Ricorda di aggiungere il bot come amministratore del canale!
+                                    {t('addBotAsAdmin')}
                                 </p>
                             </div>
                             <div className="flex justify-end gap-3">
-                                <CyberButton variant="ghost" onClick={() => setSetupStep(1)}>Indietro</CyberButton>
-                                <CyberButton variant="primary" onClick={() => setSetupStep(3)}>Continua</CyberButton>
+                                <CyberButton variant="ghost" onClick={() => setSetupStep(1)}>{tCommon('back')}</CyberButton>
+                                <CyberButton variant="primary" onClick={() => setSetupStep(3)}>{tCommon('next')}</CyberButton>
                             </div>
                         </div>
                     )}
@@ -277,25 +280,25 @@ export default function ChannelsPage() {
                     {setupStep === 3 && (
                         <div className="space-y-6 text-center">
                             <div className="p-6 bg-afflyt-cyan-500/10 rounded-lg border border-afflyt-cyan-500/30">
-                                <h4 className="text-lg font-medium text-white mb-2">Pronto per la connessione</h4>
+                                <h4 className="text-lg font-medium text-white mb-2">{t('readyToConnect')}</h4>
                                 <p className="text-gray-400 text-sm mb-4">
-                                    Stiamo per collegare il bot <strong>{newChannel.name}</strong> al canale <strong>{newChannel.channelId}</strong>.
+                                    {t('connectingBot', { name: newChannel.name, channelId: newChannel.channelId })}
                                 </p>
                                 <div className="flex flex-col gap-2 text-left max-w-xs mx-auto text-sm">
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500">Piattaforma:</span>
+                                        <span className="text-gray-500">{t('platformLabel')}:</span>
                                         <span className="text-white">Telegram</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-500">Credenziale:</span>
-                                        <span className="text-afflyt-cyan-400">Salvata nel Vault</span>
+                                        <span className="text-gray-500">{t('credentialLabel')}:</span>
+                                        <span className="text-afflyt-cyan-400">{t('savedInVault')}</span>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3">
-                                <CyberButton variant="ghost" onClick={() => setSetupStep(2)}>Indietro</CyberButton>
+                                <CyberButton variant="ghost" onClick={() => setSetupStep(2)}>{tCommon('back')}</CyberButton>
                                 <CyberButton variant="primary" onClick={handleStep3_CreateChannel} disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Conferma e Collega'}
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('confirmAndConnect')}
                                 </CyberButton>
                             </div>
                         </div>
@@ -322,7 +325,7 @@ export default function ChannelsPage() {
                                 ? 'bg-afflyt-profit-400/20 text-afflyt-profit-400'
                                 : 'bg-yellow-400/20 text-yellow-400'
                                 }`}>
-                                {channel.status}
+                                {channel.status === 'CONNECTED' ? t('connected') : t('disconnected')}
                             </span>
                             <button
                                 onClick={() => handleDeleteClick(channel)}
@@ -336,7 +339,7 @@ export default function ChannelsPage() {
 
                 {!isAddingChannel && channels.length === 0 && (
                     <div className="text-center py-12 text-gray-500">
-                        Nessun canale configurato. Aggiungine uno per iniziare a pubblicare.
+                        {t('noChannelsDesc')}
                     </div>
                 )}
             </div>
@@ -346,23 +349,23 @@ export default function ChannelsPage() {
                 isOpen={channelToDelete !== null}
                 onClose={() => setChannelToDelete(null)}
                 onConfirm={handleDeleteConfirm}
-                title="Eliminare il canale?"
+                title={t('deleteTitle')}
                 message={
                     channelToDelete ? (
                         <div className="space-y-2">
-                            <p>Stai per eliminare:</p>
+                            <p>{t('deleteAboutTo')}</p>
                             <div className="bg-gray-800 p-3 rounded-lg border border-gray-700">
                                 <p className="font-semibold text-white">{channelToDelete.name}</p>
                                 <p className="text-xs text-gray-400">{channelToDelete.platform} • {channelToDelete.channelId}</p>
                             </div>
                             <p className="text-sm text-red-300">
-                                Questa azione non può essere annullata. Tutte le automazioni associate a questo canale verranno disattivate.
+                                {t('deleteWarning')}
                             </p>
                         </div>
                     ) : ''
                 }
-                confirmText="Sì, elimina"
-                cancelText="Annulla"
+                confirmText={t('deleteConfirmButton')}
+                cancelText={tCommon('cancel')}
                 variant="danger"
                 isLoading={isDeleting}
             />

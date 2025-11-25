@@ -291,7 +291,7 @@ export default function DealsPage() {
               <StandardEmptyState
                 icon={Package}
                 title={tTable('noDeals')}
-                description="Try adjusting your filters or search query to find more deals"
+                description={t('emptyState')}
                 actionLabel={t('refresh')}
                 onAction={fetchDeals}
               />

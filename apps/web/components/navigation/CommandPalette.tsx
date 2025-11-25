@@ -23,6 +23,7 @@ import {
     Flame
 } from 'lucide-react';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
+import { useTranslations } from 'next-intl';
 
 interface CommandPaletteProps {
     onClose: () => void;
@@ -47,6 +48,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
     const pathname = usePathname();
     const os = useOperatingSystem();
     const modKey = getModifierKey(os);
+    const t = useTranslations('commandPalette');
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
     const [recentCommands, setRecentCommands] = useState<string[]>([]);
@@ -88,8 +90,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'nav-dashboard',
             type: 'navigation',
-            label: 'Dashboard',
-            description: 'Torna al Command Center',
+            label: t('navigation.dashboard.label'),
+            description: t('navigation.dashboard.description'),
             icon: LayoutDashboard,
             action: () => router.push('/dashboard'),
             shortcut: `${modKey}D`,
@@ -98,8 +100,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'nav-deals',
             type: 'navigation',
-            label: 'Deal Finder',
-            description: 'Trova offerte con alto Deal Score',
+            label: t('navigation.deals.label'),
+            description: t('navigation.deals.description'),
             icon: TrendingUp,
             action: () => router.push('/dashboard/deals'),
             shortcut: `${modKey}F`,
@@ -109,8 +111,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'nav-automations',
             type: 'navigation',
-            label: 'Automazioni',
-            description: 'Gestisci le tue automazioni',
+            label: t('navigation.automations.label'),
+            description: t('navigation.automations.description'),
             icon: Zap,
             action: () => router.push('/dashboard/automations'),
             shortcut: `${modKey}A`,
@@ -119,8 +121,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'nav-channels',
             type: 'navigation',
-            label: 'Canali',
-            description: 'Gestisci canali di pubblicazione',
+            label: t('navigation.channels.label'),
+            description: t('navigation.channels.description'),
             icon: Send,
             action: () => router.push('/dashboard/settings/channels'),
             shortcut: `${modKey}C`,
@@ -129,8 +131,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'nav-settings',
             type: 'navigation',
-            label: 'Settings',
-            description: 'Impostazioni e configurazioni',
+            label: t('navigation.settings.label'),
+            description: t('navigation.settings.description'),
             icon: Settings,
             action: () => router.push('/dashboard/settings'),
             shortcut: `${modKey},`,
@@ -143,8 +145,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'action-create-automation',
             type: 'action',
-            label: 'Crea Automazione',
-            description: 'Configura una nuova regola di pubblicazione',
+            label: t('actions.createAutomation.label'),
+            description: t('actions.createAutomation.description'),
             icon: Zap,
             action: () => router.push('/dashboard/automations'),
             category: 'actions',
@@ -153,8 +155,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'action-connect-channel',
             type: 'action',
-            label: 'Connetti canale Telegram',
-            description: 'Aggiungi un nuovo canale di pubblicazione',
+            label: t('actions.connectChannel.label'),
+            description: t('actions.connectChannel.description'),
             icon: Bot,
             action: () => router.push('/dashboard/settings/channels?action=new&type=telegram'),
             keywords: ['telegram', 'bot', 'connect', 'collega']
@@ -162,8 +164,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'action-add-credentials',
             type: 'action',
-            label: 'Aggiungi credenziali API',
-            description: 'Configura Keepa o altre API keys',
+            label: t('actions.addCredentials.label'),
+            description: t('actions.addCredentials.description'),
             icon: Plus,
             action: () => router.push('/dashboard/settings/credentials?action=new'),
             keywords: ['api', 'key', 'keepa', 'credentials']
@@ -171,21 +173,21 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'action-generate-link',
             type: 'action',
-            label: 'Genera link affiliato',
-            description: 'Crea un link Amazon con il tuo tag',
+            label: t('actions.generateLink.label'),
+            description: t('actions.generateLink.description'),
             icon: Link2,
             action: () => router.push('/dashboard/deals?action=generate-link'),
             keywords: ['link', 'affiliate', 'amazon', 'genera']
         }
     ];
 
-    // Quick stats commands  
+    // Quick stats commands
     const quickStatCommands: CommandItem[] = [
         {
             id: 'stat-revenue',
             type: 'quickstat',
-            label: 'Mostra revenue ultimo mese',
-            description: 'Visualizza entrate e conversioni',
+            label: t('quickStats.revenue.label'),
+            description: t('quickStats.revenue.description'),
             icon: DollarSign,
             action: () => router.push('/dashboard?view=revenue'),
             keywords: ['revenue', 'entrate', 'soldi', 'guadagni']
@@ -193,8 +195,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'stat-performance',
             type: 'quickstat',
-            label: 'Performance automazioni',
-            description: 'Statistiche delle automazioni attive',
+            label: t('quickStats.performance.label'),
+            description: t('quickStats.performance.description'),
             icon: BarChart3,
             action: () => router.push('/dashboard?view=performance'),
             keywords: ['performance', 'stats', 'statistiche']
@@ -202,8 +204,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         {
             id: 'stat-ttl',
             type: 'quickstat',
-            label: 'Stato TTL e limiti',
-            description: 'Verifica TTL e consumo API',
+            label: t('quickStats.ttl.label'),
+            description: t('quickStats.ttl.description'),
             icon: Clock,
             action: () => router.push('/dashboard?view=limits'),
             keywords: ['ttl', 'limits', 'limiti', 'api']
@@ -217,7 +219,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                 {
                     id: 'context-filter-hot',
                     type: 'action',
-                    label: 'Filtra solo Hot Deals (Score > 85)',
+                    label: t('context.filterHotDeals'),
                     icon: Flame,
                     action: () => { },
                     keywords: ['filter', 'hot']
@@ -225,7 +227,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                 {
                     id: 'context-filter-category',
                     type: 'action',
-                    label: 'Filtra per categoria',
+                    label: t('context.filterByCategory'),
                     icon: Filter,
                     action: () => { },
                     keywords: ['filter', 'category']
@@ -238,8 +240,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                 {
                     id: 'context-complete-setup',
                     type: 'action',
-                    label: 'Completa configurazione',
-                    description: 'Continua il setup guidato',
+                    label: t('context.completeSetup.label'),
+                    description: t('context.completeSetup.description'),
                     icon: Sparkles,
                     action: () => router.push('/dashboard?onboarding=continue'),
                     keywords: ['setup', 'onboarding']
@@ -260,7 +262,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                         id: `deal-${search}`,
                         type: 'search',
                         label: `Echo Dot (4ª gen) - ${search}`,
-                        description: 'Score: 92 • Sconto: 67%',
+                        description: t('search.resultDescription', { score: 92, discount: 67 }),
                         icon: Package,
                         score: 92,
                         hot: true,
@@ -273,7 +275,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         } else {
             setSearchResults([]);
         }
-    }, [search, router]);
+    }, [search, router, t]);
 
     // Combine all commands
     const allCommands = [
@@ -314,7 +316,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                         <Command.Input
                             value={search}
                             onValueChange={setSearch}
-                            placeholder="Cerca comandi, deal, automazioni..."
+                            placeholder={t('placeholder')}
                             className="flex-1 px-4 py-4 bg-transparent text-white placeholder:text-gray-500 focus:outline-none"
                         />
                         <button
@@ -337,7 +339,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                             <>
                                 {/* Recent Commands */}
                                 {recentItems.length > 0 && (
-                                    <Command.Group heading="Recenti" className="mb-2">
+                                    <Command.Group heading={t('groups.recent')} className="mb-2">
                                         {recentItems.map(item => (
                                             <Command.Item
                                                 key={item.id}
@@ -362,7 +364,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                                 )}
 
                                 {/* Navigation */}
-                                <Command.Group heading="Navigazione" className="mb-2">
+                                <Command.Group heading={t('groups.navigation')} className="mb-2">
                                     {navigationCommands.map(item => (
                                         <Command.Item
                                             key={item.id}
@@ -386,7 +388,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
                                 </Command.Group>
 
                                 {/* Actions */}
-                                <Command.Group heading="Azioni" className="mb-2">
+                                <Command.Group heading={t('groups.actions')} className="mb-2">
                                     {actionCommands.map(item => (
                                         <Command.Item
                                             key={item.id}
@@ -406,7 +408,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
 
                                 {/* Search Results */}
                                 {searchResults.length > 0 && (
-                                    <Command.Group heading="Risultati" className="mb-2">
+                                    <Command.Group heading={t('groups.results')} className="mb-2">
                                         {searchResults.map(item => (
                                             <Command.Item
                                                 key={item.id}
@@ -435,8 +437,8 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
 
                     {/* Footer */}
                     <div className="border-t border-afflyt-glass-border px-4 py-2 flex items-center justify-between text-xs text-gray-500">
-                        <span>Usa ↑↓ per navigare, ↵ per selezionare</span>
-                        <span>ESC per chiudere</span>
+                        <span>{t('footer.navigation')}</span>
+                        <span>{t('footer.close')}</span>
                     </div>
                 </Command>
             </div>

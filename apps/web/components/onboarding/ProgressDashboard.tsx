@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
+import { useTranslations } from 'next-intl';
 
 interface ProgressDashboardProps {
     progress: OnboardingProgress;
@@ -49,6 +50,7 @@ interface Achievement {
 }
 
 export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: ProgressDashboardProps) => {
+    const t = useTranslations('progressDashboard');
     const [timeSpent, setTimeSpent] = useState(0);
 
     useEffect(() => {
@@ -77,27 +79,27 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
     // Determine next action
     const getNextAction = () => {
         if (!progress.welcomeSurveyCompleted) {
-            return { step: 'welcome', label: 'Completa il benvenuto', icon: Sparkles };
+            return { step: 'welcome', label: t('actions.completeWelcome'), icon: Sparkles };
         }
 
         const needsChannel = !progress.telegramSetupCompleted && !progress.emailSetupCompleted && !progress.discordSetupCompleted;
         if (needsChannel) {
             if (progress.channelsSelected.includes('telegram')) {
-                return { step: 'telegram', label: 'Configura Telegram', icon: Send };
+                return { step: 'telegram', label: t('actions.configureTelegram'), icon: Send };
             }
             if (progress.channelsSelected.includes('email')) {
-                return { step: 'email', label: 'Configura Email', icon: Mail };
+                return { step: 'email', label: t('actions.configureEmail'), icon: Mail };
             }
             if (progress.channelsSelected.includes('discord')) {
-                return { step: 'discord', label: 'Configura Discord', icon: MessageSquare };
+                return { step: 'discord', label: t('actions.configureDiscord'), icon: MessageSquare };
             }
         }
 
         if (!progress.firstAutomationCreated) {
-            return { step: 'automation', label: 'Crea prima automazione', icon: Zap };
+            return { step: 'automation', label: t('actions.createAutomation'), icon: Zap };
         }
 
-        return { step: 'dashboard', label: 'Vai alla Dashboard', icon: TrendingUp };
+        return { step: 'dashboard', label: t('actions.goToDashboard'), icon: TrendingUp };
     };
 
     const nextAction = getNextAction();
@@ -106,36 +108,36 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
     const achievements: Achievement[] = [
         {
             id: 'welcome',
-            title: 'Primo Passo',
-            description: 'Completato il questionario iniziale',
+            title: t('achievements.firstStep.title'),
+            description: t('achievements.firstStep.description'),
             icon: Sparkles,
             unlocked: progress.welcomeSurveyCompleted
         },
         {
             id: 'telegram',
-            title: 'Telegram Master',
-            description: 'Configurato canale Telegram',
+            title: t('achievements.telegramMaster.title'),
+            description: t('achievements.telegramMaster.description'),
             icon: Send,
             unlocked: progress.telegramSetupCompleted
         },
         {
             id: 'email',
-            title: 'Email Pro',
-            description: 'Configurato sistema email',
+            title: t('achievements.emailPro.title'),
+            description: t('achievements.emailPro.description'),
             icon: Mail,
             unlocked: progress.emailSetupCompleted
         },
         {
             id: 'automation',
-            title: 'Automation Wizard',
-            description: 'Creata la prima automazione',
+            title: t('achievements.automationWizard.title'),
+            description: t('achievements.automationWizard.description'),
             icon: Zap,
             unlocked: progress.firstAutomationCreated
         },
         {
             id: 'complete',
-            title: 'Setup Completo',
-            description: 'Onboarding completato al 100%',
+            title: t('achievements.setupComplete.title'),
+            description: t('achievements.setupComplete.description'),
             icon: Trophy,
             unlocked: completionPercentage === 100
         }
@@ -150,40 +152,40 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
             <div className="grid grid-cols-2 gap-3">
                 <GlassCard className="p-6 bg-gradient-to-br from-afflyt-cyan-500/10 to-afflyt-cyan-600/5 border-afflyt-cyan-500/30">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-400">Completamento</span>
+                        <span className="text-sm text-gray-400">{t('stats.completion')}</span>
                         <TrendingUp className="w-4 h-4 text-afflyt-cyan-400" />
                     </div>
                     <div className="text-3xl font-bold text-white mb-1">{completionPercentage}%</div>
-                    <div className="text-xs text-gray-500">{completedSteps}/{steps.length} passi</div>
+                    <div className="text-xs text-gray-500">{completedSteps}/{steps.length} {t('stats.steps')}</div>
                 </GlassCard>
 
                 <GlassCard className="p-6 bg-gradient-to-br from-afflyt-profit-500/10 to-afflyt-profit-600/5 border-afflyt-profit-500/30">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-400">Achievement</span>
+                        <span className="text-sm text-gray-400">{t('stats.achievement')}</span>
                         <Trophy className="w-4 h-4 text-afflyt-profit-400" />
                     </div>
                     <div className="text-3xl font-bold text-white mb-1">{unlockedAchievements}</div>
-                    <div className="text-xs text-gray-500">/{achievements.length} sbloccati</div>
+                    <div className="text-xs text-gray-500">/{achievements.length} {t('stats.unlocked')}</div>
                 </GlassCard>
 
                 <GlassCard className="p-6 bg-gradient-to-br from-afflyt-plasma-500/10 to-afflyt-plasma-600/5 border-afflyt-plasma-500/30">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-400">Tempo</span>
+                        <span className="text-sm text-gray-400">{t('stats.time')}</span>
                         <Clock className="w-4 h-4 text-afflyt-plasma-400" />
                     </div>
                     <div className="text-3xl font-bold text-white mb-1">{formatTime(progress.totalTimeSpent + timeSpent)}</div>
-                    <div className="text-xs text-gray-500">tempo speso</div>
+                    <div className="text-xs text-gray-500">{t('stats.timeSpent')}</div>
                 </GlassCard>
 
                 <GlassCard className="p-6 bg-gradient-to-br from-afflyt-cyan-500/10 to-afflyt-plasma-500/5 border-afflyt-glass-border">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-400">Canali</span>
+                        <span className="text-sm text-gray-400">{t('stats.channels')}</span>
                         <Target className="w-4 h-4 text-afflyt-cyan-400" />
                     </div>
                     <div className="text-3xl font-bold text-white mb-1">
                         {[progress.telegramSetupCompleted, progress.emailSetupCompleted, progress.discordSetupCompleted].filter(Boolean).length}
                     </div>
-                    <div className="text-xs text-gray-500">configurati</div>
+                    <div className="text-xs text-gray-500">{t('stats.configured')}</div>
                 </GlassCard>
             </div>
             )}
@@ -192,11 +194,11 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
             <GlassCard className="p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Il Tuo Percorso</h2>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('progress.title')}</h2>
                         <p className="text-gray-400">
                             {completionPercentage === 100
-                                ? 'Fantastico! Hai completato l\'onboarding'
-                                : `Ancora ${steps.length - completedSteps} ${steps.length - completedSteps === 1 ? 'passo' : 'passi'} al completamento`}
+                                ? t('progress.completed')
+                                : t('progress.stepsRemaining', { count: steps.length - completedSteps })}
                         </p>
                     </div>
                     <div className="text-right">
@@ -223,7 +225,7 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
                                     <nextAction.icon className="w-5 h-5 text-afflyt-cyan-400" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-white">Prossimo passo</p>
+                                    <p className="text-sm font-medium text-white">{t('progress.nextStep')}</p>
                                     <p className="text-xs text-gray-400">{nextAction.label}</p>
                                 </div>
                             </div>
@@ -233,7 +235,7 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
                                 onClick={() => onContinue(nextAction.step)}
                                 className="gap-2"
                             >
-                                Continua
+                                {t('progress.continue')}
                                 <ArrowRight className="w-4 h-4" />
                             </CyberButton>
                         </div>
@@ -247,8 +249,8 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
                                 <Trophy className="w-7 h-7 text-white" />
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-xl font-bold text-white mb-1">Onboarding Completato!</h3>
-                                <p className="text-gray-300">Sei pronto per iniziare a guadagnare con le automazioni</p>
+                                <h3 className="text-xl font-bold text-white mb-1">{t('progress.onboardingCompleted')}</h3>
+                                <p className="text-gray-300">{t('progress.readyToEarn')}</p>
                             </div>
                         </div>
                         <CyberButton
@@ -257,7 +259,7 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
                             className="w-full justify-center gap-2"
                         >
                             <Sparkles className="w-4 h-4" />
-                            Vai alla Dashboard
+                            {t('actions.goToDashboard')}
                         </CyberButton>
                     </div>
                 )}
@@ -265,40 +267,50 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
 
             {/* Steps Checklist */}
             <GlassCard className="p-6">
-                <h3 className="text-xl font-bold text-white mb-6">Checklist Setup</h3>
+                <h3 className="text-xl font-bold text-white mb-6">{t('checklist.title')}</h3>
                 <div className="space-y-3">
                     <StepItem
                         completed={progress.welcomeSurveyCompleted}
-                        title="Benvenuto e Questionario"
-                        description="Personalizza la tua esperienza"
+                        title={t('checklist.welcome.title')}
+                        description={t('checklist.welcome.description')}
                         icon={Sparkles}
+                        optionalLabel={t('checklist.optional')}
+                        completedLabel={t('checklist.completed')}
                     />
                     <StepItem
                         completed={progress.telegramSetupCompleted}
-                        title="Configura Telegram"
-                        description="Collega il tuo canale o gruppo"
+                        title={t('checklist.telegram.title')}
+                        description={t('checklist.telegram.description')}
                         icon={Send}
                         optional={!progress.channelsSelected.includes('telegram')}
+                        optionalLabel={t('checklist.optional')}
+                        completedLabel={t('checklist.completed')}
                     />
                     <StepItem
                         completed={progress.emailSetupCompleted}
-                        title="Configura Email"
-                        description="Setup provider e newsletter"
+                        title={t('checklist.email.title')}
+                        description={t('checklist.email.description')}
                         icon={Mail}
                         optional={!progress.channelsSelected.includes('email')}
+                        optionalLabel={t('checklist.optional')}
+                        completedLabel={t('checklist.completed')}
                     />
                     <StepItem
                         completed={progress.discordSetupCompleted}
-                        title="Configura Discord"
-                        description="Connetti il tuo server"
+                        title={t('checklist.discord.title')}
+                        description={t('checklist.discord.description')}
                         icon={MessageSquare}
                         optional={!progress.channelsSelected.includes('discord')}
+                        optionalLabel={t('checklist.optional')}
+                        completedLabel={t('checklist.completed')}
                     />
                     <StepItem
                         completed={progress.firstAutomationCreated}
-                        title="Crea Prima Automazione"
-                        description="Imposta filtri e inizia a pubblicare"
+                        title={t('checklist.automation.title')}
+                        description={t('checklist.automation.description')}
                         icon={Zap}
+                        optionalLabel={t('checklist.optional')}
+                        completedLabel={t('checklist.completed')}
                     />
                 </div>
             </GlassCard>
@@ -306,9 +318,9 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
             {/* Achievements Grid */}
             <GlassCard className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-white">Achievement</h3>
+                    <h3 className="text-xl font-bold text-white">{t('achievementsSection.title')}</h3>
                     <span className="text-sm text-gray-400">
-                        {unlockedAchievements}/{achievements.length} sbloccati
+                        {unlockedAchievements}/{achievements.length} {t('stats.unlocked')}
                     </span>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -351,23 +363,23 @@ export const ProgressDashboard = ({ progress, onContinue, hideStats = false }: P
                             <Star className="w-5 h-5 text-afflyt-cyan-400" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-white mb-2">Profilo Personalizzato</h3>
+                            <h3 className="text-lg font-semibold text-white mb-2">{t('profile.title')}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {progress.goal && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-1">Obiettivo</p>
+                                        <p className="text-xs text-gray-500 mb-1">{t('profile.goal')}</p>
                                         <p className="text-sm text-white font-medium capitalize">{progress.goal}</p>
                                     </div>
                                 )}
                                 {progress.audienceSize && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-1">Audience</p>
+                                        <p className="text-xs text-gray-500 mb-1">{t('profile.audience')}</p>
                                         <p className="text-sm text-white font-medium capitalize">{progress.audienceSize}</p>
                                     </div>
                                 )}
                                 {progress.experienceLevel && (
                                     <div>
-                                        <p className="text-xs text-gray-500 mb-1">Esperienza</p>
+                                        <p className="text-xs text-gray-500 mb-1">{t('profile.experience')}</p>
                                         <p className="text-sm text-white font-medium capitalize">{progress.experienceLevel}</p>
                                     </div>
                                 )}
@@ -386,9 +398,11 @@ interface StepItemProps {
     description: string;
     icon: React.ElementType;
     optional?: boolean;
+    optionalLabel?: string;
+    completedLabel?: string;
 }
 
-const StepItem = ({ completed, title, description, icon: Icon, optional }: StepItemProps) => {
+const StepItem = ({ completed, title, description, icon: Icon, optional, optionalLabel = 'optional', completedLabel = 'Completed' }: StepItemProps) => {
     return (
         <div className={`flex items-center gap-4 p-4 rounded-lg border transition-all ${completed
             ? 'bg-afflyt-profit-500/5 border-afflyt-profit-500/30'
@@ -411,7 +425,7 @@ const StepItem = ({ completed, title, description, icon: Icon, optional }: StepI
                     </h4>
                     {optional && (
                         <span className="px-2 py-0.5 bg-afflyt-dark-100 rounded text-xs text-gray-500">
-                            opzionale
+                            {optionalLabel}
                         </span>
                     )}
                 </div>
@@ -420,7 +434,7 @@ const StepItem = ({ completed, title, description, icon: Icon, optional }: StepI
             {completed && (
                 <div className="shrink-0">
                     <div className="px-3 py-1 bg-afflyt-profit-400/10 rounded-full text-xs text-afflyt-profit-400 font-medium">
-                        Completato
+                        {completedLabel}
                     </div>
                 </div>
             )}

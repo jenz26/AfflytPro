@@ -21,6 +21,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { API_BASE } from '@/lib/api/config';
+import { useTranslations } from 'next-intl';
 
 interface EmailSetupProps {
     onComplete: (data: EmailSetupData) => void;
@@ -37,30 +38,8 @@ interface EmailSetupData {
 
 type ValidationStatus = 'idle' | 'validating' | 'valid' | 'invalid';
 
-const EMAIL_PROVIDERS = [
-    {
-        id: 'sendgrid' as const,
-        name: 'SendGrid',
-        logo: '📧',
-        description: 'Soluzione enterprise-grade di Twilio',
-        pricing: 'Gratis fino a 100 email/giorno',
-        features: ['Template avanzati', 'Analytics integrato', 'Deliverability alta'],
-        signupUrl: 'https://signup.sendgrid.com/',
-        docsUrl: 'https://docs.sendgrid.com/for-developers/sending-email/api-getting-started'
-    },
-    {
-        id: 'resend' as const,
-        name: 'Resend',
-        logo: '✉️',
-        description: 'Moderno e developer-friendly',
-        pricing: 'Gratis fino a 100 email/giorno',
-        features: ['Setup veloce', 'React Email templates', 'Dashboard moderna'],
-        signupUrl: 'https://resend.com/signup',
-        docsUrl: 'https://resend.com/docs/introduction'
-    }
-];
-
 export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
+    const t = useTranslations('emailSetup');
     const [step, setStep] = useState(0);
     const [provider, setProvider] = useState<'sendgrid' | 'resend' | null>(null);
     const [apiKey, setApiKey] = useState('');
@@ -74,10 +53,33 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
 
     const { trackOnboardingStep, track } = useAnalytics();
 
+    const EMAIL_PROVIDERS = [
+        {
+            id: 'sendgrid' as const,
+            name: 'SendGrid',
+            logo: '📧',
+            description: t('providers.sendgrid.description'),
+            pricing: t('providers.sendgrid.pricing'),
+            features: [t('providers.sendgrid.features.templates'), t('providers.sendgrid.features.analytics'), t('providers.sendgrid.features.deliverability')],
+            signupUrl: 'https://signup.sendgrid.com/',
+            docsUrl: 'https://docs.sendgrid.com/for-developers/sending-email/api-getting-started'
+        },
+        {
+            id: 'resend' as const,
+            name: 'Resend',
+            logo: '✉️',
+            description: t('providers.resend.description'),
+            pricing: t('providers.resend.pricing'),
+            features: [t('providers.resend.features.quickSetup'), t('providers.resend.features.reactEmail'), t('providers.resend.features.modernDashboard')],
+            signupUrl: 'https://resend.com/signup',
+            docsUrl: 'https://resend.com/docs/introduction'
+        }
+    ];
+
     const validateApiKey = async (key: string, prov: 'sendgrid' | 'resend') => {
         if (!key || key.length < 10) {
             setApiKeyValidation('invalid');
-            setValidationError('La chiave API deve essere di almeno 10 caratteri');
+            setValidationError(t('errors.apiKeyTooShort'));
             return;
         }
 
@@ -98,11 +100,11 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                 track('email_api_key_validated', 'onboarding', { provider: prov });
             } else {
                 setApiKeyValidation('invalid');
-                setValidationError(data.error || 'Chiave API non valida');
+                setValidationError(data.error || t('errors.invalidApiKey'));
             }
         } catch (error) {
             setApiKeyValidation('invalid');
-            setValidationError('Errore di connessione al server');
+            setValidationError(t('errors.connectionError'));
         }
     };
 
@@ -123,7 +125,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
             });
         } catch (error) {
             setTestEmailStatus('failed');
-            setValidationError('Invio email fallito');
+            setValidationError(t('errors.emailSendFailed'));
         }
     };
 
@@ -174,52 +176,52 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             <Mail className="w-8 h-8 text-white" />
                         </div>
                         <h2 className="text-3xl font-bold text-white mb-4 text-center">
-                            Configurazione Email
+                            {t('title')}
                         </h2>
                         <p className="text-gray-300 text-center mb-8 max-w-2xl mx-auto">
-                            Invia newsletter automatiche con i deal migliori direttamente nella inbox dei tuoi iscritti
+                            {t('subtitle')}
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
                                 <div className="text-2xl font-bold text-afflyt-plasma-400 mb-2">5 min</div>
-                                <div className="text-sm text-gray-400">Setup veloce</div>
+                                <div className="text-sm text-gray-400">{t('stats.quickSetup')}</div>
                             </div>
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
-                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-2">100/g</div>
-                                <div className="text-sm text-gray-400">Email gratis al giorno</div>
+                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-2">100/{t('stats.perDay')}</div>
+                                <div className="text-sm text-gray-400">{t('stats.freeEmails')}</div>
                             </div>
                             <div className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border text-center">
                                 <div className="text-2xl font-bold text-afflyt-cyan-400 mb-2">98%</div>
-                                <div className="text-sm text-gray-400">Deliverability</div>
+                                <div className="text-sm text-gray-400">{t('stats.deliverability')}</div>
                             </div>
                         </div>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6">
                             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                 <Info className="w-5 h-5 text-afflyt-plasma-400" />
-                                Perché configurare l'email?
+                                {t('whyEmail.title')}
                             </h3>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
                                     <CheckCircle className="w-5 h-5 text-afflyt-profit-400 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-white font-medium">Reach diretto</p>
-                                        <p className="text-sm text-gray-400">Le email arrivano direttamente nella inbox, senza algoritmi</p>
+                                        <p className="text-white font-medium">{t('whyEmail.directReach')}</p>
+                                        <p className="text-sm text-gray-400">{t('whyEmail.directReachDesc')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckCircle className="w-5 h-5 text-afflyt-profit-400 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-white font-medium">Conversione alta</p>
-                                        <p className="text-sm text-gray-400">CTR medio 15-25% con deal personalizzati</p>
+                                        <p className="text-white font-medium">{t('whyEmail.highConversion')}</p>
+                                        <p className="text-sm text-gray-400">{t('whyEmail.highConversionDesc')}</p>
                                     </div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <CheckCircle className="w-5 h-5 text-afflyt-profit-400 shrink-0 mt-0.5" />
                                     <div>
-                                        <p className="text-white font-medium">Automazione completa</p>
-                                        <p className="text-sm text-gray-400">Template HTML responsive generati automaticamente</p>
+                                        <p className="text-white font-medium">{t('whyEmail.fullAutomation')}</p>
+                                        <p className="text-sm text-gray-400">{t('whyEmail.fullAutomationDesc')}</p>
                                     </div>
                                 </li>
                             </ul>
@@ -234,8 +236,8 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Scegli il Provider Email</h2>
-                        <p className="text-gray-400 mb-6">Entrambi offrono piani gratuiti generosi per iniziare</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('chooseProvider.title')}</h2>
+                        <p className="text-gray-400 mb-6">{t('chooseProvider.subtitle')}</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {EMAIL_PROVIDERS.map((prov) => (
@@ -286,7 +288,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-afflyt-plasma-500/10 text-afflyt-plasma-400 rounded-lg text-sm hover:bg-afflyt-plasma-500/20 transition"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                Registrati
+                                                {t('chooseProvider.signup')}
                                                 <ExternalLink className="w-3 h-3" />
                                             </a>
                                             <a
@@ -296,7 +298,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                                 className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-afflyt-dark-100 text-gray-300 rounded-lg text-sm hover:bg-afflyt-dark-200 transition"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
-                                                Docs
+                                                {t('chooseProvider.docs')}
                                                 <ExternalLink className="w-3 h-3" />
                                             </a>
                                         </div>
@@ -314,27 +316,27 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Configura {selectedProvider?.name}</h2>
-                        <p className="text-gray-400 mb-6">Inserisci le credenziali e le informazioni del mittente</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('configure.title', { provider: selectedProvider?.name || '' })}</h2>
+                        <p className="text-gray-400 mb-6">{t('configure.subtitle')}</p>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-white mb-4">Come ottenere la chiave API:</h3>
+                            <h3 className="text-lg font-semibold text-white mb-4">{t('configure.howToGetKey')}</h3>
                             {provider === 'sendgrid' && (
                                 <ol className="space-y-3 text-sm text-gray-300">
-                                    <li>1. Accedi a <a href="https://app.sendgrid.com/" target="_blank" className="text-afflyt-plasma-400 hover:underline">SendGrid Dashboard</a></li>
-                                    <li>2. Vai in Settings → API Keys</li>
-                                    <li>3. Clicca "Create API Key"</li>
-                                    <li>4. Seleziona "Full Access" come permesso</li>
-                                    <li>5. Copia la chiave generata (appare una sola volta!)</li>
+                                    <li>1. {t('configure.sendgrid.step1')} <a href="https://app.sendgrid.com/" target="_blank" className="text-afflyt-plasma-400 hover:underline">SendGrid Dashboard</a></li>
+                                    <li>2. {t('configure.sendgrid.step2')}</li>
+                                    <li>3. {t('configure.sendgrid.step3')}</li>
+                                    <li>4. {t('configure.sendgrid.step4')}</li>
+                                    <li>5. {t('configure.sendgrid.step5')}</li>
                                 </ol>
                             )}
                             {provider === 'resend' && (
                                 <ol className="space-y-3 text-sm text-gray-300">
-                                    <li>1. Accedi a <a href="https://resend.com/api-keys" target="_blank" className="text-afflyt-plasma-400 hover:underline">Resend Dashboard</a></li>
-                                    <li>2. Vai nella sezione "API Keys"</li>
-                                    <li>3. Clicca "Create API Key"</li>
-                                    <li>4. Dai un nome alla chiave e seleziona i permessi</li>
-                                    <li>5. Copia la chiave generata</li>
+                                    <li>1. {t('configure.resend.step1')} <a href="https://resend.com/api-keys" target="_blank" className="text-afflyt-plasma-400 hover:underline">Resend Dashboard</a></li>
+                                    <li>2. {t('configure.resend.step2')}</li>
+                                    <li>3. {t('configure.resend.step3')}</li>
+                                    <li>4. {t('configure.resend.step4')}</li>
+                                    <li>5. {t('configure.resend.step5')}</li>
                                 </ol>
                             )}
                         </div>
@@ -343,7 +345,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             {/* API Key */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Chiave API {selectedProvider?.name}
+                                    {t('configure.apiKeyLabel', { provider: selectedProvider?.name || '' })}
                                 </label>
                                 <div className="relative">
                                     <input
@@ -377,7 +379,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                 {apiKeyValidation === 'valid' && (
                                     <p className="mt-2 text-sm text-afflyt-profit-400 flex items-center gap-2">
                                         <CheckCircle className="w-4 h-4" />
-                                        Chiave API validata con successo
+                                        {t('configure.apiKeyValidated')}
                                     </p>
                                 )}
                                 {apiKeyValidation === 'invalid' && validationError && (
@@ -391,34 +393,34 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             {/* Sender Email */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Email Mittente
+                                    {t('configure.senderEmail')}
                                 </label>
                                 <input
                                     type="email"
                                     value={senderEmail}
                                     onChange={(e) => setSenderEmail(e.target.value)}
-                                    placeholder="deals@tuodominio.com"
+                                    placeholder={t('configure.senderEmailPlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border-2 border-afflyt-glass-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-afflyt-plasma-500 transition"
                                 />
                                 <p className="mt-2 text-xs text-gray-500">
-                                    Deve essere un dominio verificato nel tuo account {selectedProvider?.name}
+                                    {t('configure.senderEmailHint', { provider: selectedProvider?.name || '' })}
                                 </p>
                             </div>
 
                             {/* Sender Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Nome Mittente
+                                    {t('configure.senderName')}
                                 </label>
                                 <input
                                     type="text"
                                     value={senderName}
                                     onChange={(e) => setSenderName(e.target.value)}
-                                    placeholder="Il Tuo Brand - Deal Alert"
+                                    placeholder={t('configure.senderNamePlaceholder')}
                                     className="w-full px-4 py-3 bg-afflyt-dark-50 border-2 border-afflyt-glass-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-afflyt-plasma-500 transition"
                                 />
                                 <p className="mt-2 text-xs text-gray-500">
-                                    Il nome che apparirà come mittente delle email
+                                    {t('configure.senderNameHint')}
                                 </p>
                             </div>
                         </div>
@@ -432,8 +434,8 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                     >
-                        <h2 className="text-2xl font-bold text-white mb-2">Test Email</h2>
-                        <p className="text-gray-400 mb-6">Inviamo un'email di prova per verificare che tutto funzioni</p>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('testEmail.title')}</h2>
+                        <p className="text-gray-400 mb-6">{t('testEmail.subtitle')}</p>
 
                         <div className="bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border p-6 mb-6">
                             <div className="flex items-center gap-3 mb-4">
@@ -441,33 +443,33 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                     <Send className="w-6 h-6 text-afflyt-plasma-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">Email di Test</h3>
-                                    <p className="text-sm text-gray-400">Riceverai un esempio di deal email</p>
+                                    <h3 className="text-lg font-semibold text-white">{t('testEmail.testEmailTitle')}</h3>
+                                    <p className="text-sm text-gray-400">{t('testEmail.testEmailDesc')}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center gap-3 text-sm">
                                     <CheckCircle className="w-4 h-4 text-afflyt-profit-400" />
-                                    <span className="text-gray-300">Provider: {selectedProvider?.name}</span>
+                                    <span className="text-gray-300">{t('testEmail.provider')}: {selectedProvider?.name}</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm">
                                     <CheckCircle className="w-4 h-4 text-afflyt-profit-400" />
-                                    <span className="text-gray-300">Da: {senderName} &lt;{senderEmail}&gt;</span>
+                                    <span className="text-gray-300">{t('testEmail.from')}: {senderName} &lt;{senderEmail}&gt;</span>
                                 </div>
                             </div>
 
                             {testEmailStatus === 'idle' && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Invia email di test a:
+                                        {t('testEmail.sendTo')}
                                     </label>
                                     <div className="flex gap-2">
                                         <input
                                             type="email"
                                             value={testRecipient}
                                             onChange={(e) => setTestRecipient(e.target.value)}
-                                            placeholder="tua@email.com"
+                                            placeholder={t('testEmail.emailPlaceholder')}
                                             className="flex-1 px-4 py-3 bg-afflyt-dark-100 border-2 border-afflyt-glass-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-afflyt-plasma-500 transition"
                                         />
                                         <CyberButton
@@ -477,7 +479,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                             className="gap-2"
                                         >
                                             <Send className="w-4 h-4" />
-                                            Invia
+                                            {t('testEmail.send')}
                                         </CyberButton>
                                     </div>
                                 </div>
@@ -486,7 +488,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             {testEmailStatus === 'sending' && (
                                 <div className="flex items-center justify-center gap-3 py-3">
                                     <Loader2 className="w-5 h-5 text-afflyt-plasma-400 animate-spin" />
-                                    <span className="text-gray-300">Invio in corso...</span>
+                                    <span className="text-gray-300">{t('testEmail.sending')}</span>
                                 </div>
                             )}
 
@@ -497,12 +499,12 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                             <Sparkles className="w-5 h-5 text-afflyt-profit-400" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-white">Email inviata!</p>
-                                            <p className="text-sm text-gray-300">Controlla la tua casella di posta</p>
+                                            <p className="font-semibold text-white">{t('testEmail.sent')}</p>
+                                            <p className="text-sm text-gray-300">{t('testEmail.checkInbox')}</p>
                                         </div>
                                     </div>
                                     <p className="text-xs text-gray-400 mt-3">
-                                        Email inviata a: {testRecipient}
+                                        {t('testEmail.sentTo')}: {testRecipient}
                                     </p>
                                 </div>
                             )}
@@ -511,7 +513,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                 <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                                     <div className="flex items-center gap-3 mb-2">
                                         <XCircle className="w-5 h-5 text-red-400" />
-                                        <p className="font-semibold text-white">Invio fallito</p>
+                                        <p className="font-semibold text-white">{t('testEmail.failed')}</p>
                                     </div>
                                     <p className="text-sm text-red-300 mb-3">{validationError}</p>
                                     <CyberButton
@@ -520,7 +522,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                         className="w-full justify-center gap-2"
                                         size="sm"
                                     >
-                                        Riprova
+                                        {t('testEmail.retry')}
                                     </CyberButton>
                                 </div>
                             )}
@@ -531,8 +533,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                                 <div className="flex items-start gap-2">
                                     <Info className="w-4 h-4 text-afflyt-plasma-400 mt-0.5 shrink-0" />
                                     <p className="text-sm text-gray-300">
-                                        Perfetto! D'ora in poi potrai inviare newsletter automatiche ai tuoi iscritti con i deal migliori,
-                                        usando template HTML responsive generati automaticamente.
+                                        {t('testEmail.successMessage')}
                                     </p>
                                 </div>
                             </div>
@@ -550,7 +551,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
             {/* Progress Indicator */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-400">Passo {step + 1} di 4</span>
+                    <span className="text-sm text-gray-400">{t('navigation.step', { current: step + 1, total: 4 })}</span>
                     <span className="text-sm font-mono text-afflyt-plasma-400">
                         {Math.round(((step + 1) / 4) * 100)}%
                     </span>
@@ -582,7 +583,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             className="gap-2"
                         >
                             <ChevronLeft className="w-4 h-4" />
-                            Indietro
+                            {t('navigation.back')}
                         </CyberButton>
                     )}
                 </div>
@@ -593,7 +594,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             variant="ghost"
                             onClick={onSkip}
                         >
-                            Salta per ora
+                            {t('navigation.skipForNow')}
                         </CyberButton>
                     )}
 
@@ -604,7 +605,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             disabled={!canProceedStep()}
                             className="gap-2"
                         >
-                            {step === 0 ? 'Inizia' : 'Continua'}
+                            {step === 0 ? t('navigation.start') : t('navigation.continue')}
                             <ChevronRight className="w-4 h-4" />
                         </CyberButton>
                     ) : (
@@ -615,7 +616,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                             className="gap-2"
                         >
                             <Check className="w-4 h-4" />
-                            Completa Configurazione
+                            {t('navigation.complete')}
                         </CyberButton>
                     )}
                 </div>

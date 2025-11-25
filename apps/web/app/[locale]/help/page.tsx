@@ -188,15 +188,15 @@ export default function HelpPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto mt-10">
             <GlassCard className="p-4 text-center border-afflyt-cyan-500/20">
               <div className="text-3xl font-bold text-afflyt-cyan-400 mb-1">47</div>
-              <div className="text-sm text-gray-400">Guide disponibili</div>
+              <div className="text-sm text-gray-400">{t('hero.stats.guides')}</div>
             </GlassCard>
             <GlassCard className="p-4 text-center border-afflyt-profit-400/20">
               <div className="text-3xl font-bold text-afflyt-profit-400 mb-1">3 min</div>
-              <div className="text-sm text-gray-400">Tempo medio soluzione</div>
+              <div className="text-sm text-gray-400">{t('hero.stats.avgSolutionTime')}</div>
             </GlassCard>
             <GlassCard className="p-4 text-center border-afflyt-plasma-400/20">
               <div className="text-3xl font-bold text-afflyt-plasma-400 mb-1">94%</div>
-              <div className="text-sm text-gray-400">User satisfaction</div>
+              <div className="text-sm text-gray-400">{t('hero.stats.satisfaction')}</div>
             </GlassCard>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function HelpPage() {
                             </h4>
                             {guide.isNew && (
                               <span className="px-2 py-0.5 bg-afflyt-profit-400/20 text-afflyt-profit-400 text-xs font-bold rounded animate-pulse">
-                                NEW
+                                {t('badges.new')}
                               </span>
                             )}
                           </div>
@@ -432,7 +432,7 @@ export default function HelpPage() {
                 <div className="pb-3 border-b border-afflyt-glass-border">
                   <div className="flex items-start gap-2 mb-1">
                     <span className="px-2 py-0.5 bg-afflyt-profit-400/20 text-afflyt-profit-400 text-xs font-bold rounded">
-                      NEW
+                      {t('badges.new')}
                     </span>
                     <span className="text-xs text-gray-400">24 Nov 2025</span>
                   </div>

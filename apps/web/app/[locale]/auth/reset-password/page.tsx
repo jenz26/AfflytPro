@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Lock, CheckCircle2, XCircle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_BASE } from '@/lib/api/config';
 
 type Status = 'form' | 'loading' | 'success' | 'error';
 
 export default function ResetPasswordPage() {
+    const t = useTranslations('auth.resetPassword');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -28,21 +28,21 @@ export default function ResetPasswordPage() {
 
         if (password !== confirmPassword) {
             setStatus('error');
-            setMessage('Le password non coincidono.');
+            setMessage(t('passwordsMismatch'));
             return;
         }
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(password)) {
             setStatus('error');
-            setMessage('La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero.');
+            setMessage(t('passwordRequirements'));
             return;
         }
 
         setStatus('loading');
 
         try {
-            const res = await fetch(`${API_URL}/auth/reset-password`, {
+            const res = await fetch(`${API_BASE}/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, password }),
@@ -55,11 +55,11 @@ export default function ResetPasswordPage() {
                 setMessage(data.message);
             } else {
                 setStatus('error');
-                setMessage(data.message || 'Reset fallito.');
+                setMessage(data.message || t('resetFailed'));
             }
         } catch (error) {
             setStatus('error');
-            setMessage('Errore di connessione al server.');
+            setMessage(t('connectionError'));
         }
     };
 
@@ -68,10 +68,10 @@ export default function ResetPasswordPage() {
             <div className="min-h-screen bg-afflyt-dark-100 flex items-center justify-center p-4">
                 <GlassCard className="p-8 max-w-md w-full text-center">
                     <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-white mb-2">Link Non Valido</h2>
-                    <p className="text-gray-400 mb-6">Il link di reset password non è valido o è scaduto.</p>
+                    <h2 className="text-2xl font-bold text-white mb-2">{t('invalidLinkTitle')}</h2>
+                    <p className="text-gray-400 mb-6">{t('invalidLinkDescription')}</p>
                     <CyberButton onClick={() => router.push(`/${locale}/auth/login`)} variant="secondary" className="w-full justify-center">
-                        Torna al Login
+                        {t('backToLogin')}
                     </CyberButton>
                 </GlassCard>
             </div>
@@ -88,13 +88,13 @@ export default function ResetPasswordPage() {
             <GlassCard className="relative z-10 p-8 max-w-md w-full">
                 {status === 'form' || status === 'loading' ? (
                     <>
-                        <h2 className="text-2xl font-bold text-white mb-2 text-center">Nuova Password</h2>
-                        <p className="text-gray-400 mb-6 text-center">Scegli una nuova password sicura.</p>
+                        <h2 className="text-2xl font-bold text-white mb-2 text-center">{t('title')}</h2>
+                        <p className="text-gray-400 mb-6 text-center">{t('subtitle')}</p>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Nuova Password
+                                    {t('newPasswordLabel')}
                                 </label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -116,13 +116,13 @@ export default function ResetPasswordPage() {
                                     </button>
                                 </div>
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Min. 8 caratteri, 1 maiuscola, 1 minuscola, 1 numero
+                                    {t('passwordHint')}
                                 </p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Conferma Password
+                                    {t('confirmPasswordLabel')}
                                 </label>
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-cyan-400/50" />
@@ -146,11 +146,11 @@ export default function ResetPasswordPage() {
                                 {status === 'loading' ? (
                                     <div className="flex items-center gap-2">
                                         <div className="w-4 h-4 border-2 border-afflyt-dark-100 border-t-transparent rounded-full animate-spin" />
-                                        <span>Reimpostando...</span>
+                                        <span>{t('resetting')}</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2">
-                                        <span>Reimposta Password</span>
+                                        <span>{t('resetButton')}</span>
                                         <ArrowRight className="w-4 h-4" />
                                     </div>
                                 )}
@@ -162,10 +162,10 @@ export default function ResetPasswordPage() {
                         <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-green-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Password Reimpostata!</h2>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('successTitle')}</h2>
                         <p className="text-gray-400 mb-6">{message}</p>
                         <CyberButton onClick={() => router.push(`/${locale}/auth/login`)} variant="primary" className="w-full justify-center">
-                            Vai al Login
+                            {t('goToLogin')}
                         </CyberButton>
                     </div>
                 ) : (
@@ -173,10 +173,10 @@ export default function ResetPasswordPage() {
                         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                             <XCircle className="w-8 h-8 text-red-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Errore</h2>
+                        <h2 className="text-2xl font-bold text-white mb-2">{t('errorTitle')}</h2>
                         <p className="text-gray-400 mb-6">{message}</p>
                         <CyberButton onClick={() => setStatus('form')} variant="secondary" className="w-full justify-center">
-                            Riprova
+                            {t('retry')}
                         </CyberButton>
                     </div>
                 )}
