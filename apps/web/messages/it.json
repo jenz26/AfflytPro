@@ -1171,6 +1171,124 @@
       "close": "ESC per chiudere"
     }
   },
+  "channels": {
+    "title": "Canali di Pubblicazione",
+    "subtitle": "Connetti e gestisci i tuoi canali di pubblicazione",
+    "addChannel": "Aggiungi Canale",
+    "header": {
+      "activeChannels": "Canali Attivi",
+      "postsPublished": "Post Pubblicati"
+    },
+    "emptyState": {
+      "badge": "Inizia Ora",
+      "title": "Connetti il Tuo Primo Canale",
+      "description": "I canali permettono ad Afflyt di pubblicare automaticamente le offerte su Telegram, Discord o altre piattaforme. Configura in pochi minuti e inizia a monetizzare 24/7.",
+      "selectChannel": "Scegli la Tua Piattaforma",
+      "selectChannelNote": "Inizia con la piattaforma dove il tuo pubblico è più attivo",
+      "benefits": {
+        "autoPublish": {
+          "title": "Pubblicazione Automatica",
+          "description": "Pubblicazione offerte 24/7 senza lavoro manuale"
+        },
+        "optimizedReach": {
+          "title": "Reach Ottimizzato",
+          "description": "Timing AI-powered per massimo engagement"
+        },
+        "multiChannel": {
+          "title": "Multi-Canale",
+          "description": "Pubblica su più piattaforme contemporaneamente"
+        }
+      },
+      "helpBox": {
+        "title": "Non sai da dove iniziare?",
+        "description": "Telegram è la scelta più semplice e popolare per l'affiliate marketing. La maggior parte degli utenti vede risultati entro la prima settimana.",
+        "link": "Scopri di più sui canali Telegram"
+      }
+    },
+    "platforms": {
+      "telegram": {
+        "name": "Telegram",
+        "description": "Ideale per notifiche istantanee e alto engagement"
+      },
+      "discord": {
+        "name": "Discord",
+        "description": "Perfetto per condivisione offerte in community"
+      },
+      "facebook": {
+        "name": "Facebook",
+        "description": "Raggiungi il tuo pubblico Facebook con post automatici"
+      },
+      "twitter": {
+        "name": "X (Twitter)",
+        "description": "Condividi offerte con i tuoi follower Twitter"
+      },
+      "linkedin": {
+        "name": "LinkedIn",
+        "description": "Condivisione offerte professionale per audience B2B"
+      },
+      "webhook": {
+        "name": "Webhook Personalizzato",
+        "description": "Integra con qualsiasi piattaforma via HTTP webhooks"
+      }
+    },
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Medio",
+      "advanced": "Avanzato"
+    },
+    "recommended": "Consigliato",
+    "comingSoon": "Prossimamente",
+    "connect": "Connetti {platform}",
+    "status": {
+      "connected": "Connesso",
+      "pending": "In Attesa",
+      "error": "Errore"
+    },
+    "stats": {
+      "posts": "Post",
+      "clicks": "Click",
+      "revenue": "Revenue"
+    },
+    "wizard": {
+      "title": "Connetti Canale Telegram",
+      "subtitle": "Segui i passaggi per connettere il tuo bot",
+      "instructions": "Come creare un Bot Telegram:",
+      "step1": "Apri Telegram e cerca @BotFather",
+      "step2": "Invia /newbot e segui le istruzioni",
+      "step3": "Copia il token API che ricevi",
+      "botToken": "Bot Token",
+      "botTokenPlaceholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
+      "botTokenHelp": "Incolla il token ricevuto da @BotFather",
+      "botTokenRequired": "Inserisci il token del bot",
+      "tokenSaveError": "Errore nel salvare il token",
+      "connectionError": "Errore di connessione",
+      "channelName": "Nome Canale",
+      "channelNamePlaceholder": "es. Tech Deals Hub",
+      "channelId": "ID o Username Canale",
+      "channelIdPlaceholder": "@tuo_canale o -1001234567890",
+      "addBotAsAdmin": "Ricorda di aggiungere il bot come amministratore del canale!",
+      "readyToConnect": "Pronto per la Connessione!",
+      "summary": "Collegheremo il tuo bot Telegram al canale specificato.",
+      "platformLabel": "Piattaforma",
+      "nameLabel": "Nome",
+      "channelIdLabel": "ID Canale",
+      "saveAndContinue": "Salva e Continua",
+      "confirmAndConnect": "Conferma e Connetti",
+      "channelCreateError": "Errore nella creazione del canale"
+    },
+    "activeState": {
+      "addNew": {
+        "title": "Aggiungi Nuovo Canale",
+        "description": "Connetti un altro Telegram, Discord o altra piattaforma"
+      }
+    },
+    "delete": {
+      "title": "Eliminare il Canale?",
+      "aboutTo": "Stai per eliminare:",
+      "warning": "Questa azione non può essere annullata. Tutte le automazioni collegate a questo canale verranno disattivate.",
+      "confirmButton": "Sì, Elimina"
+    }
+  },
   "usageDashboard": {
     "yourPlan": "Il tuo Piano",
     "upgrade": "Upgrade",
