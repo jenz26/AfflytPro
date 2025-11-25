@@ -70,7 +70,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('${API_BASE}/validate/telegram-token', {
+            const response = await fetch(`${API_BASE}/validate/telegram-token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token })
@@ -103,7 +103,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('${API_BASE}/validate/telegram-channel', {
+            const response = await fetch(`${API_BASE}/validate/telegram-channel`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, channelId })
@@ -132,7 +132,7 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
 
         try {
             const token = localStorage.getItem('token'); // Get auth token
-            const response = await fetch('${API_BASE}/validate/telegram-test', {
+            const response = await fetch(`${API_BASE}/validate/telegram-test`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

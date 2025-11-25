@@ -59,7 +59,7 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         const fetchChannels = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('${API_BASE}/user/channels', {
+                const response = await fetch(`${API_BASE}/user/channels`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

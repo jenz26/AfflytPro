@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import {
     Sparkles,
     TrendingUp,
@@ -34,67 +35,39 @@ interface SurveyData {
     channels: string[];
 }
 
-const GOALS = [
-    {
-        id: 'sales' as const,
-        icon: TrendingUp,
-        title: 'Aumentare le Vendite',
-        description: 'Vuoi massimizzare le commissioni di affiliazione pubblicando i deal migliori',
-        color: 'from-afflyt-profit-500 to-afflyt-profit-600'
-    },
-    {
-        id: 'audience' as const,
-        icon: Users,
-        title: 'Costruire un\'Audience',
-        description: 'Vuoi crescere la tua community con contenuti di valore costanti',
-        color: 'from-afflyt-cyan-500 to-afflyt-cyan-600'
-    },
-    {
-        id: 'monetize' as const,
-        icon: DollarSign,
-        title: 'Monetizzare Contenuti',
-        description: 'Hai già un\'audience e vuoi monetizzarla con automazioni intelligenti',
-        color: 'from-afflyt-plasma-500 to-afflyt-plasma-600'
-    }
-];
+const GOAL_IDS = ['sales', 'audience', 'monetize'] as const;
+const GOAL_ICONS = {
+    sales: TrendingUp,
+    audience: Users,
+    monetize: DollarSign
+};
+const GOAL_COLORS = {
+    sales: 'from-afflyt-profit-500 to-afflyt-profit-600',
+    audience: 'from-afflyt-cyan-500 to-afflyt-cyan-600',
+    monetize: 'from-afflyt-plasma-500 to-afflyt-plasma-600'
+};
 
-const AUDIENCE_SIZES = [
-    { id: 'starting' as const, label: 'Sto iniziando', description: '0-100 follower', range: '0-100' },
-    { id: 'small' as const, label: 'Piccola audience', description: '100-1K follower', range: '100-1K' },
-    { id: 'medium' as const, label: 'Media audience', description: '1K-10K follower', range: '1K-10K' },
-    { id: 'large' as const, label: 'Grande audience', description: '10K+ follower', range: '10K+' }
-];
+const AUDIENCE_SIZE_IDS = ['starting', 'small', 'medium', 'large'] as const;
+const AUDIENCE_SIZE_RANGES = {
+    starting: '0-100',
+    small: '100-1K',
+    medium: '1K-10K',
+    large: '10K+'
+};
 
-const EXPERIENCE_LEVELS = [
-    {
-        id: 'beginner' as const,
-        label: 'Principiante',
-        description: 'Nuovo nel mondo dell\'affiliate marketing',
-        helpText: 'Ti guideremo passo-passo in ogni configurazione'
-    },
-    {
-        id: 'intermediate' as const,
-        label: 'Intermedio',
-        description: 'Conosco le basi, voglio automatizzare',
-        helpText: 'Configurazione guidata con suggerimenti avanzati'
-    },
-    {
-        id: 'advanced' as const,
-        label: 'Esperto',
-        description: 'Cerco massima flessibilità e controllo',
-        helpText: 'Accesso completo a tutte le funzionalità pro'
-    }
-];
+const EXPERIENCE_IDS = ['beginner', 'intermediate', 'advanced'] as const;
 
-const CHANNELS = [
-    { id: 'telegram', icon: Send, label: 'Telegram', description: 'Canali e gruppi' },
-    { id: 'email', icon: Mail, label: 'Email', description: 'Newsletter automatiche' },
-    { id: 'discord', icon: MessageSquare, label: 'Discord', description: 'Server e canali' }
-];
+const CHANNEL_IDS = ['telegram', 'email', 'discord'] as const;
+const CHANNEL_ICONS = {
+    telegram: Send,
+    email: Mail,
+    discord: MessageSquare
+};
 
 export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
+    const t = useTranslations('onboarding.welcomeFlow');
     const [step, setStep] = useState(() => {
-        // Carica lo step salvato da localStorage
+        // Load saved step from localStorage
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('onboarding_progress');
             if (saved) {
@@ -265,34 +238,34 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             <Sparkles className="w-7 h-7 text-afflyt-dark-100" />
                         </div>
                         <h1 className="text-2xl font-bold text-white mb-2">
-                            Benvenuto in Afflyt Pro
+                            {t('title')}
                         </h1>
                         <p className="text-sm text-gray-300 mb-6 max-w-xl mx-auto">
-                            L'automazione intelligente per l'affiliate marketing che lavora per te 24/7
+                            {t('subtitle')}
                         </p>
                         <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto mb-6">
                             <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                                 <div className="text-2xl font-bold text-afflyt-cyan-400 mb-0.5">100%</div>
-                                <div className="text-xs text-gray-400">Automatico</div>
+                                <div className="text-xs text-gray-400">{t('stats.automatic')}</div>
                             </div>
                             <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                                 <div className="text-2xl font-bold text-afflyt-profit-400 mb-0.5">+247%</div>
-                                <div className="text-xs text-gray-400">ROI Medio</div>
+                                <div className="text-xs text-gray-400">{t('stats.avgRoi')}</div>
                             </div>
                             <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                                 <div className="text-2xl font-bold text-afflyt-plasma-400 mb-0.5">24/7</div>
-                                <div className="text-xs text-gray-400">Attivo</div>
+                                <div className="text-xs text-gray-400">{t('stats.active')}</div>
                             </div>
                         </div>
                         <p className="text-sm text-gray-400 mb-4">
-                            Rispondi a 4 domande per personalizzare la tua esperienza
+                            {t('answerQuestions')}
                         </p>
                         <button
                             onClick={useRecommendedSettings}
                             className="mx-auto px-4 py-2 bg-afflyt-dark-50 border border-afflyt-cyan-500/30 rounded-lg text-sm text-afflyt-cyan-400 hover:bg-afflyt-cyan-500/10 hover:border-afflyt-cyan-500/50 transition-all flex items-center gap-2"
                         >
                             <Sparkles className="w-4 h-4" />
-                            Usa impostazioni raccomandate (più veloce)
+                            {t('useRecommended')}
                         </button>
                     </motion.div>
                 );
@@ -306,45 +279,49 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     >
                         <div className="flex items-start gap-2 mb-3">
-                            <h2 className="text-xl font-bold text-white flex-1">Qual è il tuo obiettivo principale?</h2>
+                            <h2 className="text-xl font-bold text-white flex-1">{t('goals.title')}</h2>
                             <div className="group relative">
                                 <Info className="w-5 h-5 text-gray-500 cursor-help" />
                                 <div className="absolute right-0 top-6 w-64 p-3 bg-afflyt-dark-100 border border-afflyt-glass-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                                     <p className="text-xs text-gray-300">
-                                        Useremo questa info per suggerirti template di automazione ottimizzati per il tuo caso d'uso
+                                        {t('goals.infoTooltip')}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <p className="text-sm text-gray-400 mb-4">Questo ci aiuterà a personalizzare i suggerimenti per te</p>
+                        <p className="text-sm text-gray-400 mb-4">{t('goals.helpText')}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {GOALS.map((goal) => (
+                            {GOAL_IDS.map((goalId) => {
+                                const Icon = GOAL_ICONS[goalId];
+                                const color = GOAL_COLORS[goalId];
+                                return (
                                 <button
-                                    key={goal.id}
-                                    onClick={() => updateData('goal', goal.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[160px] ${surveyData.goal === goal.id
+                                    key={goalId}
+                                    onClick={() => updateData('goal', goalId)}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[160px] ${surveyData.goal === goalId
                                         ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
                                         : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
                                         }`}
                                 >
                                     <div className="flex flex-col items-start gap-3 h-full">
                                         <div className="flex items-center justify-between w-full">
-                                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${goal.color} flex items-center justify-center shrink-0`}>
-                                                <goal.icon className="w-5 h-5 text-white" />
+                                            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center shrink-0`}>
+                                                <Icon className="w-5 h-5 text-white" />
                                             </div>
-                                            {surveyData.goal === goal.id && (
+                                            {surveyData.goal === goalId && (
                                                 <div className="w-5 h-5 rounded-full bg-afflyt-cyan-500 flex items-center justify-center shrink-0">
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-base font-semibold text-white mb-1">{goal.title}</h3>
-                                            <p className="text-xs text-gray-400 leading-relaxed">{goal.description}</p>
+                                            <h3 className="text-base font-semibold text-white mb-1">{t(`goals.${goalId}.title`)}</h3>
+                                            <p className="text-xs text-gray-400 leading-relaxed">{t(`goals.${goalId}.description`)}</p>
                                         </div>
                                     </div>
                                 </button>
-                            ))}
+                                );
+                            })}
                         </div>
                         {surveyData.goal && (
                             <motion.div
@@ -354,9 +331,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             >
                                 <Lightbulb className="w-4 h-4 text-afflyt-cyan-400 shrink-0 mt-0.5" />
                                 <p className="text-xs text-gray-300">
-                                    {surveyData.goal === 'sales' && 'Perfetto! Ti suggeriremo automazioni focalizzate su deal ad alto tasso di conversione.'}
-                                    {surveyData.goal === 'audience' && 'Ottimo! Ti suggeriremo template per crescita audience con contenuti di valore.'}
-                                    {surveyData.goal === 'monetize' && 'Fantastico! Ti proporremo strategie di monetizzazione avanzate per la tua audience esistente.'}
+                                    {t(`goals.${surveyData.goal}.feedback`)}
                                 </p>
                             </motion.div>
                         )}
@@ -371,25 +346,25 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     >
-                        <h2 className="text-xl font-bold text-white mb-1">Dimensione della tua audience</h2>
-                        <p className="text-sm text-gray-400 mb-4">Ottimizzeremo le strategie in base alla tua audience attuale</p>
+                        <h2 className="text-xl font-bold text-white mb-1">{t('audienceSize.title')}</h2>
+                        <p className="text-sm text-gray-400 mb-4">{t('audienceSize.helpText')}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {AUDIENCE_SIZES.map((size) => (
+                            {AUDIENCE_SIZE_IDS.map((sizeId) => (
                                 <button
-                                    key={size.id}
-                                    onClick={() => updateData('audienceSize', size.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${surveyData.audienceSize === size.id
+                                    key={sizeId}
+                                    onClick={() => updateData('audienceSize', sizeId)}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${surveyData.audienceSize === sizeId
                                         ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
                                         : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
                                         }`}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <h3 className="text-base font-semibold text-white mb-1">{size.label}</h3>
-                                            <p className="text-xs text-gray-400">{size.description}</p>
-                                            <p className="text-xs text-afflyt-cyan-400 mt-1.5 font-mono">{size.range}</p>
+                                            <h3 className="text-base font-semibold text-white mb-1">{t(`audienceSize.${sizeId}.label`)}</h3>
+                                            <p className="text-xs text-gray-400">{t(`audienceSize.${sizeId}.description`)}</p>
+                                            <p className="text-xs text-afflyt-cyan-400 mt-1.5 font-mono">{AUDIENCE_SIZE_RANGES[sizeId]}</p>
                                         </div>
-                                        {surveyData.audienceSize === size.id && (
+                                        {surveyData.audienceSize === sizeId && (
                                             <div className="w-5 h-5 rounded-full bg-afflyt-cyan-500 flex items-center justify-center shrink-0">
                                                 <Check className="w-3 h-3 text-white" />
                                             </div>
@@ -409,29 +384,29 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     >
-                        <h2 className="text-xl font-bold text-white mb-1">Livello di esperienza</h2>
-                        <p className="text-sm text-gray-400 mb-4">Adatteremo il livello di guida e assistenza</p>
+                        <h2 className="text-xl font-bold text-white mb-1">{t('experience.title')}</h2>
+                        <p className="text-sm text-gray-400 mb-4">{t('experience.helpText')}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {EXPERIENCE_LEVELS.map((level) => (
+                            {EXPERIENCE_IDS.map((levelId) => (
                                 <button
-                                    key={level.id}
-                                    onClick={() => updateData('experienceLevel', level.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all text-left ${surveyData.experienceLevel === level.id
+                                    key={levelId}
+                                    onClick={() => updateData('experienceLevel', levelId)}
+                                    className={`p-4 rounded-xl border-2 transition-all text-left ${surveyData.experienceLevel === levelId
                                         ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
                                         : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
                                         }`}
                                 >
                                     <div className="flex flex-col items-start min-h-[140px]">
                                         <div className="flex items-center justify-between w-full mb-3">
-                                            <h3 className="text-base font-semibold text-white">{level.label}</h3>
-                                            {surveyData.experienceLevel === level.id && (
+                                            <h3 className="text-base font-semibold text-white">{t(`experience.${levelId}.label`)}</h3>
+                                            {surveyData.experienceLevel === levelId && (
                                                 <div className="w-5 h-5 rounded-full bg-afflyt-cyan-500 flex items-center justify-center shrink-0">
                                                     <Check className="w-3 h-3 text-white" />
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-xs text-gray-400 mb-2">{level.description}</p>
-                                        <p className="text-xs text-afflyt-cyan-400 mt-auto">{level.helpText}</p>
+                                        <p className="text-xs text-gray-400 mb-2">{t(`experience.${levelId}.description`)}</p>
+                                        <p className="text-xs text-afflyt-cyan-400 mt-auto">{t(`experience.${levelId}.helpText`)}</p>
                                     </div>
                                 </button>
                             ))}
@@ -447,46 +422,49 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     >
-                        <h2 className="text-xl font-bold text-white mb-1">Seleziona i canali da configurare</h2>
-                        <p className="text-sm text-gray-400 mb-4">Puoi sempre aggiungerne altri in seguito (scegli almeno uno)</p>
+                        <h2 className="text-xl font-bold text-white mb-1">{t('channels.title')}</h2>
+                        <p className="text-sm text-gray-400 mb-4">{t('channels.helpText')}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                            {CHANNELS.map((channel) => (
+                            {CHANNEL_IDS.map((channelId) => {
+                                const Icon = CHANNEL_ICONS[channelId];
+                                return (
                                 <button
-                                    key={channel.id}
-                                    onClick={() => toggleChannel(channel.id)}
-                                    className={`p-4 rounded-xl border-2 transition-all ${surveyData.channels.includes(channel.id)
+                                    key={channelId}
+                                    onClick={() => toggleChannel(channelId)}
+                                    className={`p-4 rounded-xl border-2 transition-all ${surveyData.channels.includes(channelId)
                                         ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
                                         : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
                                         }`}
                                 >
                                     <div className="text-center">
-                                        <div className={`w-12 h-12 mx-auto mb-2 rounded-lg flex items-center justify-center ${surveyData.channels.includes(channel.id)
+                                        <div className={`w-12 h-12 mx-auto mb-2 rounded-lg flex items-center justify-center ${surveyData.channels.includes(channelId)
                                             ? 'bg-afflyt-cyan-500'
                                             : 'bg-afflyt-dark-100'
                                             }`}>
-                                            <channel.icon className={`w-6 h-6 ${surveyData.channels.includes(channel.id)
+                                            <Icon className={`w-6 h-6 ${surveyData.channels.includes(channelId)
                                                 ? 'text-white'
                                                 : 'text-gray-500'
                                                 }`} />
                                         </div>
-                                        <h3 className="text-base font-semibold text-white mb-0.5">{channel.label}</h3>
-                                        <p className="text-xs text-gray-400">{channel.description}</p>
-                                        {surveyData.channels.includes(channel.id) && (
+                                        <h3 className="text-base font-semibold text-white mb-0.5">{t(`channels.${channelId}.label`)}</h3>
+                                        <p className="text-xs text-gray-400">{t(`channels.${channelId}.description`)}</p>
+                                        {surveyData.channels.includes(channelId) && (
                                             <div className="mt-2 flex items-center justify-center gap-1 text-afflyt-cyan-400">
                                                 <Check className="w-3 h-3" />
-                                                <span className="text-xs font-medium">Selezionato</span>
+                                                <span className="text-xs font-medium">{t('selected')}</span>
                                             </div>
                                         )}
                                     </div>
                                 </button>
-                            ))}
+                                );
+                            })}
                         </div>
                         <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                             <p className="text-xs text-gray-300 mb-1">
-                                <strong className="text-white">Canali selezionati:</strong> {surveyData.channels.length === 0 ? 'Nessuno' : surveyData.channels.join(', ')}
+                                <strong className="text-white">{t('channels.selectedChannels')}</strong> {surveyData.channels.length === 0 ? t('channels.none') : surveyData.channels.join(', ')}
                             </p>
                             <p className="text-xs text-gray-500">
-                                Configureremo questi canali nei prossimi passaggi
+                                {t('channels.configureNext')}
                             </p>
                         </div>
                         {surveyData.channels.length === 1 && (
@@ -497,7 +475,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             >
                                 <Lightbulb className="w-4 h-4 text-afflyt-cyan-400 shrink-0 mt-0.5" />
                                 <p className="text-xs text-gray-300">
-                                    Hai selezionato solo {surveyData.channels[0]}. Salteremo automaticamente la configurazione degli altri canali.
+                                    {t('channels.singleChannelNote', { channel: surveyData.channels[0] })}
                                 </p>
                             </motion.div>
                         )}
@@ -509,7 +487,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             >
                                 <Info className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
                                 <p className="text-xs text-gray-300">
-                                    Configureremo tutti i {surveyData.channels.length} canali selezionati. Puoi sempre skippare i canali che non vuoi configurare ora.
+                                    {t('channels.multiChannelNote', { count: surveyData.channels.length })}
                                 </p>
                             </motion.div>
                         )}
@@ -526,7 +504,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             {/* Progress Indicator */}
             <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400">Passo {step + 1} di 5</span>
+                    <span className="text-xs text-gray-400">{t('step', { current: step + 1, total: 5 })}</span>
                     <span className="text-xs font-mono text-afflyt-cyan-400">
                         {Math.round(((step + 1) / 5) * 100)}%
                     </span>
@@ -574,7 +552,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             className="gap-2"
                         >
                             <ChevronLeft className="w-4 h-4" />
-                            Indietro
+                            {t('navigation.back')}
                         </CyberButton>
                     )}
                 </div>
@@ -585,7 +563,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             variant="ghost"
                             onClick={onSkip}
                         >
-                            Salta
+                            {t('navigation.skip')}
                         </CyberButton>
                     )}
 
@@ -596,7 +574,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             disabled={!isStepComplete()}
                             className="gap-2"
                         >
-                            {step === 0 ? 'Inizia' : 'Continua'}
+                            {step === 0 ? t('navigation.start') : t('navigation.continue')}
                             <ChevronRight className="w-4 h-4" />
                         </CyberButton>
                     ) : (
@@ -607,7 +585,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             className="gap-2"
                         >
                             <Rocket className="w-4 h-4" />
-                            Inizia la configurazione
+                            {t('navigation.startConfiguration')}
                         </CyberButton>
                     )}
                 </div>

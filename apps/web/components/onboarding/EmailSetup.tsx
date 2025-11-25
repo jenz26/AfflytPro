@@ -87,7 +87,7 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
         setValidationError('');
 
         try {
-            const response = await fetch('${API_BASE}/validate/email-key', {
+            const response = await fetch(`${API_BASE}/validate/email-key`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ apiKey: key, provider: prov })

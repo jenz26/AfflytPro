@@ -161,7 +161,8 @@
     "live": "Live",
     "billing": "Fatturazione",
     "profile": "Profilo",
-    "logout": "Esci"
+    "logout": "Esci",
+    "completeSetup": "Completa Setup"
   },
   "sidebar": {
     "accountStatus": "Stato Account",
@@ -390,6 +391,113 @@
           "dedicatedSupport": "Supporto dedicato"
         }
       }
+    },
+    "layout": {
+      "initialSetup": "Setup Iniziale",
+      "step": "Step {current} di {total}",
+      "completeLater": "Completa dopo",
+      "exit": "Esci",
+      "yourJourney": "Il Tuo Percorso"
+    },
+    "welcomeFlow": {
+      "title": "Benvenuto in Afflyt Pro",
+      "subtitle": "L'automazione intelligente per l'affiliate marketing che lavora per te 24/7",
+      "stats": {
+        "automatic": "Automatico",
+        "avgRoi": "ROI Medio",
+        "active": "Attivo"
+      },
+      "answerQuestions": "Rispondi a 4 domande per personalizzare la tua esperienza",
+      "useRecommended": "Usa impostazioni raccomandate (più veloce)",
+      "step": "Passo {current} di {total}",
+      "goals": {
+        "title": "Qual è il tuo obiettivo principale?",
+        "helpText": "Questo ci aiuterà a personalizzare i suggerimenti per te",
+        "infoTooltip": "Useremo questa info per suggerirti template di automazione ottimizzati per il tuo caso d'uso",
+        "sales": {
+          "title": "Aumentare le Vendite",
+          "description": "Vuoi massimizzare le commissioni di affiliazione pubblicando i deal migliori",
+          "feedback": "Perfetto! Ti suggeriremo automazioni focalizzate su deal ad alto tasso di conversione."
+        },
+        "audience": {
+          "title": "Costruire un'Audience",
+          "description": "Vuoi crescere la tua community con contenuti di valore costanti",
+          "feedback": "Ottimo! Ti suggeriremo template per crescita audience con contenuti di valore."
+        },
+        "monetize": {
+          "title": "Monetizzare Contenuti",
+          "description": "Hai già un'audience e vuoi monetizzarla con automazioni intelligenti",
+          "feedback": "Fantastico! Ti proporremo strategie di monetizzazione avanzate per la tua audience esistente."
+        }
+      },
+      "audienceSize": {
+        "title": "Dimensione della tua audience",
+        "helpText": "Ottimizzeremo le strategie in base alla tua audience attuale",
+        "starting": {
+          "label": "Sto iniziando",
+          "description": "0-100 follower"
+        },
+        "small": {
+          "label": "Piccola audience",
+          "description": "100-1K follower"
+        },
+        "medium": {
+          "label": "Media audience",
+          "description": "1K-10K follower"
+        },
+        "large": {
+          "label": "Grande audience",
+          "description": "10K+ follower"
+        }
+      },
+      "experience": {
+        "title": "Livello di esperienza",
+        "helpText": "Adatteremo il livello di guida e assistenza",
+        "beginner": {
+          "label": "Principiante",
+          "description": "Nuovo nel mondo dell'affiliate marketing",
+          "helpText": "Ti guideremo passo-passo in ogni configurazione"
+        },
+        "intermediate": {
+          "label": "Intermedio",
+          "description": "Conosco le basi, voglio automatizzare",
+          "helpText": "Configurazione guidata con suggerimenti avanzati"
+        },
+        "advanced": {
+          "label": "Esperto",
+          "description": "Cerco massima flessibilità e controllo",
+          "helpText": "Accesso completo a tutte le funzionalità pro"
+        }
+      },
+      "channels": {
+        "title": "Seleziona i canali da configurare",
+        "helpText": "Puoi sempre aggiungerne altri in seguito (scegli almeno uno)",
+        "telegram": {
+          "label": "Telegram",
+          "description": "Canali e gruppi"
+        },
+        "email": {
+          "label": "Email",
+          "description": "Newsletter automatiche"
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Server e canali"
+        },
+        "selectedChannels": "Canali selezionati:",
+        "none": "Nessuno",
+        "configureNext": "Configureremo questi canali nei prossimi passaggi",
+        "singleChannelNote": "Hai selezionato solo {channel}. Salteremo automaticamente la configurazione degli altri canali.",
+        "multiChannelNote": "Configureremo tutti i {count} canali selezionati. Puoi sempre skippare i canali che non vuoi configurare ora."
+      },
+      "navigation": {
+        "back": "Indietro",
+        "skip": "Salta",
+        "start": "Inizia",
+        "continue": "Continua",
+        "startConfiguration": "Inizia la configurazione"
+      },
+      "selected": "Selezionato"
     },
     "complete": {
       "title": "Tutto pronto!",

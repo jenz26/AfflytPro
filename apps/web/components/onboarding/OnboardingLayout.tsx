@@ -2,7 +2,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactNode, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles, ChevronUp } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 
 interface OnboardingLayoutProps {
     children: ReactNode;
@@ -21,6 +23,7 @@ export const OnboardingLayout = ({
     totalSteps,
     onExit
 }: OnboardingLayoutProps) => {
+    const t = useTranslations('onboarding.layout');
     const progressPercentage = Math.round((currentStep / totalSteps) * 100);
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
 
@@ -36,14 +39,14 @@ export const OnboardingLayout = ({
                         </div>
                         <div className="hidden sm:block">
                             <h1 className="text-sm font-bold text-white">Afflyt Pro</h1>
-                            <p className="text-xs text-gray-500">Setup iniziale</p>
+                            <p className="text-xs text-gray-500">{t('initialSetup')}</p>
                         </div>
                     </div>
 
                     {/* Progress Bar Horizontal - Hidden on very small screens */}
                     <div className="flex-1 max-w-xs md:max-w-md mx-4 md:mx-8">
                         <div className="hidden sm:flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-400">Step {currentStep} di {totalSteps}</span>
+                            <span className="text-xs text-gray-400">{t('step', { current: currentStep, total: totalSteps })}</span>
                             <span className="text-xs font-mono text-afflyt-cyan-400">{progressPercentage}%</span>
                         </div>
                         <div className="h-1 md:h-1.5 bg-afflyt-dark-100 rounded-full overflow-hidden">
@@ -56,8 +59,11 @@ export const OnboardingLayout = ({
                         </div>
                     </div>
 
-                    {/* Mobile: Bottom Sheet Toggle + Exit */}
+                    {/* Mobile: Bottom Sheet Toggle + Language + Exit */}
                     <div className="flex items-center gap-2">
+                        {/* Language Switcher */}
+                        <LanguageSwitcher />
+
                         <button
                             onClick={() => setIsBottomSheetOpen(!isBottomSheetOpen)}
                             className="lg:hidden text-xs text-afflyt-cyan-400 hover:text-afflyt-cyan-300 transition-colors px-2 py-1 border border-afflyt-cyan-500/30 rounded"
@@ -71,8 +77,8 @@ export const OnboardingLayout = ({
                                 onClick={onExit}
                                 className="text-xs md:text-sm text-gray-400 hover:text-white transition-colors"
                             >
-                                <span className="hidden sm:inline">Completa dopo</span>
-                                <span className="sm:hidden">Esci</span>
+                                <span className="hidden sm:inline">{t('completeLater')}</span>
+                                <span className="sm:hidden">{t('exit')}</span>
                             </button>
                         )}
                     </div>
@@ -139,7 +145,7 @@ export const OnboardingLayout = ({
                             <div className="sticky top-0 bg-afflyt-dark-50 p-4 border-b border-afflyt-glass-border">
                                 <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-3" />
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-white">Il Tuo Percorso</h3>
+                                    <h3 className="text-sm font-semibold text-white">{t('yourJourney')}</h3>
                                     <button
                                         onClick={() => setIsBottomSheetOpen(false)}
                                         className="text-gray-400 hover:text-white"

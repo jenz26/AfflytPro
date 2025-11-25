@@ -56,7 +56,7 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
         try {
             setIsLoading(true);
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const response = await fetch('${API_BASE}/automation/templates', {
+            const response = await fetch(`${API_BASE}/automation/templates`, {
                 headers: {
                     ...(token && { 'Authorization': `Bearer ${token}` })
                 }
@@ -74,7 +74,7 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
         try {
             setIsCreating(true);
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const response = await fetch('${API_BASE}/automation/from-template', {
+            const response = await fetch(`${API_BASE}/automation/from-template`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

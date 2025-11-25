@@ -11,11 +11,13 @@ import {
     ProgressDashboard,
     OnboardingLayout,
     ProgressTracker,
-    ContextPreview
+    ContextPreview,
+    PlanSelector,
+    PlanType
 } from '@/components/onboarding';
 import { API_BASE } from '@/lib/api/config';
 
-type OnboardingStep = 'welcome' | 'telegram' | 'email' | 'automation' | 'complete';
+type OnboardingStep = 'welcome' | 'plan' | 'telegram' | 'email' | 'automation' | 'complete';
 
 interface SurveyData {
     goal: string | null;
@@ -33,8 +35,10 @@ export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
     const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+    const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
     const [progress, setProgress] = useState({
         welcomeSurveyCompleted: false,
+        planSelected: false,
         channelsSelected: [] as string[],
         telegramSetupCompleted: false,
         emailSetupCompleted: false,
@@ -56,10 +60,19 @@ export default function OnboardingPage() {
             experienceLevel: data.experienceLevel
         }));
 
+        // Go to plan selection
+        setCurrentStep('plan');
+    };
+
+    const handlePlanSelect = (plan: PlanType) => {
+        console.log('Plan selected:', plan);
+        setSelectedPlan(plan);
+        setProgress(prev => ({ ...prev, planSelected: true }));
+
         // Navigate to first selected channel or automation
-        if (data.channels.includes('telegram')) {
+        if (selectedChannels.includes('telegram')) {
             setCurrentStep('telegram');
-        } else if (data.channels.includes('email')) {
+        } else if (selectedChannels.includes('email')) {
             setCurrentStep('email');
         } else {
             setCurrentStep('automation');
@@ -72,7 +85,7 @@ export default function OnboardingPage() {
         try {
             // 1. Save bot token as Credential
             const token = localStorage.getItem('token');
-            const credentialResponse = await fetch('${API_BASE}/user/credentials', {
+            const credentialResponse = await fetch(`${API_BASE}/user/credentials`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -94,14 +107,14 @@ export default function OnboardingPage() {
             const credentialData = await credentialResponse.json();
 
             // 2. Create Channel linked to the credential
-            const channelResponse = await fetch('${API_BASE}/user/channels', {
+            const channelResponse = await fetch(`${API_BASE}/user/channels`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token && { 'Authorization': `Bearer ${token}` })
                 },
                 body: JSON.stringify({
-                    name: data.channelName || `Telegram - ${data.channelId}`, // Use friendly name
+                    name: data.channelName || `Telegram - ${data.channelId}`,
                     platform: 'TELEGRAM',
                     channelId: data.channelId,
                     credentialId: credentialData.id
@@ -133,14 +146,14 @@ export default function OnboardingPage() {
         try {
             // 1. Save API key as Credential
             const token = localStorage.getItem('token');
-            const credentialResponse = await fetch('${API_BASE}/user/credentials', {
+            const credentialResponse = await fetch(`${API_BASE}/user/credentials`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token && { 'Authorization': `Bearer ${token}` })
                 },
                 body: JSON.stringify({
-                    provider: data.provider.toUpperCase(), // SENDGRID or RESEND
+                    provider: data.provider.toUpperCase(),
                     key: data.apiKey,
                     label: `${data.provider} - ${data.senderEmail}`
                 })
@@ -155,7 +168,7 @@ export default function OnboardingPage() {
             const credentialData = await credentialResponse.json();
 
             // 2. Create Channel for email
-            const channelResponse = await fetch('${API_BASE}/user/channels', {
+            const channelResponse = await fetch(`${API_BASE}/user/channels`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -187,6 +200,11 @@ export default function OnboardingPage() {
         setProgress(prev => ({ ...prev, firstAutomationCreated: true }));
         setCurrentStep('complete');
 
+        // Mark onboarding as completed
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('onboarding_completed', 'true');
+        }
+
         // Redirect to dashboard after 2 seconds
         setTimeout(() => {
             router.push(`/${locale}/dashboard`);
@@ -207,6 +225,10 @@ export default function OnboardingPage() {
     };
 
     const handleSkipAutomation = () => {
+        // Mark onboarding as completed even when skipping
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('onboarding_completed', 'true');
+        }
         router.push(`/${locale}/dashboard`);
     };
 
@@ -222,12 +244,20 @@ export default function OnboardingPage() {
                 locked: false
             },
             {
+                id: 'plan',
+                label: tSteps('plan.label'),
+                description: tSteps('plan.description'),
+                completed: progress.planSelected,
+                current: currentStep === 'plan',
+                locked: !progress.welcomeSurveyCompleted
+            },
+            {
                 id: 'channels',
                 label: tSteps('channels.label'),
                 description: tSteps('channels.description'),
                 completed: progress.telegramSetupCompleted || progress.emailSetupCompleted,
                 current: currentStep === 'telegram' || currentStep === 'email',
-                locked: !progress.welcomeSurveyCompleted
+                locked: !progress.planSelected
             },
             {
                 id: 'automation',
@@ -235,7 +265,7 @@ export default function OnboardingPage() {
                 description: tSteps('automation.description'),
                 completed: progress.firstAutomationCreated,
                 current: currentStep === 'automation',
-                locked: !progress.welcomeSurveyCompleted
+                locked: !progress.planSelected
             }
         ];
         return steps;
@@ -243,7 +273,14 @@ export default function OnboardingPage() {
 
     // Get current step number
     const getCurrentStepNumber = () => {
-        const stepMap = { welcome: 1, telegram: 2, email: 2, automation: 3, complete: 3 };
+        const stepMap: Record<OnboardingStep, number> = {
+            welcome: 1,
+            plan: 2,
+            telegram: 3,
+            email: 3,
+            automation: 4,
+            complete: 4
+        };
         return stepMap[currentStep] || 1;
     };
 
@@ -258,6 +295,7 @@ export default function OnboardingPage() {
     // Get context for preview
     const getPreviewContext = (): 'welcome' | 'telegram' | 'email' | 'automation' => {
         if (currentStep === 'complete') return 'automation';
+        if (currentStep === 'plan') return 'welcome'; // Show welcome context during plan selection
         return currentStep as 'welcome' | 'telegram' | 'email' | 'automation';
     };
 
@@ -302,7 +340,7 @@ export default function OnboardingPage() {
     return (
         <OnboardingLayout
             currentStep={getCurrentStepNumber()}
-            totalSteps={3}
+            totalSteps={4}
             onExit={() => router.push(`/${locale}/dashboard`)}
             leftSidebar={
                 <ProgressTracker
@@ -321,6 +359,24 @@ export default function OnboardingPage() {
                 <WelcomeFlow
                     onComplete={handleWelcomeComplete}
                     onSkip={() => router.push(`/${locale}/dashboard`)}
+                />
+            )}
+
+            {currentStep === 'plan' && (
+                <PlanSelector
+                    onSelect={handlePlanSelect}
+                    onSkip={() => {
+                        setSelectedPlan('FREE');
+                        setProgress(prev => ({ ...prev, planSelected: true }));
+                        if (selectedChannels.includes('telegram')) {
+                            setCurrentStep('telegram');
+                        } else if (selectedChannels.includes('email')) {
+                            setCurrentStep('email');
+                        } else {
+                            setCurrentStep('automation');
+                        }
+                    }}
+                    selectedPlan={selectedPlan || undefined}
                 />
             )}
 

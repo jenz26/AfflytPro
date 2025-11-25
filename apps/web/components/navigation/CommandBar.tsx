@@ -19,7 +19,8 @@ import {
     Flame,
     User,
     LogOut,
-    CreditCard
+    CreditCard,
+    Sparkles
 } from 'lucide-react';
 import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -35,7 +36,19 @@ export const CommandBar = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [onboardingCompleted, setOnboardingCompleted] = useState(true);
     const userMenuRef = useRef<HTMLDivElement>(null);
+
+    // Check if onboarding is completed
+    useEffect(() => {
+        const checkOnboardingStatus = () => {
+            if (typeof window !== 'undefined') {
+                const completed = localStorage.getItem('onboarding_completed');
+                setOnboardingCompleted(completed === 'true');
+            }
+        };
+        checkOnboardingStatus();
+    }, []);
 
     // Close user menu when clicking outside
     useEffect(() => {
@@ -121,6 +134,17 @@ export const CommandBar = () => {
                             <div className="w-2 h-2 bg-afflyt-profit-400 rounded-full animate-pulse" />
                             <span className="text-xs text-afflyt-profit-400">{t('live')}</span>
                         </div>
+
+                        {/* Onboarding Button - Show if not completed */}
+                        {!onboardingCompleted && (
+                            <Link
+                                href={`/${locale}/onboarding`}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-afflyt-cyan-500/20 to-afflyt-plasma-500/20 border border-afflyt-cyan-500/40 rounded-lg hover:border-afflyt-cyan-500/60 transition-all group"
+                            >
+                                <Sparkles className="w-4 h-4 text-afflyt-cyan-400 group-hover:animate-pulse" />
+                                <span className="text-sm text-afflyt-cyan-300 font-medium">{t('completeSetup')}</span>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Center: Main Navigation */}
@@ -314,6 +338,18 @@ export const CommandBar = () => {
                 {mobileMenuOpen && (
                     <div className="absolute top-14 left-0 right-0 bg-afflyt-dark-50/95 backdrop-blur-xl border-b border-afflyt-glass-border">
                         <nav className="p-4 space-y-1">
+                            {/* Mobile Onboarding Button */}
+                            {!onboardingCompleted && (
+                                <Link
+                                    href={`/${locale}/onboarding`}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 mb-2 bg-gradient-to-r from-afflyt-cyan-500/20 to-afflyt-plasma-500/20 border border-afflyt-cyan-500/40 rounded-lg"
+                                >
+                                    <Sparkles className="w-5 h-5 text-afflyt-cyan-400" />
+                                    <span className="text-afflyt-cyan-300 font-medium">{t('completeSetup')}</span>
+                                </Link>
+                            )}
+
                             {navItems.map((item) => {
                                 const isActive = pathname === item.path;
 

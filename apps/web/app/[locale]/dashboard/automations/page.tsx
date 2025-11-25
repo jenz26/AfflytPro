@@ -61,7 +61,7 @@ export default function AutomationStudioPage() {
     const fetchRules = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('${API_BASE}/automation/rules', {
+            const response = await fetch(`${API_BASE}/automation/rules`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -107,7 +107,7 @@ export default function AutomationStudioPage() {
                 }
             } else {
                 // Create new rule
-                const response = await fetch('${API_BASE}/automation/rules', {
+                const response = await fetch(`${API_BASE}/automation/rules`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -219,7 +219,7 @@ export default function AutomationStudioPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('${API_BASE}/automation/rules', {
+            const response = await fetch(`${API_BASE}/automation/rules`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

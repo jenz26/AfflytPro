@@ -161,7 +161,8 @@
     "live": "Live",
     "billing": "Billing",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "completeSetup": "Complete Setup"
   },
   "sidebar": {
     "accountStatus": "Account Status",
@@ -390,6 +391,113 @@
           "dedicatedSupport": "Dedicated support"
         }
       }
+    },
+    "layout": {
+      "initialSetup": "Initial Setup",
+      "step": "Step {current} of {total}",
+      "completeLater": "Complete later",
+      "exit": "Exit",
+      "yourJourney": "Your Journey"
+    },
+    "welcomeFlow": {
+      "title": "Welcome to Afflyt Pro",
+      "subtitle": "Smart automation for affiliate marketing that works for you 24/7",
+      "stats": {
+        "automatic": "Automatic",
+        "avgRoi": "Avg ROI",
+        "active": "Active"
+      },
+      "answerQuestions": "Answer 4 questions to customize your experience",
+      "useRecommended": "Use recommended settings (faster)",
+      "step": "Step {current} of {total}",
+      "goals": {
+        "title": "What is your main goal?",
+        "helpText": "This helps us personalize suggestions for you",
+        "infoTooltip": "We'll use this info to suggest automation templates optimized for your use case",
+        "sales": {
+          "title": "Increase Sales",
+          "description": "Maximize affiliate commissions by publishing the best deals",
+          "feedback": "Perfect! We'll suggest automations focused on high-conversion deals."
+        },
+        "audience": {
+          "title": "Build an Audience",
+          "description": "Grow your community with consistent valuable content",
+          "feedback": "Great! We'll suggest templates for audience growth with valuable content."
+        },
+        "monetize": {
+          "title": "Monetize Content",
+          "description": "Already have an audience and want to monetize with smart automations",
+          "feedback": "Awesome! We'll propose advanced monetization strategies for your existing audience."
+        }
+      },
+      "audienceSize": {
+        "title": "Your audience size",
+        "helpText": "We'll optimize strategies based on your current audience",
+        "starting": {
+          "label": "Just starting",
+          "description": "0-100 followers"
+        },
+        "small": {
+          "label": "Small audience",
+          "description": "100-1K followers"
+        },
+        "medium": {
+          "label": "Medium audience",
+          "description": "1K-10K followers"
+        },
+        "large": {
+          "label": "Large audience",
+          "description": "10K+ followers"
+        }
+      },
+      "experience": {
+        "title": "Experience level",
+        "helpText": "We'll adapt the level of guidance and assistance",
+        "beginner": {
+          "label": "Beginner",
+          "description": "New to affiliate marketing",
+          "helpText": "We'll guide you step-by-step through every setup"
+        },
+        "intermediate": {
+          "label": "Intermediate",
+          "description": "Know the basics, want to automate",
+          "helpText": "Guided setup with advanced suggestions"
+        },
+        "advanced": {
+          "label": "Expert",
+          "description": "Looking for maximum flexibility and control",
+          "helpText": "Full access to all pro features"
+        }
+      },
+      "channels": {
+        "title": "Select channels to configure",
+        "helpText": "You can always add more later (select at least one)",
+        "telegram": {
+          "label": "Telegram",
+          "description": "Channels and groups"
+        },
+        "email": {
+          "label": "Email",
+          "description": "Automated newsletters"
+        },
+        "discord": {
+          "label": "Discord",
+          "description": "Servers and channels"
+        },
+        "selectedChannels": "Selected channels:",
+        "none": "None",
+        "configureNext": "We'll configure these channels in the next steps",
+        "singleChannelNote": "You selected only {channel}. We'll automatically skip the other channels configuration.",
+        "multiChannelNote": "We'll configure all {count} selected channels. You can skip any channel you don't want to set up now."
+      },
+      "navigation": {
+        "back": "Back",
+        "skip": "Skip",
+        "start": "Start",
+        "continue": "Continue",
+        "startConfiguration": "Start configuration"
+      },
+      "selected": "Selected"
     },
     "complete": {
       "title": "All set!",
