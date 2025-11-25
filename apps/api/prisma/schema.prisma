@@ -3,70 +3,110 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Note: SQLite doesn't support enums natively
-// PlanType values: "FREE" | "PRO" | "BUSINESS"
-// Validated at runtime in planLimits.ts
+// === ENUMS (PostgreSQL native) ===
+
+enum PlanType {
+  FREE
+  PRO
+  BUSINESS
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  MAGIC_LINK
+}
+
+enum ChannelPlatform {
+  TELEGRAM
+  DISCORD
+}
+
+enum ChannelStatus {
+  CONNECTED
+  PENDING
+  ERROR
+}
+
+enum TriggerType {
+  SCHEDULE
+  SCORE_THRESHOLD
+  PRICE_DROP
+}
+
+enum ActionType {
+  PUBLISH_CHANNEL
+  SEND_EMAIL
+  WEBHOOK
+}
+
+// === USER & AUTHENTICATION ===
 
 model User {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  name               String?
-  password           String?              // Hashed password (bcrypt)
-  role               String               @default("USER")
-  plan               String               @default("FREE") // "FREE" | "PRO" | "BUSINESS"
-  ttl                Int                  @default(72) // hours
-  brandId            String?
+  id                  String               @id @default(uuid())
+  email               String               @unique
+  name                String?
+  password            String?              // Hashed password (bcrypt)
+  role                UserRole             @default(USER)
+  plan                PlanType             @default(FREE)
+  ttl                 Int                  @default(72) // hours
+  brandId             String?
 
   // Email verification
-  emailVerified      Boolean              @default(false)
-  emailVerifiedAt    DateTime?
+  emailVerified       Boolean              @default(false)
+  emailVerifiedAt     DateTime?
 
   // Account status
-  isActive           Boolean              @default(true)
-  lastLoginAt        DateTime?
-  failedLoginAttempts Int                 @default(0)
-  lockedUntil        DateTime?
+  isActive            Boolean              @default(true)
+  lastLoginAt         DateTime?
+  failedLoginAttempts Int                  @default(0)
+  lockedUntil         DateTime?
 
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   // Relations
-  apiKeys            ApiKey[]
-  credentials        Credential[]
-  channels           Channel[]
-  affiliateLinks     AffiliateLink[]
-  keepaBudgets       KeepaMonthlyBudget[]
-  automationRules    AutomationRule[]
-  automationSplits   AutomationSplit[]
-  messageTemplates   MessageTemplate[]
-  onboardingProgress OnboardingProgress?
-  achievements       Achievement[]
-  authTokens         AuthToken[]
+  apiKeys             ApiKey[]
+  credentials         Credential[]
+  channels            Channel[]
+  affiliateLinks      AffiliateLink[]
+  keepaBudgets        KeepaMonthlyBudget[]
+  automationRules     AutomationRule[]
+  automationSplits    AutomationSplit[]
+  messageTemplates    MessageTemplate[]
+  onboardingProgress  OnboardingProgress?
+  achievements        Achievement[]
+  authTokens          AuthToken[]
+
+  @@index([email])
+  @@index([plan])
 }
 
-// === AUTHENTICATION TOKENS ===
-// Used for email verification, password reset, and magic links
-
 model AuthToken {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  token     String   @unique // Secure random token (hashed)
-  type      String   // "EMAIL_VERIFICATION" | "PASSWORD_RESET" | "MAGIC_LINK"
+  token     String        @unique // Secure random token (hashed)
+  type      AuthTokenType
 
   expiresAt DateTime
-  usedAt    DateTime? // When the token was used (null if not used)
+  usedAt    DateTime?     // When the token was used (null if not used)
 
   // Metadata for security
   ipAddress String?
   userAgent String?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
 
   @@index([userId])
   @@index([token])
@@ -78,37 +118,49 @@ model ApiKey {
   id        String    @id @default(uuid())
   key       String    @unique
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())
   expiresAt DateTime?
+
+  @@index([userId])
 }
+
+// === CREDENTIALS & CHANNELS ===
 
 model Credential {
   id        String    @id @default(uuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  provider  String // e.g., "OPENAI", "ANTHROPIC", "TELEGRAM_BOT"
-  key       String // Encrypted value
-  label     String? // User friendly name
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  String    // e.g., "OPENAI", "ANTHROPIC", "TELEGRAM_BOT"
+  key       String    // Encrypted value
+  label     String?   // User friendly name
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   channels  Channel[]
+
+  @@index([userId])
+  @@index([provider])
 }
 
 model Channel {
   id              String           @id @default(uuid())
   userId          String
-  user            User             @relation(fields: [userId], references: [id])
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
-  platform        String // "TELEGRAM", "DISCORD"
-  channelId       String // e.g., "@mychannel" or "-100..."
+  platform        ChannelPlatform
+  channelId       String           // e.g., "@mychannel" or "-100..."
   credentialId    String?
-  credential      Credential?      @relation(fields: [credentialId], references: [id])
-  status          String           @default("PENDING") // "CONNECTED", "PENDING", "ERROR"
+  credential      Credential?      @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  status          ChannelStatus    @default(PENDING)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   automationRules AutomationRule[]
+
+  @@index([userId])
+  @@index([platform])
 }
+
+// === PRODUCTS & AFFILIATE LINKS ===
 
 model Brand {
   id        String    @id @default(uuid())
@@ -124,18 +176,18 @@ model Product {
   asin             String          @unique
   title            String
   brandId          String?
-  brand            Brand?          @relation(fields: [brandId], references: [id])
+  brand            Brand?          @relation(fields: [brandId], references: [id], onDelete: SetNull)
   category         String
   imageUrl         String?
   currentPrice     Float
   originalPrice    Float
-  discount         Int // Calculated percentage
+  discount         Int             // Calculated percentage
   salesRank        Int?
   rating           Float?
   reviewCount      Int?
-  scoreComponents  String? // JSON: breakdown of Deal Score calculation
+  scoreComponents  Json?           // Breakdown of Deal Score calculation
   lastPriceCheckAt DateTime        @default(now())
-  lastKeepaRefresh DateTime        @default(now()) // Track Keepa API refresh
+  lastKeepaRefresh DateTime        @default(now())
   keepaDataTTL     Int             @default(1440) // Minutes remaining (default 24h)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
@@ -144,19 +196,20 @@ model Product {
   @@index([asin])
   @@index([category])
   @@index([salesRank])
+  @@index([lastPriceCheckAt])
 }
 
 model AffiliateLink {
   id             String  @id @default(uuid())
   productId      String
-  product        Product @relation(fields: [productId], references: [id])
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId         String
-  user           User    @relation(fields: [userId], references: [id])
-  amazonTag      String // e.g., "contindig-21"
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amazonTag      String  // e.g., "contindig-21"
   shortCode      String  @unique // Short hash for /r/:hash URLs
-  shortUrl       String // Generated short link
-  fullUrl        String // Full Amazon URL with tag
-  destinationUrl String // Final Amazon product URL
+  shortUrl       String  // Generated short link
+  fullUrl        String  // Full Amazon URL with tag
+  destinationUrl String  // Final Amazon product URL
 
   // Tracking metrics
   clicks          Int   @default(0)
@@ -177,8 +230,8 @@ model AffiliateLink {
 model KeepaMonthlyBudget {
   id          String   @id @default(uuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  month       String // e.g., "2025-11"
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month       String   // e.g., "2025-11"
   tokensUsed  Int      @default(0)
   tokensLimit Int      @default(10000)
   resetAt     DateTime
@@ -189,13 +242,15 @@ model KeepaMonthlyBudget {
   @@index([userId])
 }
 
+// === CLICK & CONVERSION TRACKING ===
+
 model Click {
   id     String        @id @default(cuid())
   linkId String
   link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Tracking Data (Privacy-compliant)
-  ipHash    String // Anonymized IP hash
+  ipHash    String  // Anonymized IP hash
   userAgent String?
   referer   String?
 
@@ -212,9 +267,9 @@ model Conversion {
   link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Conversion Data
-  trackingId String @unique // External tracking ID from Amazon/affiliate network
-  revenue    Float // Total sale amount
-  commission Float? // Commission earned (if provided)
+  trackingId String  @unique // External tracking ID from Amazon/affiliate network
+  revenue    Float   // Total sale amount
+  commission Float?  // Commission earned (if provided)
 
   // Metadata
   convertedAt DateTime @default(now())
@@ -223,10 +278,12 @@ model Conversion {
   @@index([convertedAt])
 }
 
+// === AUTOMATION RULES ===
+
 model AutomationRule {
-  id     String @id @default(uuid())
+  id     String   @id @default(uuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Rule Config
   name        String
@@ -234,21 +291,21 @@ model AutomationRule {
   isActive    Boolean @default(true)
 
   // Targeting
-  categories String // JSON array of categories
-  minScore   Int    @default(70)
+  categories String[] // Array of categories
+  minScore   Int      @default(70)
   maxPrice   Float?
 
   // Publishing Config
   channelId String?
-  channel   Channel? @relation(fields: [channelId], references: [id])
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
 
   // Message Template
   templateId String?
-  template   MessageTemplate? @relation(fields: [templateId], references: [id])
+  template   MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   // A/B Testing
   splitId String?
-  split   AutomationSplit? @relation(fields: [splitId], references: [id])
+  split   AutomationSplit? @relation(fields: [splitId], references: [id], onDelete: SetNull)
 
   // Metadata
   lastRunAt DateTime?
@@ -270,10 +327,10 @@ model AutomationTrigger {
   rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
   // Trigger Type
-  type String // "SCHEDULE" | "SCORE_THRESHOLD" | "PRICE_DROP"
+  type TriggerType
 
-  // Trigger Config (JSON)
-  config String // {"cron": "0 */6 * * *"} or {"threshold": 85}
+  // Trigger Config
+  config Json // {"cron": "0 */6 * * *"} or {"threshold": 85}
 
   createdAt DateTime @default(now())
 
@@ -286,10 +343,10 @@ model AutomationAction {
   rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
   // Action Type
-  type String // "PUBLISH_CHANNEL" | "SEND_EMAIL" | "WEBHOOK"
+  type ActionType
 
-  // Action Config (JSON)
-  config String // {"template": "default", "includeImage": true}
+  // Action Config
+  config Json // {"template": "default", "includeImage": true}
 
   order     Int      @default(0)
   createdAt DateTime @default(now())
@@ -300,14 +357,14 @@ model AutomationAction {
 model AutomationSplit {
   id     String @id @default(uuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Split Config
   name        String
   description String?
 
-  // Variants (JSON array)
-  variants String // [{"name": "A", "weight": 50}, {"name": "B", "weight": 50}]
+  // Variants
+  variants Json // [{"name": "A", "weight": 50}, {"name": "B", "weight": 50}]
 
   // Metadata
   isActive  Boolean  @default(true)
@@ -319,16 +376,18 @@ model AutomationSplit {
   @@index([userId])
 }
 
+// === MESSAGE TEMPLATES ===
+
 model MessageTemplate {
   id          String @id @default(uuid())
   userId      String
-  user        User   @relation(fields: [userId], references: [id])
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name        String
   description String?
 
   // Template content with variables
-  template    String @default("🔥 *{title}*\n\n💰 Prezzo: €{price} ~€{originalPrice}~\n💸 Risparmi: €{savings} (-{discount}%)\n⭐ Rating: {rating}/5 ({reviewCount} recensioni)\n\n👉 {link}")
+  template String @default("🔥 *{title}*\n\n💰 Prezzo: €{price} ~€{originalPrice}~\n💸 Risparmi: €{savings} (-{discount}%)\n⭐ Rating: {rating}/5 ({reviewCount} recensioni)\n\n👉 {link}")
 
   // AI settings
   useAI           Boolean @default(false)
@@ -337,11 +396,11 @@ model MessageTemplate {
   aiIncludeEmojis Boolean @default(true)
 
   // Metadata
-  isDefault   Boolean   @default(false)
-  usageCount  Int       @default(0)
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isDefault  Boolean   @default(false)
+  usageCount Int       @default(0)
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
   automationRules AutomationRule[]
@@ -350,20 +409,20 @@ model MessageTemplate {
   @@index([isDefault])
 }
 
-// === ONBOARDING & ANALYTICS MODELS ===
+// === ONBOARDING & ANALYTICS ===
 
 model OnboardingProgress {
   id     String @id @default(uuid())
   userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Step completion flags
-  welcomeSurveyCompleted Boolean @default(false)
-  channelsSelected       String  @default("[]") // JSON array
-  telegramSetupCompleted Boolean @default(false)
-  emailSetupCompleted    Boolean @default(false)
-  discordSetupCompleted  Boolean @default(false)
-  firstAutomationCreated Boolean @default(false)
+  welcomeSurveyCompleted Boolean  @default(false)
+  channelsSelected       String[] @default([])
+  telegramSetupCompleted Boolean  @default(false)
+  emailSetupCompleted    Boolean  @default(false)
+  discordSetupCompleted  Boolean  @default(false)
+  firstAutomationCreated Boolean  @default(false)
 
   // Metadata
   goal            String?
@@ -387,7 +446,7 @@ model AnalyticsEvent {
 
   eventName     String // 'onboarding_step_viewed', 'telegram_token_validated'
   eventCategory String // 'onboarding', 'automation', 'deal_finder'
-  properties    String @default("{}") // JSON stringified
+  properties    Json   @default("{}")
 
   userAgent String?
   ipHash    String?
@@ -403,22 +462,22 @@ model AnalyticsEvent {
 }
 
 model AutomationTemplate {
-  id               String @id @default(uuid())
+  id               String   @id @default(uuid())
   name             String
   description      String
-  category         String // 'popular', 'scheduled', 'premium'
-  difficulty       String // 'easy', 'medium', 'advanced'
-  popularity       Int    @default(0)
-  estimatedRevenue String // '€500-2000/mese'
+  category         String   // 'popular', 'scheduled', 'premium'
+  difficulty       String   // 'easy', 'medium', 'advanced'
+  popularity       Int      @default(0)
+  estimatedRevenue String   // '€500-2000/mese'
 
   // Config template
-  schedule   String // Cron expression
+  schedule   String   // Cron expression
   minScore   Int
-  categories String @default("[]") // JSON array
+  categories String[] @default([])
   maxPrice   Int?
 
-  // Success stories (JSON)
-  successStories String @default("[]")
+  // Success stories
+  successStories Json @default("[]")
 
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -430,9 +489,9 @@ model AutomationTemplate {
 model Achievement {
   id     String @id @default(uuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type       String // 'fast-setup', 'first-sale', 'multi-channel', 'onboarding-complete'
+  type       String   // 'fast-setup', 'first-sale', 'multi-channel', 'onboarding-complete'
   unlockedAt DateTime @default(now())
 
   @@index([userId])
@@ -446,10 +505,10 @@ model UserSession {
 
   startedAt DateTime  @default(now())
   endedAt   DateTime?
-  duration  Int? // seconds
+  duration  Int?      // seconds
 
-  pagesVisited String @default("[]") // JSON array
-  actionsCount Int    @default(0)
+  pagesVisited String[] @default([])
+  actionsCount Int      @default(0)
 
   device  String?
   browser String?
@@ -461,41 +520,41 @@ model UserSession {
 // === REDIRECT & FUNNEL TRACKING ===
 
 model ShortLink {
-  id        String   @id @default(cuid())
-  shortCode String   @unique
+  id        String  @id @default(cuid())
+  shortCode String  @unique
 
   // Product Info (denormalized for fast access)
-  asin             String
-  title            String
-  imageUrl         String?
-  currentPrice     Float
-  originalPrice    Float?
-  discount         Int?
+  asin          String
+  title         String
+  imageUrl      String?
+  currentPrice  Float
+  originalPrice Float?
+  discount      Int?
 
   // Amazon URL with affiliate tag
-  amazonUrl        String
-  amazonTag        String   @default("afflyt-21")
+  amazonUrl String
+  amazonTag String @default("afflyt-21")
 
   // Compliance tracking
-  priceCheckedAt   DateTime @default(now())
-  expiresAt        DateTime? // Optional: link expiration
+  priceCheckedAt DateTime  @default(now())
+  expiresAt      DateTime? // Optional: link expiration
 
   // Analytics
-  clicks           Int      @default(0)
-  conversions      Int      @default(0)
-  bounces          Int      @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
+  bounces     Int @default(0)
 
   // Source tracking
-  source           String?  // "telegram", "webapp", "email"
-  campaignId       String?
-  userId           String?
+  source     String? // "telegram", "webapp", "email"
+  campaignId String?
+  userId     String?
 
   // Timestamps
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  funnelEvents     RedirectFunnelEvent[]
+  funnelEvents RedirectFunnelEvent[]
 
   @@index([shortCode])
   @@index([asin])
@@ -504,45 +563,33 @@ model ShortLink {
 }
 
 model RedirectFunnelEvent {
-  id           String    @id @default(cuid())
-  linkId       String
-  link         ShortLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  id     String    @id @default(cuid())
+  linkId String
+  link   ShortLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Session tracking
-  sessionId    String
-  visitorId    String?   // Cookie-based visitor ID
+  sessionId String
+  visitorId String? // Cookie-based visitor ID
 
   // Event data
-  eventType    String    // See FUNNEL_EVENTS enum below
-  eventData    String?   // JSON: additional event data
+  eventType String // See FUNNEL_EVENTS enum
+  eventData Json?  // Additional event data
 
   // User consent
-  hasConsent   Boolean?  // For auto-redirect consent tracking
-  consentType  String?   // "auto" | "manual"
+  hasConsent  Boolean? // For auto-redirect consent tracking
+  consentType String?  // "auto" | "manual"
 
   // Timing
-  timeOnPage   Int?      // milliseconds
-  timestamp    DateTime  @default(now())
+  timeOnPage Int?     // milliseconds
+  timestamp  DateTime @default(now())
 
   // Device info (privacy-compliant)
-  device       String?   // "mobile" | "tablet" | "desktop"
-  browser      String?
-  os           String?
+  device  String? // "mobile" | "tablet" | "desktop"
+  browser String?
+  os      String?
 
   @@index([linkId])
   @@index([sessionId])
   @@index([eventType])
   @@index([timestamp])
 }
-
-// FUNNEL EVENT TYPES:
-// 1. "page_view" - User lands on interstitial
-// 2. "page_ready" - Page fully loaded and interactive
-// 3. "consent_shown" - Consent banner displayed (first visit)
-// 4. "consent_accepted" - User accepted auto-redirect
-// 5. "consent_declined" - User declined auto-redirect
-// 6. "auto_redirect_start" - Auto-redirect countdown started
-// 7. "manual_click" - User clicked "Vai su Amazon" button
-// 8. "redirect_complete" - User successfully redirected to Amazon
-// 9. "redirect_cancelled" - User clicked back/cancel
-// 10. "preference_changed" - User changed auto-redirect setting
