@@ -177,27 +177,31 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
             </GlassCard>
 
             {/* Steps Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {steps.map((step, index) => {
-                    const isActive = !step.completed &&
-                        (index === 0 || steps[index - 1].completed);
-                    const isLocked = !step.completed && !isActive;
+            <div className="relative">
+                {/* Connection Lines - Rendered behind cards */}
+                <div className="hidden lg:flex absolute top-12 left-0 right-0 items-center justify-center z-0 px-[16.67%]">
+                    <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${
+                        progress.channelConnected ? 'bg-afflyt-profit-400' : 'bg-gray-700'
+                    }`} />
+                    <div className={`flex-1 h-0.5 mx-4 transition-colors duration-500 ${
+                        progress.credentialsSet ? 'bg-afflyt-profit-400' : 'bg-gray-700'
+                    }`} />
+                </div>
 
-                    return (
-                        <div
-                            key={step.id}
-                            className={`relative transition-all duration-500 ${
-                                step.completed ? 'opacity-100' : isActive ? 'opacity-100' : 'opacity-60'
-                            }`}
-                        >
-                            {/* Connection Line */}
-                            {index < steps.length - 1 && (
-                                <div className={`hidden lg:block absolute top-12 left-full w-full h-0.5 -ml-3 z-0 transition-colors duration-500 ${
-                                    step.completed ? 'bg-gradient-to-r from-afflyt-profit-400 to-afflyt-cyan-400' : 'bg-gray-700'
-                                }`} />
-                            )}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+                    {steps.map((step, index) => {
+                        const isActive = !step.completed &&
+                            (index === 0 || steps[index - 1].completed);
+                        const isLocked = !step.completed && !isActive;
 
-                            <GlassCard
+                        return (
+                            <div
+                                key={step.id}
+                                className={`transition-all duration-500 ${
+                                    step.completed ? 'opacity-100' : isActive ? 'opacity-100' : 'opacity-60'
+                                }`}
+                            >
+                                <GlassCard
                                 className={`relative z-10 p-6 transition-all duration-500 ${
                                     isActive
                                         ? 'border-2 border-afflyt-cyan-500/60 shadow-[0_0_40px_rgba(0,229,224,0.25)] bg-afflyt-cyan-500/5'
@@ -332,6 +336,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
                         </div>
                     );
                 })}
+                </div>
             </div>
 
             {/* Actionable Next Steps Card */}
