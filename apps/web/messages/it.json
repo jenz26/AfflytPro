@@ -311,13 +311,84 @@
         "label": "Benvenuto",
         "description": "Personalizza la tua esperienza"
       },
+      "plan": {
+        "label": "Scegli Piano",
+        "description": "Seleziona il tuo abbonamento"
+      },
       "channels": {
         "label": "Configura Canali",
         "description": "Setup Telegram, Email o Discord"
       },
+      "amazonTag": {
+        "label": "Tag Amazon",
+        "description": "Configura il tuo tag affiliato"
+      },
+      "templates": {
+        "label": "Template",
+        "description": "Personalizza i template messaggi"
+      },
+      "team": {
+        "label": "Setup Team",
+        "description": "Invita membri del team"
+      },
       "automation": {
         "label": "Prima Automazione",
         "description": "Configura filtri e pubblica"
+      }
+    },
+    "plans": {
+      "title": "Scegli il Tuo Piano",
+      "subtitle": "Seleziona il piano più adatto alle tue esigenze. Puoi fare upgrade in qualsiasi momento.",
+      "popular": "PIU' POPOLARE",
+      "continue": "Continua",
+      "skipForNow": "Salta per ora",
+      "changeLater": "Puoi cambiare piano in qualsiasi momento dalle Impostazioni",
+      "free": {
+        "name": "Free",
+        "price": "€0",
+        "priceNote": "/mese",
+        "description": "Perfetto per iniziare",
+        "features": {
+          "channels": "1 canale",
+          "amazonTag": "Tag affiliato Amazon",
+          "basicAutomation": "Automazione base",
+          "dealScore": "Deal Score (solo 85+)",
+          "templates": "Template personalizzati",
+          "analytics": "Analytics avanzate",
+          "priority": "Supporto prioritario"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "€19",
+        "priceNote": "/mese",
+        "description": "Per creator in crescita",
+        "features": {
+          "channels": "5 canali",
+          "amazonTag": "Tag affiliato Amazon",
+          "advancedAutomation": "Automazione avanzata",
+          "dealScore": "Deal Score (70+, regolabile)",
+          "templates": "Template personalizzati",
+          "analytics": "Analytics avanzate",
+          "priority": "Supporto prioritario"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "€99",
+        "priceNote": "/mese",
+        "description": "Per team e agenzie",
+        "features": {
+          "unlimitedChannels": "Canali illimitati",
+          "amazonTag": "Tag affiliato Amazon",
+          "fullAutomation": "Suite automazione completa",
+          "dealScore": "Deal Score (qualsiasi, completamente personalizzabile)",
+          "customTemplates": "Builder template personalizzato",
+          "advancedAnalytics": "Analytics avanzate + report",
+          "teamAccess": "Accesso team (5 membri)",
+          "apiAccess": "Accesso API",
+          "dedicatedSupport": "Supporto dedicato"
+        }
       }
     },
     "complete": {

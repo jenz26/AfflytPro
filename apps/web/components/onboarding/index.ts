@@ -6,3 +6,5 @@ export { FirstAutomation } from './FirstAutomation';
 export { OnboardingLayout } from './OnboardingLayout';
 export { ProgressTracker } from './ProgressTracker';
 export { ContextPreview } from './ContextPreview';
+export { PlanSelector } from './PlanSelector';
+export type { PlanType } from './PlanSelector';

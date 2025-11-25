@@ -311,13 +311,84 @@
         "label": "Welcome",
         "description": "Customize your experience"
       },
+      "plan": {
+        "label": "Choose Plan",
+        "description": "Select your subscription"
+      },
       "channels": {
         "label": "Setup Channels",
         "description": "Setup Telegram, Email or Discord"
       },
+      "amazonTag": {
+        "label": "Amazon Tag",
+        "description": "Configure your affiliate tag"
+      },
+      "templates": {
+        "label": "Templates",
+        "description": "Customize message templates"
+      },
+      "team": {
+        "label": "Team Setup",
+        "description": "Invite team members"
+      },
       "automation": {
         "label": "First Automation",
         "description": "Configure filters and publish"
+      }
+    },
+    "plans": {
+      "title": "Choose Your Plan",
+      "subtitle": "Select the plan that best fits your needs. You can upgrade anytime.",
+      "popular": "MOST POPULAR",
+      "continue": "Continue",
+      "skipForNow": "Skip for now",
+      "changeLater": "You can change your plan at any time from Settings",
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "priceNote": "/month",
+        "description": "Perfect to start",
+        "features": {
+          "channels": "1 channel",
+          "amazonTag": "Amazon affiliate tag",
+          "basicAutomation": "Basic automation",
+          "dealScore": "Deal Score (85+ only)",
+          "templates": "Custom templates",
+          "analytics": "Advanced analytics",
+          "priority": "Priority support"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$19",
+        "priceNote": "/month",
+        "description": "For growing creators",
+        "features": {
+          "channels": "5 channels",
+          "amazonTag": "Amazon affiliate tag",
+          "advancedAutomation": "Advanced automation",
+          "dealScore": "Deal Score (70+, adjustable)",
+          "templates": "Custom templates",
+          "analytics": "Advanced analytics",
+          "priority": "Priority support"
+        }
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "$99",
+        "priceNote": "/month",
+        "description": "For teams and agencies",
+        "features": {
+          "unlimitedChannels": "Unlimited channels",
+          "amazonTag": "Amazon affiliate tag",
+          "fullAutomation": "Full automation suite",
+          "dealScore": "Deal Score (any, fully customizable)",
+          "customTemplates": "Custom template builder",
+          "advancedAnalytics": "Advanced analytics + reports",
+          "teamAccess": "Team access (5 members)",
+          "apiAccess": "API access",
+          "dedicatedSupport": "Dedicated support"
+        }
       }
     },
     "complete": {
