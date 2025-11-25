@@ -13,7 +13,6 @@ import {
     Search,
     Menu,
     X,
-    Clock,
     Bell,
     HelpCircle,
     ChevronDown,
@@ -22,7 +21,6 @@ import {
     LogOut,
     CreditCard
 } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
@@ -88,7 +86,7 @@ export const CommandBar = () => {
         {
             icon: Send,
             label: t('channels'),
-            path: `/${locale}/settings/channels`,
+            path: `/${locale}/dashboard/channels`,
             shortcut: '⌘C'
         }
     ];
@@ -115,37 +113,13 @@ export const CommandBar = () => {
                             <div className="w-10 h-10 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,229,224,0.3)]">
                                 <span className="text-afflyt-dark-100 font-bold text-xl">A</span>
                             </div>
-                            <div>
-                                <span className="text-white font-bold text-lg">{tBrand('name')}</span>
-                                <span className="text-afflyt-cyan-400 text-[10px] font-mono uppercase block -mt-1">
-                                    {tBrand('tagline')}
-                                </span>
-                            </div>
+                            <span className="text-white font-bold text-lg">{tBrand('name')}</span>
                         </Link>
 
-                        {/* Status Indicators */}
-                        <div className="flex items-center gap-3">
-                            {/* TTL Status */}
-                            <GlassCard className="px-3 py-1.5 flex items-center gap-2">
-                                <Clock className="w-3.5 h-3.5 text-afflyt-cyan-400" />
-                                <span className="text-xs font-mono text-white">{accountStatus.ttl}h</span>
-                                <span className="text-[10px] text-gray-500">TTL</span>
-                            </GlassCard>
-
-                            {/* WAA Progress */}
-                            <GlassCard className="px-3 py-1.5 flex items-center gap-2">
-                                <Zap className="w-3.5 h-3.5 text-afflyt-profit-400" />
-                                <span className="text-xs font-mono text-white">
-                                    {accountStatus.waa}/{accountStatus.waaTarget}
-                                </span>
-                                <span className="text-[10px] text-gray-500">WAA</span>
-                            </GlassCard>
-
-                            {/* System Status */}
-                            <div className="flex items-center gap-2 px-3">
-                                <div className="w-2 h-2 bg-afflyt-profit-400 rounded-full animate-pulse" />
-                                <span className="text-xs text-afflyt-profit-400">{t('live')}</span>
-                            </div>
+                        {/* System Status */}
+                        <div className="flex items-center gap-2 px-3">
+                            <div className="w-2 h-2 bg-afflyt-profit-400 rounded-full animate-pulse" />
+                            <span className="text-xs text-afflyt-profit-400">{t('live')}</span>
                         </div>
                     </div>
 
@@ -331,11 +305,8 @@ export const CommandBar = () => {
 
                     {/* Mobile Status */}
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 px-2 py-1 bg-afflyt-glass-white rounded-lg">
-                            <Clock className="w-3 h-3 text-afflyt-cyan-400" />
-                            <span className="text-xs font-mono text-white">{accountStatus.ttl}h</span>
-                        </div>
                         <div className="w-1.5 h-1.5 bg-afflyt-profit-400 rounded-full animate-pulse" />
+                        <span className="text-xs text-afflyt-profit-400">{t('live')}</span>
                     </div>
                 </div>
 

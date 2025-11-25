@@ -6,11 +6,7 @@ import {
     User,
     Mail,
     Building2,
-    MapPin,
-    FileText,
-    Globe,
     Save,
-    Camera,
     Check,
     Loader2
 } from 'lucide-react';
@@ -59,27 +55,6 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-4xl space-y-8">
-            {/* Avatar Section */}
-            <GlassCard className="p-6">
-                <div className="flex items-center gap-6">
-                    <div className="relative">
-                        <div className="w-24 h-24 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                            {formData.fullName.charAt(0)}
-                        </div>
-                        <button className="absolute bottom-0 right-0 w-8 h-8 bg-afflyt-cyan-500 rounded-full flex items-center justify-center hover:bg-afflyt-cyan-400 transition-colors">
-                            <Camera className="w-4 h-4 text-afflyt-dark-100" />
-                        </button>
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-white">{formData.fullName}</h2>
-                        <p className="text-gray-400">{formData.email}</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            {t('avatarHint')}
-                        </p>
-                    </div>
-                </div>
-            </GlassCard>
-
             {/* Personal Information */}
             <GlassCard className="p-6">
                 <div className="flex items-center gap-3 mb-6">
