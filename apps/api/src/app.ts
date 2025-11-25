@@ -94,8 +94,9 @@ app.get('/health', async () => {
 
 const start = async () => {
     try {
-        await app.listen({ port: 3001, host: '0.0.0.0' });
-        console.log('Server listening on http://localhost:3001');
+        const port = parseInt(process.env.PORT || '3001', 10);
+        await app.listen({ port, host: '0.0.0.0' });
+        console.log(`Server listening on http://localhost:${port}`);
 
         // Start background automation scheduler
         startAutomationScheduler();
