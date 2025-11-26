@@ -152,6 +152,7 @@
   },
   "navigation": {
     "dashboard": "Dashboard",
+    "analytics": "Analytics",
     "dealFinder": "Deal Finder",
     "automations": "Automations",
     "channels": "Channels",

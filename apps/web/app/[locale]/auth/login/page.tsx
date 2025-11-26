@@ -105,7 +105,7 @@ export default function AuthPage() {
             const res = await fetch(`${API_BASE}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, name: name || undefined })
+                body: JSON.stringify({ email, password, name: name || undefined, locale })
             });
 
             const data = await res.json();
@@ -136,7 +136,7 @@ export default function AuthPage() {
             const res = await fetch(`${API_BASE}/auth/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, locale })
             });
 
             const data = await res.json();
@@ -159,7 +159,7 @@ export default function AuthPage() {
             const res = await fetch(`${API_BASE}/auth/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, locale })
             });
 
             const data = await res.json();

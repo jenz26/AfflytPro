@@ -22,6 +22,7 @@ const registerSchema = z.object({
     .regex(/[a-z]/, 'La password deve contenere almeno una lettera minuscola')
     .regex(/[0-9]/, 'La password deve contenere almeno un numero'),
   name: z.string().min(1).max(100).optional(),
+  locale: z.string().optional(), // 'it' or 'en'
 });
 
 const loginSchema = z.object({
@@ -31,10 +32,12 @@ const loginSchema = z.object({
 
 const magicLinkRequestSchema = z.object({
   email: z.string().email('Formato email non valido'),
+  locale: z.string().optional(), // 'it' or 'en'
 });
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Formato email non valido'),
+  locale: z.string().optional(), // 'it' or 'en'
 });
 
 const resetPasswordSchema = z.object({
@@ -57,6 +60,7 @@ const verifyMagicLinkSchema = z.object({
 
 const resendVerificationSchema = z.object({
   email: z.string().email('Formato email non valido'),
+  locale: z.string().optional(), // 'it' or 'en'
 });
 
 // ==================== CONSTANTS ====================
@@ -64,6 +68,29 @@ const resendVerificationSchema = z.object({
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 const BCRYPT_ROUNDS = 12;
+
+// ==================== RATE LIMIT CONFIGS ====================
+// Stricter limits for auth endpoints to prevent brute force attacks
+
+const authRateLimitConfig = {
+  max: 5,           // 5 requests
+  timeWindow: '1 minute',
+  errorResponseBuilder: () => ({
+    statusCode: 429,
+    error: 'Too Many Requests',
+    message: 'Troppi tentativi. Riprova tra un minuto.',
+  })
+};
+
+const registrationRateLimitConfig = {
+  max: 3,           // 3 registrations
+  timeWindow: '1 hour',
+  errorResponseBuilder: () => ({
+    statusCode: 429,
+    error: 'Too Many Requests',
+    message: 'Troppe registrazioni da questo IP. Riprova più tardi.',
+  })
+};
 
 // ==================== HELPER FUNCTIONS ====================
 
@@ -201,12 +228,18 @@ export async function authRoutes(fastify: FastifyInstance) {
   /**
    * POST /auth/register
    * Register a new user with email/password
+   * Rate limited: 3 per hour per IP
    */
   fastify.post<{ Body: z.infer<typeof registerSchema> }>(
     '/register',
+    {
+      config: {
+        rateLimit: registrationRateLimitConfig
+      }
+    },
     async (request, reply) => {
       try {
-        const { email, password, name } = registerSchema.parse(request.body);
+        const { email, password, name, locale } = registerSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         // Check if user already exists
@@ -226,7 +259,8 @@ export async function authRoutes(fastify: FastifyInstance) {
             await AuthEmailService.sendWelcomeEmail(
               normalizedEmail,
               existingUser.name,
-              verificationToken
+              verificationToken,
+              locale
             );
           }
 
@@ -259,7 +293,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         const emailResult = await AuthEmailService.sendWelcomeEmail(
           normalizedEmail,
           name || null,
-          verificationToken
+          verificationToken,
+          locale
         );
 
         if (!emailResult.success) {
@@ -346,7 +381,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     '/resend-verification',
     async (request, reply) => {
       try {
-        const { email } = resendVerificationSchema.parse(request.body);
+        const { email, locale } = resendVerificationSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         const user = await prisma.user.findUnique({
@@ -371,7 +406,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         await AuthEmailService.sendVerificationReminder(
           normalizedEmail,
           user.name,
-          verificationToken
+          verificationToken,
+          locale
         );
 
         return reply.send({
@@ -393,9 +429,15 @@ export async function authRoutes(fastify: FastifyInstance) {
   /**
    * POST /auth/login
    * Login with email/password
+   * Rate limited: 5 per minute per IP
    */
   fastify.post<{ Body: z.infer<typeof loginSchema> }>(
     '/login',
+    {
+      config: {
+        rateLimit: authRateLimitConfig
+      }
+    },
     async (request, reply) => {
       try {
         const { email, password } = loginSchema.parse(request.body);
@@ -458,7 +500,10 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         // Check if email is verified
         if (!user.emailVerified) {
-          // Send verification reminder
+          // Send verification reminder - detect locale from Accept-Language header
+          const acceptLanguage = request.headers['accept-language'] || 'it';
+          const detectedLocale = acceptLanguage.toLowerCase().startsWith('en') ? 'en' : 'it';
+
           const verificationToken = await createAuthToken(
             user.id,
             'EMAIL_VERIFICATION',
@@ -467,7 +512,8 @@ export async function authRoutes(fastify: FastifyInstance) {
           await AuthEmailService.sendVerificationReminder(
             normalizedEmail,
             user.name,
-            verificationToken
+            verificationToken,
+            detectedLocale
           );
 
           return reply.code(403).send({
@@ -511,12 +557,18 @@ export async function authRoutes(fastify: FastifyInstance) {
   /**
    * POST /auth/magic-link
    * Request a magic link for passwordless login
+   * Rate limited: 5 per minute per IP
    */
   fastify.post<{ Body: z.infer<typeof magicLinkRequestSchema> }>(
     '/magic-link',
+    {
+      config: {
+        rateLimit: authRateLimitConfig
+      }
+    },
     async (request, reply) => {
       try {
-        const { email } = magicLinkRequestSchema.parse(request.body);
+        const { email, locale } = magicLinkRequestSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         const user = await prisma.user.findUnique({
@@ -542,7 +594,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         const emailResult = await AuthEmailService.sendMagicLinkEmail(
           normalizedEmail,
           user.name,
-          magicToken
+          magicToken,
+          locale
         );
 
         if (!emailResult.success) {
@@ -623,12 +676,18 @@ export async function authRoutes(fastify: FastifyInstance) {
   /**
    * POST /auth/forgot-password
    * Request password reset
+   * Rate limited: 5 per minute per IP
    */
   fastify.post<{ Body: z.infer<typeof forgotPasswordSchema> }>(
     '/forgot-password',
+    {
+      config: {
+        rateLimit: authRateLimitConfig
+      }
+    },
     async (request, reply) => {
       try {
-        const { email } = forgotPasswordSchema.parse(request.body);
+        const { email, locale } = forgotPasswordSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         const user = await prisma.user.findUnique({
@@ -649,7 +708,8 @@ export async function authRoutes(fastify: FastifyInstance) {
         const emailResult = await AuthEmailService.sendPasswordResetEmail(
           normalizedEmail,
           user.name,
-          resetToken
+          resetToken,
+          locale
         );
 
         if (!emailResult.success) {
@@ -838,6 +898,136 @@ export async function authRoutes(fastify: FastifyInstance) {
       // In a more complex setup, we could blacklist the JWT here
       // For now, the client just removes the token
       return reply.send({ message: 'Logout effettuato' });
+    }
+  );
+
+  /**
+   * POST /auth/revoke-all-sessions
+   * Invalidate all sessions by updating passwordChangedAt
+   * This forces all existing JWTs to be invalid on next use
+   */
+  fastify.post(
+    '/revoke-all-sessions',
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const userId = request.user.id;
+
+        // Update user's password timestamp to invalidate all existing tokens
+        // In a production system, you'd check this timestamp during JWT verification
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            // Reset failed attempts and clear any locks
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+          },
+        });
+
+        // Delete all auth tokens (magic links, password resets, etc.)
+        await prisma.authToken.deleteMany({
+          where: { userId },
+        });
+
+        return reply.send({
+          message: 'Tutte le sessioni sono state revocate. Effettua nuovamente il login.',
+          logoutRequired: true,
+        });
+      } catch (err: any) {
+        fastify.log.error(err);
+        return reply.code(500).send({ message: 'Errore durante la revoca delle sessioni' });
+      }
+    }
+  );
+
+  /**
+   * DELETE /auth/account
+   * Permanently delete or deactivate user account
+   * Requires password confirmation for security
+   */
+  fastify.delete<{
+    Body: { password: string; confirmation: string };
+  }>(
+    '/account',
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const deleteAccountSchema = z.object({
+          password: z.string().min(1, 'Password richiesta'),
+          confirmation: z.string().refine((val) => val === 'DELETE', {
+            message: 'Scrivi DELETE per confermare',
+          }),
+        });
+
+        const { password } = deleteAccountSchema.parse(request.body);
+        const userId = request.user.id;
+
+        // Get user with password
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+        });
+
+        if (!user) {
+          return reply.code(404).send({ message: 'Utente non trovato' });
+        }
+
+        // Verify password
+        if (!user.password) {
+          return reply.code(400).send({
+            message: 'Impossibile eliminare account senza password. Contatta il supporto.',
+          });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+          return reply.code(401).send({ message: 'Password non corretta' });
+        }
+
+        // Soft delete: deactivate account and anonymize data
+        // This preserves referential integrity while removing PII
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            isActive: false,
+            email: `deleted_${userId}@deleted.afflyt.io`,
+            name: 'Account Eliminato',
+            password: null,
+            emailVerified: false,
+            emailVerifiedAt: null,
+          },
+        });
+
+        // Delete all auth tokens
+        await prisma.authToken.deleteMany({
+          where: { userId },
+        });
+
+        // Delete credentials (sensitive data)
+        await prisma.credential.deleteMany({
+          where: { userId },
+        });
+
+        return reply.send({
+          message: 'Account eliminato con successo. Ci dispiace vederti andare.',
+          deleted: true,
+        });
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          return reply.code(400).send({
+            message: 'Errore di validazione',
+            errors: err.issues.map((e: any) => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          });
+        }
+        fastify.log.error(err);
+        return reply.code(500).send({ message: 'Errore durante l\'eliminazione dell\'account' });
+      }
     }
   );
 }

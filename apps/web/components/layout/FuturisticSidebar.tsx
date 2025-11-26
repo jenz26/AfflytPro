@@ -11,7 +11,8 @@ import {
     Moon,
     Sun,
     Globe,
-    HelpCircle
+    HelpCircle,
+    PieChart
 } from 'lucide-react';
 
 export const FuturisticSidebar = () => {
@@ -29,6 +30,7 @@ export const FuturisticSidebar = () => {
 
     const navItems = [
         { icon: BarChart3, label: t('dashboard'), path: '/dashboard' },
+        { icon: PieChart, label: t('analytics'), path: '/dashboard/analytics' },
         { icon: Search, label: t('dealFinder'), path: '/deals' },
         { icon: Zap, label: t('automations'), path: '/automations' },
         { icon: CreditCard, label: t('billing'), path: '/billing' },
