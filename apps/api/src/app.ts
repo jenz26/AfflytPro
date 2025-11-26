@@ -16,6 +16,8 @@ import validationRoutes from './routes/validation';
 import dealsRoutes from './routes/deals';
 import templatesRoutes from './routes/templates';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
+import billingRoutes from './routes/billing';
+import notificationRoutes from './routes/notifications';
 
 // ==================== ENVIRONMENT CHECKS ====================
 
@@ -100,6 +102,8 @@ app.register(dashboardRoutes, { prefix: '/user/dashboard' });
 app.register(automationRoutes, { prefix: '/automation' });
 app.register(dealsRoutes, { prefix: '/api' });
 app.register(templatesRoutes, { prefix: '/user' });
+app.register(billingRoutes, { prefix: '/api' });
+app.register(notificationRoutes, { prefix: '/api' });
 
 // Health check
 app.get('/health', async () => {

@@ -26,6 +26,67 @@ enum AuthTokenType {
   MAGIC_LINK
 }
 
+// === NOTIFICATIONS ===
+
+enum NotificationType {
+  // Auth & Security
+  WELCOME
+  EMAIL_VERIFIED
+  PASSWORD_CHANGED
+  NEW_LOGIN
+  API_KEY_CREATED
+  API_KEY_DELETED
+
+  // Billing
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_UPDATED
+  SUBSCRIPTION_CANCELED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  TRIAL_ENDING
+
+  // Limits & Usage
+  LIMIT_WARNING
+  LIMIT_REACHED
+
+  // Automation
+  AUTOMATION_SUCCESS
+  AUTOMATION_ERROR
+  CHANNEL_DISCONNECTED
+
+  // Reports
+  DAILY_REPORT
+  WEEKLY_REPORT
+
+  // Marketing
+  ONBOARDING_REMINDER
+  FEATURE_ANNOUNCEMENT
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+// === BILLING ===
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  TRIALING
+  PAUSED
+}
+
 enum ChannelPlatform {
   TELEGRAM
   DISCORD
@@ -86,6 +147,8 @@ model User {
   onboardingProgress  OnboardingProgress?
   achievements        Achievement[]
   authTokens          AuthToken[]
+  notifications       Notification[]
+  subscription        Subscription?
 
   @@index([email])
   @@index([plan])
@@ -592,4 +655,124 @@ model RedirectFunnelEvent {
   @@index([sessionId])
   @@index([eventType])
   @@index([timestamp])
+}
+
+// === NOTIFICATION MODEL ===
+
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType
+  channel   NotificationChannel
+  status    NotificationStatus  @default(PENDING)
+
+  // Content
+  title     String
+  body      String
+  data      Json?               // Additional data for the notification
+
+  // Delivery tracking
+  sentAt    DateTime?
+  readAt    DateTime?
+  failedAt  DateTime?
+  error     String?
+
+  // Retry logic
+  attempts   Int @default(0)
+  maxRetries Int @default(3)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// === BILLING MODELS (Stripe-ready) ===
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Stripe IDs
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+
+  // Status
+  status               SubscriptionStatus @default(ACTIVE)
+  plan                 PlanType           @default(FREE)
+
+  // Billing cycle
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+
+  // Trial
+  trialStart DateTime?
+  trialEnd   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  invoices       Invoice[]
+  paymentMethods PaymentMethod[]
+
+  @@index([stripeCustomerId])
+  @@index([status])
+}
+
+model Invoice {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  // Stripe IDs
+  stripeInvoiceId String? @unique
+
+  // Invoice data
+  amount   Float
+  currency String @default("EUR")
+  status   String // "paid", "open", "void", "uncollectible"
+
+  // URLs
+  invoicePdf       String?
+  hostedInvoiceUrl String?
+
+  // Dates
+  periodStart DateTime?
+  periodEnd   DateTime?
+  paidAt      DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+}
+
+model PaymentMethod {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  // Stripe ID
+  stripePaymentMethodId String? @unique
+
+  // Card info (safe to store)
+  type     String  // "card", "sepa_debit", etc.
+  last4    String?
+  brand    String? // "visa", "mastercard", etc.
+  expMonth Int?
+  expYear  Int?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId])
 }
