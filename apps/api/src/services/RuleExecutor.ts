@@ -301,8 +301,8 @@ export class RuleExecutor {
                 orderBy: query.orderBy,
             });
 
-            const userPlan = rule.user?.plan || 'FREE';
-            const maxResults = PLAN_RESULTS_LIMIT[userPlan] || PLAN_RESULTS_LIMIT.FREE;
+            const currentUserPlan = rule.user?.plan || 'FREE';
+            const maxResults = PLAN_RESULTS_LIMIT[currentUserPlan] || PLAN_RESULTS_LIMIT.FREE;
             console.log(`✅ Found ${deals.length} matching deals (max to publish: ${maxResults})\n`);
 
             // If too few deals, warn but continue
