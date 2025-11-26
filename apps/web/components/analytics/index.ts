@@ -3,3 +3,8 @@ export { RevenueChart } from './RevenueChart';
 export { TopLinksTable } from './TopLinksTable';
 export { ChannelBreakdown } from './ChannelBreakdown';
 export { PeriodSelector } from './PeriodSelector';
+export { TimeHeatmap } from './TimeHeatmap';
+export { ChannelDeepDive } from './ChannelDeepDive';
+export { ProductAnalytics } from './ProductAnalytics';
+export { AIInsights } from './AIInsights';
+export { ExportDropdown } from './ExportDropdown';
