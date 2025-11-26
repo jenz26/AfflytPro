@@ -16,9 +16,14 @@ import { SecurityService } from './src/services/SecurityService';
 const prisma = new PrismaClient();
 const securityService = new SecurityService();
 
-// Test credentials (use your real ones)
-const TEST_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7282919437:AAGUnujka2qXSc0R6u3PdOcWZ2LYg5UqmD8';
-const TEST_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || '-1002882115796';
+// Test credentials (configure in .env file)
+const TEST_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TEST_CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
+
+if (!TEST_BOT_TOKEN || !TEST_CHANNEL_ID) {
+  console.error('❌ Errore: TELEGRAM_BOT_TOKEN e TELEGRAM_CHANNEL_ID devono essere configurati in .env');
+  process.exit(1);
+}
 
 async function setupTestData() {
   console.log('\n📦 Setting up test data...\n');

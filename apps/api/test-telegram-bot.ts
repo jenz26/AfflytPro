@@ -10,9 +10,17 @@ import { TelegramBotService } from './src/services/TelegramBotService';
 async function testTelegramBot() {
   console.log('🤖 Testing Telegram Bot Integration\n');
 
-  // 1. Setup (usa le tue credenziali)
-  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '7282919437:AAGUnujka2qXSc0R6u3PdOcWZ2LYg5UqmD8';
-  const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID || '-1002882115796';
+  // 1. Setup (usa le tue credenziali via .env)
+  const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+  const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
+
+  if (!BOT_TOKEN || !CHANNEL_ID) {
+    console.error('❌ Errore: TELEGRAM_BOT_TOKEN e TELEGRAM_CHANNEL_ID devono essere configurati in .env');
+    console.log('\n💡 Aggiungi al file .env:');
+    console.log('   TELEGRAM_BOT_TOKEN=your-bot-token-here');
+    console.log('   TELEGRAM_CHANNEL_ID=your-channel-id-here\n');
+    return;
+  }
 
   console.log('📋 Configuration:');
   console.log(`   Bot Token: ${BOT_TOKEN.substring(0, 10)}...`);
