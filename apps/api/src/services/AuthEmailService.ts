@@ -18,6 +18,15 @@ const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@afflyt.io';
 const FROM_NAME = process.env.FROM_NAME || 'Afflyt';
 
+// Debug logging at startup
+console.log('[AuthEmailService] Configuration:', {
+  resendConfigured: !!resend,
+  apiKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 10) + '...' : 'NOT SET',
+  fromEmail: FROM_EMAIL,
+  fromName: FROM_NAME,
+  appUrl: APP_URL,
+});
+
 // Token expiration times (in minutes)
 export const TOKEN_EXPIRY = {
   EMAIL_VERIFICATION: 24 * 60, // 24 hours
@@ -160,7 +169,14 @@ export class AuthEmailService {
     const vars = { appName: APP_NAME, name: displayName, year };
 
     try {
-      await resend.emails.send({
+      console.log('[AuthEmailService] Sending magic link email:', {
+        to,
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        subject: replaceVariables(t.subject, vars),
+        magicUrl,
+      });
+
+      const result = await resend.emails.send({
         from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to,
         subject: replaceVariables(t.subject, vars),
@@ -168,9 +184,15 @@ export class AuthEmailService {
         text: generateMagicLinkText(t, vars, magicUrl),
       });
 
+      console.log('[AuthEmailService] Magic link email sent successfully:', result);
       return { success: true };
     } catch (error: any) {
-      console.error('Failed to send magic link email:', error);
+      console.error('[AuthEmailService] Failed to send magic link email:', {
+        error: error.message,
+        stack: error.stack,
+        statusCode: error.statusCode,
+        name: error.name,
+      });
       return { success: false, error: error.message };
     }
   }
