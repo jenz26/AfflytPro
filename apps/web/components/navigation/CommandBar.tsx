@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import {
     LayoutDashboard,
     TrendingUp,
+    BarChart3,
     Zap,
     Send,
     Settings,
@@ -134,6 +135,12 @@ export const CommandBar = () => {
             label: t('dashboard'),
             path: `/${locale}/dashboard`,
             shortcut: '⌘D'
+        },
+        {
+            icon: BarChart3,
+            label: t('analytics'),
+            path: `/${locale}/dashboard/analytics`,
+            shortcut: '⌘Y'
         },
         {
             icon: TrendingUp,
