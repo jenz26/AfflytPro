@@ -27,6 +27,12 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
 import { API_BASE } from '@/lib/api/config';
 
+interface UserProfile {
+    name: string | null;
+    email: string;
+    plan: string;
+}
+
 export const CommandBar = () => {
     const pathname = usePathname();
     const locale = useLocale();
@@ -38,7 +44,34 @@ export const CommandBar = () => {
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [onboardingCompleted, setOnboardingCompleted] = useState(true);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fetch user profile on mount
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+
+                const res = await fetch(`${API_BASE}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    setUserProfile(data.user);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user profile:', error);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
 
     // Check if onboarding is completed
     useEffect(() => {
@@ -125,13 +158,34 @@ export const CommandBar = () => {
         }
     ];
 
-    // Live account data (mock - will be replaced with real data)
+    // Get user initials for avatar
+    const getInitials = (): string => {
+        if (!userProfile) return '?';
+        if (userProfile.name) {
+            const parts = userProfile.name.split(' ');
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+            }
+            return userProfile.name.substring(0, 2).toUpperCase();
+        }
+        return userProfile.email.substring(0, 2).toUpperCase();
+    };
+
+    // Get display name
+    const getDisplayName = (): string => {
+        if (!userProfile) return 'User';
+        if (userProfile.name) {
+            const parts = userProfile.name.split(' ');
+            if (parts.length >= 2) {
+                return `${parts[0]} ${parts[1][0]}.`;
+            }
+            return userProfile.name;
+        }
+        return userProfile.email.split('@')[0];
+    };
+
+    // Live account data
     const accountStatus = {
-        ttl: 72,
-        tier: 'PRO',
-        waa: 3,
-        waaTarget: 5,
-        systemStatus: 'active',
         notifications: 2
     };
 
@@ -260,19 +314,18 @@ export const CommandBar = () => {
                                     {/* User Info */}
                                     <div className="p-4 border-b border-afflyt-glass-border">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center">
-                                                <User className="w-5 h-5 text-white" />
+                                            <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                {getInitials()}
                                             </div>
                                             <div>
-                                                <p className="text-white font-medium">Marco R.</p>
-                                                <p className="text-xs text-gray-500">marco@contindigital.it</p>
+                                                <p className="text-white font-medium">{getDisplayName()}</p>
+                                                <p className="text-xs text-gray-500">{userProfile?.email || ''}</p>
                                             </div>
                                         </div>
                                         <div className="mt-3 flex items-center gap-2">
                                             <span className="px-2 py-0.5 bg-afflyt-profit-400/20 text-afflyt-profit-400 text-xs font-semibold rounded">
-                                                PRO
+                                                {userProfile?.plan?.toUpperCase() || 'FREE'}
                                             </span>
-                                            <span className="text-xs text-gray-500">847 / 1,000 TTL</span>
                                         </div>
                                     </div>
 
@@ -408,12 +461,12 @@ export const CommandBar = () => {
                             {/* Mobile User Section */}
                             <div className="mt-4 pt-4 border-t border-afflyt-glass-border">
                                 <div className="flex items-center gap-3 px-4 py-2 mb-2">
-                                    <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center">
-                                        <User className="w-5 h-5 text-white" />
+                                    <div className="w-10 h-10 bg-gradient-to-br from-afflyt-plasma-400 to-afflyt-plasma-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                        {getInitials()}
                                     </div>
                                     <div>
-                                        <p className="text-white font-medium text-sm">Marco R.</p>
-                                        <p className="text-xs text-gray-500">PRO Plan</p>
+                                        <p className="text-white font-medium text-sm">{getDisplayName()}</p>
+                                        <p className="text-xs text-gray-500">{userProfile?.plan?.toUpperCase() || 'FREE'} Plan</p>
                                     </div>
                                 </div>
                                 <Link
