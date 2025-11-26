@@ -571,18 +571,30 @@ export async function authRoutes(fastify: FastifyInstance) {
         const { email, locale } = magicLinkRequestSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
-        const user = await prisma.user.findUnique({
+        const successMessage = locale === 'en'
+          ? 'Check your email for the access link.'
+          : 'Controlla la tua email per il link di accesso.';
+
+        let user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
         });
 
-        // Always return success to prevent email enumeration
-        const successMessage = 'Se l\'email è registrata, riceverai un link di accesso.';
+        let isNewUser = false;
 
+        // If user doesn't exist, create a new passwordless account
         if (!user) {
-          return reply.send({ message: successMessage });
+          user = await prisma.user.create({
+            data: {
+              email: normalizedEmail,
+              password: null, // Passwordless account
+              emailVerified: false,
+            },
+          });
+          isNewUser = true;
+          console.log('[MagicLink] New passwordless user created:', normalizedEmail);
         }
 
-        // Check if account is active
+        // Check if account is active (for existing users)
         if (!user.isActive) {
           return reply.send({ message: successMessage });
         }
@@ -605,6 +617,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         return reply.send({
           message: successMessage,
           expiresInMinutes: TOKEN_EXPIRY.MAGIC_LINK,
+          isNewUser, // Let frontend know if this is a new registration
         });
       } catch (err: any) {
         if (err instanceof z.ZodError) {
