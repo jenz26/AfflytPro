@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
     User,
@@ -8,37 +8,79 @@ import {
     Building2,
     Save,
     Check,
-    Loader2
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
+import { API_BASE } from '@/lib/api/config';
 
 export default function ProfilePage() {
     const t = useTranslations('settings.profile');
     const tCommon = useTranslations('common');
 
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [showSaved, setShowSaved] = useState(false);
 
-    // Mock user data - will be replaced with real API data
     const [formData, setFormData] = useState({
         // Personal Info
-        fullName: 'Marco Rossi',
-        email: 'marco@contindigital.it',
+        fullName: '',
+        email: '',
         language: 'it',
         timezone: 'Europe/Rome',
 
         // Billing Info
-        companyName: 'Contin Digital SRL',
-        vatNumber: 'IT12345678901',
-        fiscalCode: 'RSSMRC85A01H501Z',
-        address: 'Via Roma 123',
-        city: 'Milano',
-        postalCode: '20121',
+        companyName: '',
+        vatNumber: '',
+        fiscalCode: '',
+        address: '',
+        city: '',
+        postalCode: '',
         country: 'IT',
-        pec: 'contindigital@pec.it',
-        sdiCode: 'XXXXXXX',
+        pec: '',
+        sdiCode: '',
     });
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    setLoadError('Non autenticato');
+                    setIsLoading(false);
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!res.ok) {
+                    throw new Error('Errore nel caricamento del profilo');
+                }
+
+                const data = await res.json();
+                const user = data.user;
+
+                setFormData(prev => ({
+                    ...prev,
+                    fullName: user.name || '',
+                    email: user.email || '',
+                }));
+            } catch (error: any) {
+                setLoadError(error.message || 'Errore sconosciuto');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -52,6 +94,32 @@ export default function ProfilePage() {
         setShowSaved(true);
         setTimeout(() => setShowSaved(false), 3000);
     };
+
+    if (isLoading) {
+        return (
+            <div className="max-w-4xl">
+                <GlassCard className="p-6">
+                    <div className="flex items-center justify-center gap-3 py-12">
+                        <Loader2 className="w-6 h-6 text-afflyt-cyan-400 animate-spin" />
+                        <span className="text-gray-400">Caricamento profilo...</span>
+                    </div>
+                </GlassCard>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="max-w-4xl">
+                <GlassCard className="p-6">
+                    <div className="flex items-center justify-center gap-3 py-12 text-red-400">
+                        <AlertCircle className="w-6 h-6" />
+                        <span>{loadError}</span>
+                    </div>
+                </GlassCard>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl space-y-8">
