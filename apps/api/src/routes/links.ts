@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { SecurityService } from '../services/SecurityService';
 
 const generateLinkSchema = z.object({
     asin: z.string().regex(/^[A-Z0-9]{10}$/, 'Invalid ASIN format'),
@@ -13,6 +14,8 @@ const idParamSchema = z.object({
 });
 
 export async function linkRoutes(fastify: FastifyInstance) {
+    const securityService = new SecurityService();
+
     // Protect all routes
     fastify.addHook('onRequest', fastify.authenticate);
 
@@ -40,7 +43,43 @@ export async function linkRoutes(fastify: FastifyInstance) {
             }
 
             // Verify Amazon tag belongs to user (check in Vault)
-            // TODO: Add validation against user's stored Amazon tags in Credential Vault
+            // Amazon tags are stored with provider 'AMAZON_TAG' or 'AMAZON_AFFILIATE'
+            const userAmazonTags = await prisma.credential.findMany({
+                where: {
+                    userId,
+                    provider: {
+                        in: ['AMAZON_TAG', 'AMAZON_AFFILIATE', 'AMAZON']
+                    }
+                }
+            });
+
+            // Check if the provided tag matches any of user's stored tags
+            let tagIsValid = false;
+            for (const credential of userAmazonTags) {
+                try {
+                    const decryptedTag = securityService.decrypt(credential.key);
+                    if (decryptedTag === amazonTag) {
+                        tagIsValid = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Skip invalid credentials
+                    request.log.warn(`Failed to decrypt credential ${credential.id}`);
+                }
+            }
+
+            // If no tags stored yet, allow the first one (onboarding flow)
+            // But warn the user they should save it
+            if (userAmazonTags.length === 0) {
+                request.log.info(`User ${userId} using Amazon tag without storing it in vault`);
+                // Allow but recommend saving - this supports onboarding
+            } else if (!tagIsValid) {
+                return reply.code(403).send({
+                    message: 'Tag Amazon non autorizzato',
+                    error: 'INVALID_AMAZON_TAG',
+                    hint: 'Il tag fornito non corrisponde a nessun tag salvato nel tuo Credential Vault. Aggiungi il tag nelle impostazioni prima di usarlo.'
+                });
+            }
 
             // Generate Amazon affiliate link
             const fullUrl = `https://www.amazon.it/dp/${asin}?tag=${amazonTag}`;

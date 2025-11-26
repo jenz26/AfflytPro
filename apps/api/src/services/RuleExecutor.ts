@@ -9,6 +9,37 @@ import { needsKeepaRefresh, getPlanLimits } from '../config/planLimits';
 const prisma = new PrismaClient();
 const securityService = new SecurityService();
 
+/**
+ * Get user's Amazon affiliate tag from Credential Vault
+ * Returns the first valid Amazon tag found
+ * Throws error if no tag is configured - affiliate tag is MANDATORY
+ */
+async function getUserAmazonTag(userId: string): Promise<string> {
+    const credentials = await prisma.credential.findMany({
+        where: {
+            userId,
+            provider: {
+                in: ['AMAZON_TAG', 'AMAZON_AFFILIATE', 'AMAZON']
+            }
+        },
+        orderBy: { createdAt: 'asc' } // Use the first one added
+    });
+
+    for (const credential of credentials) {
+        try {
+            const decryptedTag = securityService.decrypt(credential.key);
+            if (decryptedTag && decryptedTag.length > 0) {
+                return decryptedTag;
+            }
+        } catch (e) {
+            console.warn(`Failed to decrypt Amazon tag credential ${credential.id}`);
+        }
+    }
+
+    // No tag found - this is a critical error, automation cannot proceed
+    throw new Error(`MISSING_AMAZON_TAG: Nessun tag Amazon affiliato configurato per l'utente ${userId}. Configura il tag nelle impostazioni per pubblicare offerte.`);
+}
+
 interface ExecutionResult {
     success: boolean;
     dealsProcessed: number;
@@ -204,6 +235,33 @@ export class RuleExecutor {
                 };
             }
 
+            // Get user's Amazon affiliate tag - MANDATORY for publishing
+            let userAmazonTag: string;
+            try {
+                userAmazonTag = await getUserAmazonTag(rule.userId);
+                console.log(`   ✅ Amazon tag found: ${userAmazonTag}`);
+            } catch (tagError: any) {
+                const errorMsg = tagError.message || 'Nessun tag Amazon affiliato configurato';
+                errors.push(errorMsg);
+                console.error(`❌ ${errorMsg}\n`);
+
+                // TODO: Send notification to user (email/telegram/in-app)
+                // NotificationService.notify(rule.userId, {
+                //     type: 'AUTOMATION_ERROR',
+                //     title: 'Automazione bloccata',
+                //     message: 'Configura il tuo tag Amazon affiliato per pubblicare offerte.',
+                //     action: { type: 'link', url: '/settings/credentials' }
+                // });
+
+                return {
+                    success: false,
+                    dealsProcessed,
+                    dealsPublished: 0,
+                    errors: [errorMsg],
+                    executionTime: Date.now() - startTime
+                };
+            }
+
             const botToken = securityService.decrypt(telegramCredential.key); // Decrypt token
             const channelId = rule.channel!.channelId; // e.g., '@mychannel' or '-1002882115796'
 
@@ -250,8 +308,8 @@ export class RuleExecutor {
                         console.log(`      ✅ Data fresh enough, proceeding...`);
                     }
 
-                    // Build Amazon affiliate URL
-                    const affiliateLink = `https://amazon.it/dp/${deal.asin}?tag=afflyt-21`; // TODO: Get tag from user settings
+                    // Build Amazon affiliate URL with user's tag (already validated above)
+                    const affiliateLink = `https://amazon.it/dp/${deal.asin}?tag=${userAmazonTag}`;
 
                     // Use TelegramBotService to create short link and publish
                     const result = await TelegramBotService.sendDealToChannel(

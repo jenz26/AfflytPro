@@ -144,6 +144,7 @@ export default async function dealsRoutes(fastify: FastifyInstance) {
 
   // Get single product details
   fastify.get('/deals/:asin', {
+    onRequest: [fastify.authenticate],
     schema: {
       params: {
         type: 'object',
@@ -156,10 +157,7 @@ export default async function dealsRoutes(fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const { asin } = request.params as { asin: string };
-
-      // For now, use checkAndRefresh which will fetch from Keepa or return cached data
-      // In production, you'd want to pass the authenticated user's ID
-      const userId = 'test-user'; // TODO: Get from JWT token
+      const userId = (request.user as any).id;
 
       const product = await keepa.checkAndRefresh(asin, userId);
 

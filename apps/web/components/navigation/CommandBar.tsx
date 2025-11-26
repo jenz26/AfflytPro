@@ -25,6 +25,7 @@ import {
 import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
+import { API_BASE } from '@/lib/api/config';
 
 export const CommandBar = () => {
     const pathname = usePathname();
@@ -73,6 +74,26 @@ export const CommandBar = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
+
+    // Logout handler
+    const handleLogout = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Call backend logout endpoint (optional, for audit logging)
+                await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).catch(() => { /* Ignore errors - we're logging out anyway */ });
+            }
+        } finally {
+            // Clear all auth-related data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Redirect to login
+            window.location.href = `/${locale}/auth/login`;
+        }
+    };
 
     const navItems = [
         {
@@ -288,7 +309,7 @@ export const CommandBar = () => {
                                         <button
                                             onClick={() => {
                                                 setUserMenuOpen(false);
-                                                // TODO: Implement logout
+                                                handleLogout();
                                             }}
                                             className="w-full flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                                         >
@@ -406,7 +427,7 @@ export const CommandBar = () => {
                                 <button
                                     onClick={() => {
                                         setMobileMenuOpen(false);
-                                        // TODO: Implement logout
+                                        handleLogout();
                                     }}
                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-red-400 hover:text-red-300 hover:bg-red-500/10"
                                 >

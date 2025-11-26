@@ -16,6 +16,7 @@ interface ConfirmModalProps {
   cancelText?: string;
   variant?: ModalVariant;
   isLoading?: boolean;
+  confirmDisabled?: boolean;
 }
 
 export function ConfirmModal({
@@ -27,7 +28,8 @@ export function ConfirmModal({
   confirmText = 'Conferma',
   cancelText = 'Annulla',
   variant = 'info',
-  isLoading = false
+  isLoading = false,
+  confirmDisabled = false
 }: ConfirmModalProps) {
   const handleConfirm = async () => {
     await onConfirm();
@@ -146,7 +148,7 @@ export function ConfirmModal({
 
                     <button
                       onClick={handleConfirm}
-                      disabled={isLoading}
+                      disabled={isLoading || confirmDisabled}
                       className={`flex-1 px-4 py-3 bg-gradient-to-r ${config.buttonBg} text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                     >
                       {isLoading ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
     Shield,
     Key,
@@ -14,11 +14,13 @@ import {
     Trash2,
     Check,
     Eye,
-    EyeOff
+    EyeOff,
+    Loader2
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { API_BASE } from '@/lib/api/config';
 
 interface Session {
     id: string;
@@ -33,11 +35,18 @@ interface Session {
 export default function SecurityPage() {
     const t = useTranslations('settings.security');
     const tCommon = useTranslations('common');
+    const locale = useLocale();
 
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [isRevokingSessions, setIsRevokingSessions] = useState(false);
+    const [passwordError, setPasswordError] = useState<string | null>(null);
+    const [passwordSuccess, setPasswordSuccess] = useState(false);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [deletePassword, setDeletePassword] = useState('');
 
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
@@ -79,27 +88,136 @@ export default function SecurityPage() {
     const twoFactorEnabled = false;
     const lastPasswordChange = '45 days ago';
 
+    const getAuthToken = () => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('token');
+        }
+        return null;
+    };
+
     const handlePasswordChange = async () => {
+        setPasswordError(null);
+        setPasswordSuccess(false);
+
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert(t('password.mismatch'));
+            setPasswordError(t('password.mismatch'));
             return;
         }
-        // TODO: Implement password change API
-        alert(t('password.changed'));
-        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+        if (passwordForm.newPassword.length < 8) {
+            setPasswordError('La password deve contenere almeno 8 caratteri');
+            return;
+        }
+
+        setIsChangingPassword(true);
+
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE}/auth/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    currentPassword: passwordForm.currentPassword,
+                    newPassword: passwordForm.newPassword,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setPasswordError(data.message || 'Errore durante il cambio password');
+                return;
+            }
+
+            setPasswordSuccess(true);
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+
+            // Clear success message after 3 seconds
+            setTimeout(() => setPasswordSuccess(false), 3000);
+        } catch (error) {
+            setPasswordError('Errore di connessione. Riprova più tardi.');
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
+    const handleRevokeAllSessions = async () => {
+        setIsRevokingSessions(true);
+
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE}/auth/revoke-all-sessions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.message || 'Errore durante la revoca delle sessioni');
+                return;
+            }
+
+            // Logout required after revoking all sessions
+            if (data.logoutRequired) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = `/${locale}/auth/login`;
+            }
+        } catch (error) {
+            alert('Errore di connessione. Riprova più tardi.');
+        } finally {
+            setIsRevokingSessions(false);
+        }
     };
 
     const handleRevokeSession = (sessionId: string) => {
-        // TODO: Implement session revocation
-        console.log('Revoke session:', sessionId);
+        // For now, just revoke all sessions since we don't have individual session tracking
+        handleRevokeAllSessions();
     };
 
     const handleDeleteAccount = async () => {
+        if (deleteConfirmation !== 'DELETE') {
+            return;
+        }
+
         setIsDeleting(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setIsDeleting(false);
-        setShowDeleteModal(false);
-        // TODO: Implement account deletion
+
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`${API_BASE}/auth/account`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    password: deletePassword,
+                    confirmation: deleteConfirmation,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.message || 'Errore durante l\'eliminazione dell\'account');
+                setIsDeleting(false);
+                return;
+            }
+
+            // Account deleted - redirect to home
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = `/${locale}/auth/login`;
+        } catch (error) {
+            alert('Errore di connessione. Riprova più tardi.');
+            setIsDeleting(false);
+        }
     };
 
     const getDeviceIcon = (device: string) => {
@@ -180,12 +298,32 @@ export default function SecurityPage() {
                         />
                     </div>
 
+                    {/* Error/Success Messages */}
+                    {passwordError && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                            {passwordError}
+                        </div>
+                    )}
+                    {passwordSuccess && (
+                        <div className="p-3 bg-afflyt-profit-400/10 border border-afflyt-profit-400/20 rounded-lg text-afflyt-profit-400 text-sm flex items-center gap-2">
+                            <Check className="w-4 h-4" />
+                            {t('password.changed')}
+                        </div>
+                    )}
+
                     <CyberButton
                         variant="secondary"
                         onClick={handlePasswordChange}
-                        disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                        disabled={!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword || isChangingPassword}
                     >
-                        {t('password.change')}
+                        {isChangingPassword ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Salvataggio...
+                            </>
+                        ) : (
+                            t('password.change')
+                        )}
                     </CyberButton>
                 </div>
             </GlassCard>
@@ -239,8 +377,17 @@ export default function SecurityPage() {
                             <p className="text-sm text-gray-500">{t('sessions.description')}</p>
                         </div>
                     </div>
-                    <CyberButton variant="ghost" size="sm">
-                        <LogOut className="w-4 h-4" />
+                    <CyberButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRevokeAllSessions}
+                        disabled={isRevokingSessions}
+                    >
+                        {isRevokingSessions ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <LogOut className="w-4 h-4" />
+                        )}
                         {t('sessions.revokeAll')}
                     </CyberButton>
                 </div>
@@ -339,17 +486,50 @@ export default function SecurityPage() {
             {/* Delete Account Modal */}
             <ConfirmModal
                 isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
+                onClose={() => {
+                    setShowDeleteModal(false);
+                    setDeletePassword('');
+                    setDeleteConfirmation('');
+                }}
                 onConfirm={handleDeleteAccount}
                 title={t('danger.delete.modal.title')}
                 message={
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <p>{t('danger.delete.modal.warning')}</p>
                         <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
                             <li>{t('danger.delete.modal.item1')}</li>
                             <li>{t('danger.delete.modal.item2')}</li>
                             <li>{t('danger.delete.modal.item3')}</li>
                         </ul>
+
+                        {/* Password confirmation */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Inserisci la tua password
+                            </label>
+                            <input
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder="Password"
+                                className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white focus:border-red-500 focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        {/* DELETE confirmation */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Scrivi <span className="text-red-400 font-mono">DELETE</span> per confermare
+                            </label>
+                            <input
+                                type="text"
+                                value={deleteConfirmation}
+                                onChange={(e) => setDeleteConfirmation(e.target.value.toUpperCase())}
+                                placeholder="DELETE"
+                                className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono focus:border-red-500 focus:outline-none transition-colors"
+                            />
+                        </div>
+
                         <p className="text-red-300 font-medium">{t('danger.delete.modal.final')}</p>
                     </div>
                 }
@@ -357,6 +537,7 @@ export default function SecurityPage() {
                 cancelText={tCommon('cancel')}
                 variant="danger"
                 isLoading={isDeleting}
+                confirmDisabled={deleteConfirmation !== 'DELETE' || !deletePassword}
             />
         </div>
     );

@@ -4,16 +4,32 @@ import { IPAnonymizer } from '../services/IPAnonymizer';
 
 const prisma = new PrismaClient();
 
+// Rate limit for tracking endpoints - more permissive but still protected
+const trackingRateLimitConfig = {
+    max: 30,          // 30 requests per minute (reasonable for normal user behavior)
+    timeWindow: '1 minute',
+    errorResponseBuilder: () => ({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please slow down.',
+    })
+};
+
 const trackingRoutes: FastifyPluginAsync = async (fastify) => {
     /**
      * POST /track/r/:hash/clickout
-     * 
+     *
      * Public endpoint to track clicks and return redirect URL
      * No authentication required - this is called by end users
+     * Rate limited: 30 per minute per IP
      */
     fastify.post<{
         Params: { hash: string };
-    }>('/r/:hash/clickout', async (request, reply) => {
+    }>('/r/:hash/clickout', {
+        config: {
+            rateLimit: trackingRateLimitConfig
+        }
+    }, async (request, reply) => {
         const { hash } = request.params;
 
         try {

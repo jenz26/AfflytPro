@@ -3,6 +3,7 @@
 import { GlassCard } from '@/components/ui/GlassCard';
 import { MessageCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import DOMPurify from 'dompurify';
 
 interface TelegramPreviewProps {
   template: string;
@@ -85,6 +86,14 @@ export function TelegramPreview({
 
   const formattedMessage = formatMarkdown(processedMessage);
 
+  // Sanitize HTML to prevent XSS attacks
+  const sanitizedMessage = typeof window !== 'undefined'
+    ? DOMPurify.sanitize(formattedMessage, {
+        ALLOWED_TAGS: ['strong', 'em', 'del', 'br', 'a'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+      })
+    : formattedMessage;
+
   return (
     <GlassCard className="bg-[#0e1621] border-gray-700" padding="lg">
       <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-700">
@@ -97,7 +106,7 @@ export function TelegramPreview({
         {/* Message Content */}
         <div
           className="text-white text-sm leading-relaxed telegram-message"
-          dangerouslySetInnerHTML={{ __html: formattedMessage }}
+          dangerouslySetInnerHTML={{ __html: sanitizedMessage }}
         />
 
         {/* Message Footer */}

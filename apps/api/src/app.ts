@@ -2,6 +2,7 @@ import 'dotenv/config';
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
+import rateLimit from '@fastify/rate-limit';
 import { authRoutes } from './routes/auth';
 import { credentialRoutes } from './routes/credentials';
 import { productRoutes } from './routes/products';
@@ -60,6 +61,19 @@ app.register(jwt, {
     sign: {
         expiresIn: '7d' // Token expires in 7 days
     }
+});
+
+// ==================== RATE LIMITING ====================
+// Global rate limit: 100 requests per minute per IP
+app.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    errorResponseBuilder: (request, context) => ({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: `Troppo richieste. Riprova tra ${Math.ceil(context.ttl / 1000)} secondi.`,
+        retryAfter: Math.ceil(context.ttl / 1000)
+    })
 });
 
 // Auth decorator
