@@ -6,16 +6,12 @@ export async function notificationRoutes(fastify: FastifyInstance) {
   fastify.get(
     '/notifications',
     { preHandler: [fastify.authenticate] },
-    async (
-      request: FastifyRequest<{
-        Querystring: { limit?: string; offset?: string; unreadOnly?: string };
-      }>,
-      reply: FastifyReply
-    ) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const userId = (request as any).user.id;
-      const limit = parseInt(request.query.limit || '20', 10);
-      const offset = parseInt(request.query.offset || '0', 10);
-      const unreadOnly = request.query.unreadOnly === 'true';
+      const query = request.query as { limit?: string; offset?: string; unreadOnly?: string };
+      const limit = parseInt(query.limit || '20', 10);
+      const offset = parseInt(query.offset || '0', 10);
+      const unreadOnly = query.unreadOnly === 'true';
 
       const notifications = await NotificationService.getUserNotifications(userId, {
         limit,
@@ -42,12 +38,10 @@ export async function notificationRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/notifications/:id/read',
     { preHandler: [fastify.authenticate] },
-    async (
-      request: FastifyRequest<{ Params: { id: string } }>,
-      reply: FastifyReply
-    ) => {
+    async (request: FastifyRequest, reply: FastifyReply) => {
       const userId = (request as any).user.id;
-      const { id } = request.params;
+      const params = request.params as { id: string };
+      const { id } = params;
 
       await NotificationService.markAsRead(id, userId);
       return { success: true };

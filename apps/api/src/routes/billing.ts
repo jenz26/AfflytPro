@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PlanType } from '@prisma/client';
 import { StripeService } from '../services/StripeService';
+import prisma from '../lib/prisma';
 
 const APP_URL = process.env.APP_URL || 'https://afflyt.io';
 
@@ -19,13 +20,9 @@ export async function billingRoutes(fastify: FastifyInstance) {
   fastify.post(
     '/billing/checkout',
     { preHandler: [fastify.authenticate] },
-    async (
-      request: FastifyRequest<{
-        Body: { plan: string; billingCycle: 'monthly' | 'yearly' };
-      }>,
-      reply: FastifyReply
-    ) => {
-      const { plan, billingCycle } = request.body;
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const body = request.body as { plan: string; billingCycle: 'monthly' | 'yearly' };
+      const { plan, billingCycle } = body;
       const userId = (request as any).user.id;
 
       if (!['PRO', 'BUSINESS'].includes(plan)) {
@@ -92,7 +89,7 @@ export async function billingRoutes(fastify: FastifyInstance) {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const userId = (request as any).user.id;
 
-      const subscription = await fastify.prisma.subscription.findUnique({
+      const subscription = await prisma.subscription.findUnique({
         where: { userId },
         include: {
           invoices: {
@@ -120,11 +117,6 @@ export async function billingRoutes(fastify: FastifyInstance) {
   // Stripe webhook handler
   fastify.post(
     '/billing/webhook',
-    {
-      config: {
-        rawBody: true, // Important: we need the raw body for signature verification
-      },
-    },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const signature = request.headers['stripe-signature'] as string;
 
@@ -132,8 +124,8 @@ export async function billingRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ error: 'Missing stripe-signature header' });
       }
 
-      // Get raw body
-      const rawBody = (request as any).rawBody || request.body;
+      // Get raw body - Fastify stores it in rawBody when configured
+      const rawBody = (request as any).rawBody || JSON.stringify(request.body);
 
       const result = await StripeService.handleWebhook(rawBody, signature);
 
