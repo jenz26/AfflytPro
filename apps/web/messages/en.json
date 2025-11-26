@@ -1503,6 +1503,68 @@
       }
     }
   },
+  "analytics": {
+    "title": "Analytics Intelligence Center",
+    "subtitle": "Transform data into revenue-generating decisions",
+    "loading": "Loading analytics...",
+    "error": "Failed to load analytics data",
+    "refresh": "Refresh",
+    "noData": "Start generating affiliate links and sharing them to see your analytics here!",
+    "tabs": {
+      "overview": "Overview",
+      "channels": "Channels",
+      "products": "Products",
+      "time": "Time Analysis",
+      "ai": "AI Insights"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "revenueTooltip": "Total affiliate commission earned",
+      "clicks": "Clicks",
+      "clicksTooltip": "Total link clicks",
+      "cvr": "CVR",
+      "cvrTooltip": "Conversion Rate - percentage of clicks that convert to sales",
+      "epc": "EPC",
+      "epcTooltip": "Earnings Per Click - average revenue per click",
+      "benchmark": "Benchmark",
+      "industry": "Industry"
+    },
+    "insights": {
+      "aboveBenchmark": "Your conversion rate ({current}%) is above the industry average ({benchmark}%)! Keep up the great work.",
+      "clicksDown": "Your clicks are trending down. Consider posting more deals or trying different products.",
+      "onTrack": "Your performance is on track. Continue optimizing your channels for better results."
+    },
+    "chart": {
+      "revenueClicks": "Revenue & Clicks Trend"
+    },
+    "topLinks": {
+      "title": "Top Performing Links",
+      "viewAll": "View All"
+    },
+    "quickStats": {
+      "periodAnalyzed": "Period Analyzed",
+      "conversions": "Conversions",
+      "topDevice": "Top Device",
+      "bestHour": "Best Hour"
+    },
+    "period": {
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "90d": "Last 90 days"
+    },
+    "export": {
+      "title": "Export",
+      "csv": "Export CSV",
+      "pdf": "Export PDF"
+    },
+    "aiLocked": {
+      "title": "AI-Powered Insights",
+      "description": "Get personalized recommendations, anomaly detection, and revenue forecasting powered by AI.",
+      "upgrade": "Upgrade to PRO - €49/month",
+      "note": "Full access to advanced analytics, custom date ranges, and AI insights"
+    },
+    "pro": "PRO"
+  },
   "settings": {
     "title": "Settings",
     "subtitle": "Manage your account and preferences",

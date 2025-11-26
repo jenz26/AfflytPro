@@ -1503,6 +1503,68 @@
       }
     }
   },
+  "analytics": {
+    "title": "Centro Intelligence Analytics",
+    "subtitle": "Trasforma i dati in decisioni che generano revenue",
+    "loading": "Caricamento analytics...",
+    "error": "Errore nel caricamento dei dati analytics",
+    "refresh": "Aggiorna",
+    "noData": "Inizia a generare link affiliati e condividerli per vedere le tue analytics qui!",
+    "tabs": {
+      "overview": "Panoramica",
+      "channels": "Canali",
+      "products": "Prodotti",
+      "time": "Analisi Temporale",
+      "ai": "AI Insights"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "revenueTooltip": "Commissioni affiliazione totali guadagnate",
+      "clicks": "Click",
+      "clicksTooltip": "Click totali sui link",
+      "cvr": "CVR",
+      "cvrTooltip": "Tasso di Conversione - percentuale di click che diventano vendite",
+      "epc": "EPC",
+      "epcTooltip": "Guadagno Per Click - revenue medio per click",
+      "benchmark": "Benchmark",
+      "industry": "Settore"
+    },
+    "insights": {
+      "aboveBenchmark": "Il tuo tasso di conversione ({current}%) è superiore alla media del settore ({benchmark}%)! Ottimo lavoro.",
+      "clicksDown": "I tuoi click sono in calo. Prova a pubblicare più offerte o prodotti diversi.",
+      "onTrack": "Le tue performance sono nella norma. Continua a ottimizzare i canali per risultati migliori."
+    },
+    "chart": {
+      "revenueClicks": "Trend Revenue & Click"
+    },
+    "topLinks": {
+      "title": "Link con Migliori Performance",
+      "viewAll": "Vedi Tutti"
+    },
+    "quickStats": {
+      "periodAnalyzed": "Periodo Analizzato",
+      "conversions": "Conversioni",
+      "topDevice": "Dispositivo Top",
+      "bestHour": "Ora Migliore"
+    },
+    "period": {
+      "7d": "Ultimi 7 giorni",
+      "30d": "Ultimi 30 giorni",
+      "90d": "Ultimi 90 giorni"
+    },
+    "export": {
+      "title": "Esporta",
+      "csv": "Esporta CSV",
+      "pdf": "Esporta PDF"
+    },
+    "aiLocked": {
+      "title": "Insights Potenziati da AI",
+      "description": "Ottieni raccomandazioni personalizzate, rilevamento anomalie e previsioni revenue potenziate dall'AI.",
+      "upgrade": "Passa a PRO - €49/mese",
+      "note": "Accesso completo ad analytics avanzate, intervalli di date personalizzati e AI insights"
+    },
+    "pro": "PRO"
+  },
   "settings": {
     "title": "Impostazioni",
     "subtitle": "Gestisci il tuo account e le preferenze",

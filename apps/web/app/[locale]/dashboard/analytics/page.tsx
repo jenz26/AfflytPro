@@ -162,11 +162,11 @@ export default function AnalyticsPage() {
 
     // Tab definitions (dynamic based on tier)
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: LayoutDashboard, locked: false },
-        { id: 'channels', label: 'Channels', icon: Radio, locked: false },
-        { id: 'products', label: 'Products', icon: Package, locked: false },
-        { id: 'time', label: 'Time Analysis', icon: CalendarClock, locked: false },
-        { id: 'ai', label: 'AI Insights', icon: Brain, locked: !isPro, tier: 'PRO' },
+        { id: 'overview', label: t('tabs.overview'), icon: LayoutDashboard, locked: false },
+        { id: 'channels', label: t('tabs.channels'), icon: Radio, locked: false },
+        { id: 'products', label: t('tabs.products'), icon: Package, locked: false },
+        { id: 'time', label: t('tabs.time'), icon: CalendarClock, locked: false },
+        { id: 'ai', label: t('tabs.ai'), icon: Brain, locked: !isPro, tier: t('pro') },
     ];
 
     // Data states
@@ -282,27 +282,27 @@ export default function AnalyticsPage() {
         if (overview.clicks.current === 0) {
             return {
                 type: 'info',
-                message: 'Start generating affiliate links and sharing them to see your analytics here!'
+                message: t('noData')
             };
         }
 
         if (overview.cvr.current > overview.cvr.benchmark) {
             return {
                 type: 'success',
-                message: `Your conversion rate (${overview.cvr.current}%) is above the industry average (${overview.cvr.benchmark}%)! Keep up the great work.`
+                message: t('insights.aboveBenchmark', { current: overview.cvr.current, benchmark: overview.cvr.benchmark })
             };
         }
 
         if (overview.clicks.trend === 'down') {
             return {
                 type: 'warning',
-                message: 'Your clicks are trending down. Consider posting more deals or trying different products.'
+                message: t('insights.clicksDown')
             };
         }
 
         return {
             type: 'info',
-            message: 'Your performance is on track. Continue optimizing your channels for better results.'
+            message: t('insights.onTrack')
         };
     };
 
@@ -313,9 +313,9 @@ export default function AnalyticsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Analytics Intelligence Center</h1>
+                    <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
                     <p className="text-gray-400 text-sm mt-1">
-                        Transform data into revenue-generating decisions
+                        {t('subtitle')}
                     </p>
                 </div>
 
@@ -335,7 +335,7 @@ export default function AnalyticsPage() {
             {/* Error State */}
             {error && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400">
-                    {error}
+                    {t('error')}
                 </div>
             )}
 
@@ -356,42 +356,42 @@ export default function AnalyticsPage() {
             {overview && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <AnalyticsKPICard
-                        title="Revenue"
+                        title={t('kpi.revenue')}
                         icon={DollarSign}
                         value={`€${overview.revenue.current.toFixed(2)}`}
                         change={overview.revenue.change}
                         trend={overview.revenue.trend}
                         color="green"
-                        tooltip="Total affiliate commission earned"
+                        tooltip={t('kpi.revenueTooltip')}
                     />
                     <AnalyticsKPICard
-                        title="Clicks"
+                        title={t('kpi.clicks')}
                         icon={MousePointerClick}
                         value={overview.clicks.current.toLocaleString()}
                         change={overview.clicks.change}
                         trend={overview.clicks.trend}
                         color="cyan"
-                        tooltip="Total link clicks"
+                        tooltip={t('kpi.clicksTooltip')}
                     />
                     <AnalyticsKPICard
-                        title="CVR"
+                        title={t('kpi.cvr')}
                         icon={Target}
                         value={`${overview.cvr.current}%`}
                         change={overview.cvr.change}
                         trend={overview.cvr.trend}
-                        benchmark={{ value: overview.cvr.benchmark, label: 'Benchmark' }}
+                        benchmark={{ value: overview.cvr.benchmark, label: t('kpi.benchmark') }}
                         color="purple"
-                        tooltip="Conversion Rate - percentage of clicks that convert to sales"
+                        tooltip={t('kpi.cvrTooltip')}
                     />
                     <AnalyticsKPICard
-                        title="EPC"
+                        title={t('kpi.epc')}
                         icon={TrendingUp}
                         value={`€${overview.epc.current.toFixed(2)}`}
                         change={overview.epc.change}
                         trend={overview.epc.trend}
-                        benchmark={{ value: overview.epc.industry, label: 'Industry' }}
+                        benchmark={{ value: overview.epc.industry, label: t('kpi.industry') }}
                         color="orange"
-                        tooltip="Earnings Per Click - average revenue per click"
+                        tooltip={t('kpi.epcTooltip')}
                     />
                 </div>
             )}
@@ -456,7 +456,7 @@ export default function AnalyticsPage() {
                     {timeSeries && (
                         <RevenueChart
                             data={timeSeries.data}
-                            title="Revenue & Clicks Trend"
+                            title={t('chart.revenueClicks')}
                             showRevenue={true}
                             showClicks={true}
                         />
@@ -479,7 +479,7 @@ export default function AnalyticsPage() {
             {topLinks && (
                 <TopLinksTable
                     links={topLinks.links}
-                    title="Top Performing Links"
+                    title={t('topLinks.title')}
                     showViewAll={topLinks.total > 5}
                     onViewAll={() => {
                         // Navigate to links page
@@ -494,17 +494,17 @@ export default function AnalyticsPage() {
                     <GlassCard className="p-4 text-center">
                         <Clock className="w-5 h-5 text-gray-400 mx-auto mb-2" />
                         <p className="text-lg font-mono text-white">{overview.period}d</p>
-                        <p className="text-xs text-gray-500">Period Analyzed</p>
+                        <p className="text-xs text-gray-500">{t('quickStats.periodAnalyzed')}</p>
                     </GlassCard>
                     <GlassCard className="p-4 text-center">
                         <Target className="w-5 h-5 text-gray-400 mx-auto mb-2" />
                         <p className="text-lg font-mono text-white">{overview.conversions.current}</p>
-                        <p className="text-xs text-gray-500">Conversions</p>
+                        <p className="text-xs text-gray-500">{t('quickStats.conversions')}</p>
                     </GlassCard>
                     <GlassCard className="p-4 text-center">
                         <Smartphone className="w-5 h-5 text-gray-400 mx-auto mb-2" />
                         <p className="text-lg font-mono text-white">-</p>
-                        <p className="text-xs text-gray-500">Top Device</p>
+                        <p className="text-xs text-gray-500">{t('quickStats.topDevice')}</p>
                     </GlassCard>
                     <GlassCard className="p-4 text-center">
                         <TrendingUp className="w-5 h-5 text-gray-400 mx-auto mb-2" />
@@ -513,7 +513,7 @@ export default function AnalyticsPage() {
                                 ? `${heatmapData.bestTime.hour.toString().padStart(2, '0')}:00`
                                 : '-'}
                         </p>
-                        <p className="text-xs text-gray-500">Best Hour</p>
+                        <p className="text-xs text-gray-500">{t('quickStats.bestHour')}</p>
                     </GlassCard>
                 </div>
             )}
@@ -573,15 +573,15 @@ export default function AnalyticsPage() {
                             <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Lock className="w-8 h-8 text-white" />
                             </div>
-                            <h3 className="text-xl font-semibold text-white mb-2">AI-Powered Insights</h3>
+                            <h3 className="text-xl font-semibold text-white mb-2">{t('aiLocked.title')}</h3>
                             <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                                Get personalized recommendations, anomaly detection, and revenue forecasting powered by AI.
+                                {t('aiLocked.description')}
                             </p>
                             <button className="px-6 py-3 bg-gradient-to-r from-afflyt-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-afflyt-cyan-600 hover:to-blue-700 transition-all">
-                                Upgrade to PRO - €49/month
+                                {t('aiLocked.upgrade')}
                             </button>
                             <p className="text-xs text-gray-500 mt-3">
-                                Full access to advanced analytics, custom date ranges, and AI insights
+                                {t('aiLocked.note')}
                             </p>
                         </div>
                     </GlassCard>
