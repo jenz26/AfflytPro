@@ -32,11 +32,11 @@ export const ScoreIndicator = ({
       label: 'HOT'
     };
     if (score >= 70) return {
-      bg: 'bg-cyan-400/10',
-      border: 'border-cyan-400/30',
-      text: 'text-cyan-400',
-      dot: 'bg-cyan-400',
-      gradient: 'from-cyan-300 to-cyan-500',
+      bg: 'bg-afflyt-cyan-400/10',
+      border: 'border-afflyt-cyan-400/30',
+      text: 'text-afflyt-cyan-400',
+      dot: 'bg-afflyt-cyan-400',
+      gradient: 'from-afflyt-cyan-300 to-afflyt-cyan-500',
       label: 'GOOD'
     };
     if (score >= 50) return {

@@ -49,10 +49,10 @@ export function UpgradePrompt({
 
   if (variant === 'banner') {
     return (
-      <div className="bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10 border border-cyan-500/30 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-afflyt-cyan-500/10 via-blue-500/10 to-afflyt-plasma-500/10 border border-afflyt-cyan-500/30 rounded-xl p-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-afflyt-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Lock className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -81,11 +81,11 @@ export function UpgradePrompt({
   }
 
   return (
-    <GlassCard className="border-cyan-500/30" padding="lg">
+    <GlassCard className="border-afflyt-cyan-500/30" padding="lg">
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className="flex-shrink-0">
-          <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-gradient-to-br from-afflyt-cyan-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
             <Lock className="w-6 h-6 text-white" />
           </div>
         </div>
@@ -127,7 +127,7 @@ export function UpgradePrompt({
             <Link href="/settings/subscription">
               <CyberButton
                 variant="primary"
-                className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+                className="bg-gradient-to-r from-afflyt-cyan-500 to-blue-600 hover:from-afflyt-cyan-600 hover:to-blue-700"
               >
                 <Zap className="w-4 h-4 mr-2" />
                 Upgrade to {PLAN_LABELS[nextPlan]}

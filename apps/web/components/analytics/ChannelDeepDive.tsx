@@ -36,13 +36,13 @@ function getChannelIcon(channel: string): string {
 
 function getChannelColor(channel: string): string {
     const colors: Record<string, string> = {
-        telegram: 'from-blue-500 to-cyan-500',
-        discord: 'from-indigo-500 to-purple-500',
+        telegram: 'from-blue-500 to-afflyt-cyan-500',
+        discord: 'from-indigo-500 to-afflyt-plasma-500',
         email: 'from-red-500 to-orange-500',
         twitter: 'from-sky-400 to-blue-500',
-        instagram: 'from-pink-500 to-purple-500',
+        instagram: 'from-pink-500 to-afflyt-plasma-500',
         facebook: 'from-blue-600 to-blue-700',
-        whatsapp: 'from-green-500 to-emerald-500',
+        whatsapp: 'from-afflyt-profit-500 to-emerald-500',
         direct: 'from-gray-500 to-gray-600',
     };
     return colors[channel.toLowerCase()] || 'from-gray-500 to-gray-600';

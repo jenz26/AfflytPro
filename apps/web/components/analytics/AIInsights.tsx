@@ -62,9 +62,9 @@ function getInsightBorder(type: Insight['type']): string {
         case 'warning':
             return 'border-yellow-500/30 bg-yellow-500/5';
         case 'opportunity':
-            return 'border-purple-500/30 bg-purple-500/5';
+            return 'border-afflyt-plasma-500/30 bg-afflyt-plasma-500/5';
         default:
-            return 'border-cyan-500/30 bg-cyan-500/5';
+            return 'border-afflyt-cyan-500/30 bg-afflyt-cyan-500/5';
     }
 }
 
@@ -79,14 +79,14 @@ function getPriorityBadge(priority: Insight['priority']) {
 
 function getScoreColor(score: number): string {
     if (score >= 80) return 'text-emerald-400';
-    if (score >= 60) return 'text-cyan-400';
+    if (score >= 60) return 'text-afflyt-cyan-400';
     if (score >= 40) return 'text-yellow-400';
     return 'text-red-400';
 }
 
 function getScoreGradient(score: number): string {
-    if (score >= 80) return 'from-emerald-500 to-green-500';
-    if (score >= 60) return 'from-cyan-500 to-blue-500';
+    if (score >= 80) return 'from-emerald-500 to-afflyt-profit-500';
+    if (score >= 60) return 'from-afflyt-cyan-500 to-blue-500';
     if (score >= 40) return 'from-yellow-500 to-orange-500';
     return 'from-red-500 to-pink-500';
 }

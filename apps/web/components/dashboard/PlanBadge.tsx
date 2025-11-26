@@ -19,12 +19,12 @@ const PLAN_CONFIG = {
   },
   PRO: {
     label: 'Pro',
-    colors: 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-500/40 text-cyan-300',
+    colors: 'bg-gradient-to-r from-afflyt-cyan-500/20 to-blue-500/20 border-afflyt-cyan-500/40 text-afflyt-cyan-300',
     icon: '⭐',
   },
   BUSINESS: {
     label: 'Business',
-    colors: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/40 text-purple-300',
+    colors: 'bg-gradient-to-r from-afflyt-plasma-500/20 to-pink-500/20 border-afflyt-plasma-500/40 text-afflyt-plasma-400',
     icon: '🚀',
   },
 };
