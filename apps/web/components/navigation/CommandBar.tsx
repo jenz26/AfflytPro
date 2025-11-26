@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import Image from 'next/image';
 import {
     LayoutDashboard,
     TrendingUp,
@@ -204,11 +205,15 @@ export const CommandBar = () => {
                     {/* Left Section: Brand + Status */}
                     <div className="flex items-center gap-8">
                         {/* Logo */}
-                        <Link href={`/${locale}/dashboard`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <div className="w-10 h-10 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(0,229,224,0.3)]">
-                                <span className="text-afflyt-dark-100 font-bold text-xl">A</span>
-                            </div>
-                            <span className="text-white font-bold text-lg">{tBrand('name')}</span>
+                        <Link href={`/${locale}/dashboard`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                            <Image
+                                src="/images/logo.webp"
+                                alt="Afflyt Pro"
+                                width={140}
+                                height={40}
+                                className="h-9 w-auto"
+                                priority
+                            />
                         </Link>
 
                         {/* System Status */}
@@ -401,9 +406,13 @@ export const CommandBar = () => {
                         </button>
 
                         <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center">
-                                <span className="text-afflyt-dark-100 font-bold text-sm">A</span>
-                            </div>
+                            <Image
+                                src="/images/logo-icon.webp"
+                                alt="Afflyt"
+                                width={32}
+                                height={32}
+                                className="h-8 w-8"
+                            />
                             <span className="text-white font-bold">AFFLYT</span>
                         </Link>
                     </div>

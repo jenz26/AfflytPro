@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTranslations, useLocale } from 'next-intl';
@@ -247,14 +248,15 @@ export default function AuthPage() {
                 {/* Left Panel - Auth Form */}
                 <div className="space-y-8">
                     {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-xl flex items-center justify-center">
-                            <span className="text-afflyt-dark-100 font-bold text-2xl">A</span>
-                        </div>
-                        <div>
-                            <h1 className="text-white font-bold text-2xl tracking-tight">{tBrand('name')}</h1>
-                            <p className="text-afflyt-cyan-400 text-sm font-mono uppercase">{tBrand('tagline')}</p>
-                        </div>
+                    <div className="flex items-center gap-4">
+                        <Image
+                            src="/images/logo.webp"
+                            alt="Afflyt Pro"
+                            width={180}
+                            height={50}
+                            className="h-12 w-auto"
+                            priority
+                        />
                     </div>
 
                     {/* Main Card */}
