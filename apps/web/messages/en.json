@@ -571,13 +571,17 @@
           "title": "Mission",
           "description": "Name and goal"
         },
-        "target": {
-          "title": "Target",
-          "description": "Categories"
+        "categories": {
+          "title": "Categories",
+          "description": "What to monitor"
         },
-        "parameters": {
-          "title": "Parameters",
-          "description": "Score and price"
+        "filters": {
+          "title": "Filters",
+          "description": "Customize"
+        },
+        "quality": {
+          "title": "Quality",
+          "description": "Deal Score"
         },
         "destination": {
           "title": "Destination",
@@ -648,6 +652,139 @@
         "Books": "Books",
         "Fashion": "Fashion",
         "Music": "Music"
+      },
+      "step2": {
+        "title": "Select Target Categories",
+        "subtitle": "Choose which Amazon categories to monitor",
+        "selectedCount": "{count} categories selected",
+        "maxReached": "Maximum {max} categories for your plan",
+        "upgradeHint": "Upgrade to PRO for more categories"
+      },
+      "step3": {
+        "info": "Filters help you narrow down results. All filters are optional - the more you add, the fewer (but more targeted) results you'll get.",
+        "clear": "Clear",
+        "proFilters": {
+          "title": "Advanced Filters",
+          "priceRange": {
+            "label": "Price Range",
+            "minPlaceholder": "Min €",
+            "maxPlaceholder": "Max €"
+          },
+          "minDiscount": {
+            "label": "Minimum Discount",
+            "hint": "Only show products with at least this discount"
+          },
+          "minRating": {
+            "label": "Minimum Rating",
+            "hint": "Click stars to set minimum rating",
+            "selected": "Minimum {stars} stars"
+          },
+          "minReviews": {
+            "label": "Minimum Reviews",
+            "hint": "Products with at least this many reviews"
+          },
+          "maxSalesRank": {
+            "label": "Maximum Sales Rank",
+            "hint": "Lower rank = more popular. Leave empty for any."
+          }
+        },
+        "businessFilters": {
+          "title": "Premium Filters",
+          "amazonOnly": {
+            "label": "Sold by Amazon",
+            "hint": "Only products sold directly by Amazon"
+          },
+          "fbaOnly": {
+            "label": "FBA Only",
+            "hint": "Only products fulfilled by Amazon"
+          },
+          "hasCoupon": {
+            "label": "With Coupon",
+            "hint": "Only products with active coupons"
+          },
+          "primeOnly": {
+            "label": "Prime Only",
+            "hint": "Only Prime exclusive deals"
+          },
+          "brand": {
+            "label": "Brand Filter",
+            "includeLabel": "Include brands (comma separated)",
+            "includePlaceholder": "Apple, Samsung, Sony",
+            "excludeLabel": "Exclude brands (comma separated)",
+            "excludePlaceholder": "Generic, Unknown"
+          },
+          "listedAfter": {
+            "label": "New Products Only",
+            "hint": "Only products listed after this date"
+          }
+        }
+      },
+      "step4": {
+        "title": "Deal Quality Threshold",
+        "subtitle": "Set the minimum score for deals",
+        "scoreLabel": "Minimum Deal Score",
+        "scoreValue": "{score}/100",
+        "recommended": "Recommended",
+        "explanation": {
+          "title": "How Deal Score Works",
+          "description": "Our AI combines multiple factors to evaluate each deal:",
+          "factors": {
+            "discount": "Discount",
+            "popularity": "Popularity",
+            "rating": "Rating",
+            "trend": "Trend"
+          }
+        }
+      },
+      "step5": {
+        "title": "Choose Destination",
+        "subtitle": "Where do you want to publish deals?",
+        "channelLabel": "Select Channel",
+        "loadingChannels": "Loading channels...",
+        "noChannels": "No channels connected",
+        "noChannelsHint": "Connect a Telegram or Discord channel in Settings to auto-publish.",
+        "connectChannel": "Connect Channel",
+        "testingMode": {
+          "label": "Testing Mode",
+          "description": "Don't publish - track only in dashboard"
+        },
+        "frequency": {
+          "title": "Execution Frequency",
+          "current": "Based on your {plan} plan:",
+          "upgradeHint": "Upgrade for more frequent checks"
+        },
+        "maxResults": {
+          "title": "Max Results per Run",
+          "description": "Maximum deals per execution",
+          "perRun": "per run"
+        }
+      },
+      "step6": {
+        "title": "Mission Summary",
+        "subtitle": "Ready? Let's launch!",
+        "summary": {
+          "name": "Mission Name",
+          "categories": "Categories",
+          "categoriesCount": "{count} selected",
+          "filters": "Active Filters",
+          "filtersCount": "{count} filters",
+          "noFilters": "No additional filters",
+          "minScore": "Min Score",
+          "destination": "Destination",
+          "testingMode": "Testing Mode (no publishing)",
+          "frequency": "Frequency"
+        },
+        "actions": {
+          "createActive": "Create & Activate",
+          "createInactive": "Create as Draft",
+          "updateActive": "Save & Activate",
+          "updateKeepState": "Save Changes"
+        },
+        "warnings": {
+          "noChannel": "No channel selected - deals won't be published",
+          "highScore": "High score threshold - you may get fewer results",
+          "manyFilters": "Many filters active - consider reducing for more results"
+        }
       }
     }
   },

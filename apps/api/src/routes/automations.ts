@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { PrismaClient, TriggerType, ActionType } from '@prisma/client';
+import { PrismaClient, TriggerType, ActionType, PlanType } from '@prisma/client';
 import { RuleExecutor } from '../services/RuleExecutor';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
@@ -10,37 +10,196 @@ import {
     checkABTesting,
 } from '../middleware/planGuard';
 
+// ═══════════════════════════════════════════════════════════════
+// VALIDATION SCHEMAS
+// ═══════════════════════════════════════════════════════════════
+
 const triggerActionSchema = z.object({
     type: z.string().min(1),
     config: z.any(),
     order: z.number().int().nonnegative().optional()
 });
 
+/**
+ * Full create rule schema - includes all tier filters
+ * Actual tier validation happens in validateFiltersForPlan()
+ */
 const createRuleSchema = z.object({
+    // Basic info
     name: z.string().min(1, 'Name is required').max(200),
     description: z.string().max(500).optional(),
+
+    // FREE tier filters
     categories: z.array(z.string()).min(1, 'At least one category is required'),
-    minScore: z.number().min(0).max(100, 'Score must be between 0 and 100'),
+    minScore: z.number().min(0).max(100, 'Score must be between 0 and 100').default(70),
+
+    // PRO tier filters
+    minPrice: z.number().positive().optional(),
     maxPrice: z.number().positive().optional(),
-    channelId: z.string().uuid().optional(),
-    splitId: z.string().uuid().optional(),
-    triggers: z.array(triggerActionSchema).min(1, 'At least one trigger is required'),
-    actions: z.array(triggerActionSchema.extend({ order: z.number().int().nonnegative() })).min(1, 'At least one action is required')
+    minDiscount: z.number().min(0).max(100).optional(),
+    minRating: z.number().min(0).max(500).optional(), // 0-500 scale (400 = 4.0 stars)
+    minReviews: z.number().int().nonnegative().optional(),
+    maxSalesRank: z.number().int().positive().optional(),
+
+    // BUSINESS tier filters
+    amazonOnly: z.boolean().optional(),
+    fbaOnly: z.boolean().optional(),
+    hasCoupon: z.boolean().optional(),
+    primeOnly: z.boolean().optional(),
+    brandInclude: z.array(z.string()).optional(),
+    brandExclude: z.array(z.string()).optional(),
+    listedAfter: z.string().datetime().optional(),
+
+    // Publishing
+    channelId: z.string().uuid().optional().or(z.literal('')),
+    splitId: z.string().uuid().optional().or(z.literal('')),
+
+    // Triggers/Actions (optional - will use defaults if not provided)
+    triggers: z.array(triggerActionSchema).optional(),
+    actions: z.array(triggerActionSchema.extend({ order: z.number().int().nonnegative() })).optional(),
+
+    // Activation
+    isActive: z.boolean().default(true),
 });
 
 const updateRuleSchema = z.object({
     name: z.string().min(1).max(200).optional(),
     description: z.string().max(500).optional(),
     isActive: z.boolean().optional(),
+
+    // FREE tier
+    categories: z.array(z.string()).min(1).optional(),
     minScore: z.number().min(0).max(100).optional(),
-    maxPrice: z.number().positive().optional(),
-    channelId: z.string().uuid().optional(),
-    splitId: z.string().uuid().optional()
+
+    // PRO tier
+    minPrice: z.number().positive().nullable().optional(),
+    maxPrice: z.number().positive().nullable().optional(),
+    minDiscount: z.number().min(0).max(100).nullable().optional(),
+    minRating: z.number().min(0).max(500).nullable().optional(),
+    minReviews: z.number().int().nonnegative().nullable().optional(),
+    maxSalesRank: z.number().int().positive().nullable().optional(),
+
+    // BUSINESS tier
+    amazonOnly: z.boolean().optional(),
+    fbaOnly: z.boolean().optional(),
+    hasCoupon: z.boolean().optional(),
+    primeOnly: z.boolean().optional(),
+    brandInclude: z.array(z.string()).optional(),
+    brandExclude: z.array(z.string()).optional(),
+    listedAfter: z.string().datetime().nullable().optional(),
+
+    // Publishing
+    channelId: z.string().uuid().optional().or(z.literal('')),
+    splitId: z.string().uuid().optional().or(z.literal('')),
 });
 
 const idParamSchema = z.object({
     id: z.string().uuid('Invalid ID format')
 });
+
+// ═══════════════════════════════════════════════════════════════
+// TIER-BASED FILTER LIMITS
+// ═══════════════════════════════════════════════════════════════
+
+interface PlanFilterLimits {
+    allowedFilters: string[];
+    maxCategories: number;
+    maxResultsPerRun: number;
+    defaultCron: string;
+}
+
+const PLAN_FILTER_LIMITS: Record<string, PlanFilterLimits> = {
+    FREE: {
+        allowedFilters: ['categories', 'minScore'],
+        maxCategories: 3,
+        maxResultsPerRun: 5,
+        defaultCron: '0 */6 * * *', // Every 6 hours
+    },
+    PRO: {
+        allowedFilters: [
+            'categories', 'minScore',
+            'minPrice', 'maxPrice', 'minDiscount',
+            'minRating', 'minReviews', 'maxSalesRank'
+        ],
+        maxCategories: 8,
+        maxResultsPerRun: 15,
+        defaultCron: '0 */2 * * *', // Every 2 hours
+    },
+    BUSINESS: {
+        allowedFilters: [
+            'categories', 'minScore',
+            'minPrice', 'maxPrice', 'minDiscount',
+            'minRating', 'minReviews', 'maxSalesRank',
+            'amazonOnly', 'fbaOnly', 'hasCoupon', 'primeOnly',
+            'brandInclude', 'brandExclude', 'listedAfter'
+        ],
+        maxCategories: 16,
+        maxResultsPerRun: 30,
+        defaultCron: '*/30 * * * *', // Every 30 minutes
+    },
+};
+
+/**
+ * Validate and filter mission config based on user plan
+ * Strips unauthorized filters and enforces limits
+ */
+function validateFiltersForPlan(
+    filters: Record<string, any>,
+    userPlan: string
+): { valid: Record<string, any>; stripped: string[]; warnings: string[] } {
+    const limits = PLAN_FILTER_LIMITS[userPlan] || PLAN_FILTER_LIMITS.FREE;
+    const valid: Record<string, any> = {};
+    const stripped: string[] = [];
+    const warnings: string[] = [];
+
+    // Filter fields to check
+    const filterFields = [
+        'categories', 'minScore',
+        'minPrice', 'maxPrice', 'minDiscount',
+        'minRating', 'minReviews', 'maxSalesRank',
+        'amazonOnly', 'fbaOnly', 'hasCoupon', 'primeOnly',
+        'brandInclude', 'brandExclude', 'listedAfter'
+    ];
+
+    for (const key of filterFields) {
+        const value = filters[key];
+
+        if (value === undefined || value === null || value === '') {
+            continue;
+        }
+
+        if (limits.allowedFilters.includes(key)) {
+            // Special handling for categories limit
+            if (key === 'categories' && Array.isArray(value)) {
+                if (value.length > limits.maxCategories) {
+                    valid[key] = value.slice(0, limits.maxCategories);
+                    warnings.push(`categories limited to ${limits.maxCategories} for ${userPlan} plan`);
+                } else {
+                    valid[key] = value;
+                }
+            } else {
+                valid[key] = value;
+            }
+        } else {
+            // Filter not allowed for this plan
+            stripped.push(key);
+        }
+    }
+
+    // Always include defaults if not set
+    if (!valid.minScore) {
+        valid.minScore = 70;
+    }
+
+    return { valid, stripped, warnings };
+}
+
+/**
+ * Get default cron expression based on plan
+ */
+function getDefaultCronForPlan(plan: string): string {
+    return PLAN_FILTER_LIMITS[plan]?.defaultCron || PLAN_FILTER_LIMITS.FREE.defaultCron;
+}
 
 const automationRoutes: FastifyPluginAsync = async (fastify) => {
     /**
@@ -129,54 +288,81 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
     /**
      * POST /automation/rules
-     * Create new automation rule with governance check
+     * Create new automation rule (mission) with tier-based filter validation
      */
     fastify.post<{
-        Body: {
-            name: string;
-            description?: string;
-            categories: string[];
-            minScore: number;
-            maxPrice?: number;
-            channelId?: string;
-            splitId?: string;
-            triggers: Array<{ type: string; config: any }>;
-            actions: Array<{ type: string; config: any; order: number }>;
-        };
+        Body: z.infer<typeof createRuleSchema>;
     }>('/rules', {
         preHandler: [
             fastify.authenticate,
             checkAutomationLimit,  // Check if user can create more rules
-            checkMinScore,         // Check if minScore is allowed
             checkABTesting,        // Check if A/B testing is allowed
         ]
     }, async (request, reply) => {
         const userId = (request.user as any).id;
+        const userPlan = (request.user as any).plan || 'FREE';
 
         try {
-            const {
-                name,
-                description,
-                categories,
-                minScore,
-                maxPrice,
-                channelId,
-                splitId,
-                triggers,
-                actions
-            } = createRuleSchema.parse(request.body);
+            const parsed = createRuleSchema.parse(request.body);
 
-            // Create rule with triggers and actions (transactional)
+            // Validate filters based on user plan
+            const { valid: validFilters, stripped, warnings } = validateFiltersForPlan(parsed, userPlan);
+
+            // Log if filters were stripped
+            if (stripped.length > 0) {
+                fastify.log.info({
+                    userId,
+                    userPlan,
+                    strippedFilters: stripped,
+                }, 'Some filters were stripped due to plan limitations');
+            }
+
+            // Get plan limits for max results
+            const planLimits = PLAN_FILTER_LIMITS[userPlan] || PLAN_FILTER_LIMITS.FREE;
+
+            // Use provided triggers/actions or create defaults
+            const triggers = parsed.triggers && parsed.triggers.length > 0
+                ? parsed.triggers
+                : [{ type: 'SCHEDULE', config: { cron: getDefaultCronForPlan(userPlan) } }];
+
+            const actions = parsed.actions && parsed.actions.length > 0
+                ? parsed.actions
+                : [{ type: 'PUBLISH_CHANNEL', config: { maxDeals: planLimits.maxResultsPerRun }, order: 0 }];
+
+            // Create rule with validated filters
             const rule = await prisma.automationRule.create({
                 data: {
                     userId,
-                    name,
-                    description,
-                    categories: categories,
-                    minScore,
-                    maxPrice,
-                    ...(channelId && channelId.trim() !== '' ? { channelId } : {}),
-                    ...(splitId && splitId.trim() !== '' ? { splitId } : {}),
+                    name: parsed.name,
+                    description: parsed.description,
+                    isActive: parsed.isActive,
+
+                    // Apply validated filters
+                    categories: validFilters.categories || [],
+                    minScore: validFilters.minScore || 70,
+
+                    // PRO filters (will be null if stripped)
+                    minPrice: validFilters.minPrice,
+                    maxPrice: validFilters.maxPrice,
+                    minDiscount: validFilters.minDiscount,
+                    minRating: validFilters.minRating,
+                    minReviews: validFilters.minReviews,
+                    maxSalesRank: validFilters.maxSalesRank,
+
+                    // BUSINESS filters (will be default/null if stripped)
+                    amazonOnly: validFilters.amazonOnly || false,
+                    fbaOnly: validFilters.fbaOnly || false,
+                    hasCoupon: validFilters.hasCoupon || false,
+                    primeOnly: validFilters.primeOnly || false,
+                    brandInclude: validFilters.brandInclude || [],
+                    brandExclude: validFilters.brandExclude || [],
+                    listedAfter: validFilters.listedAfter ? new Date(validFilters.listedAfter) : null,
+
+                    // Publishing
+                    ...(parsed.channelId && parsed.channelId.trim() !== '' ? { channelId: parsed.channelId } : {}),
+                    ...(parsed.splitId && parsed.splitId.trim() !== '' ? { splitId: parsed.splitId } : {}),
+
+                    // Triggers and actions
                     triggers: {
                         create: triggers.map(t => ({
                             type: t.type as TriggerType,
@@ -184,10 +370,10 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                         }))
                     },
                     actions: {
-                        create: actions.map(a => ({
+                        create: actions.map((a, index) => ({
                             type: a.type as ActionType,
                             config: a.config,
-                            order: a.order
+                            order: a.order ?? index
                         }))
                     }
                 },
@@ -199,9 +385,23 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                 }
             });
 
-            fastify.log.info({ ruleId: rule.id, userId }, 'Automation rule created');
+            fastify.log.info({ ruleId: rule.id, userId, userPlan }, 'Automation rule (mission) created');
 
-            return reply.code(201).send({ rule });
+            return reply.code(201).send({
+                success: true,
+                rule,
+                planLimits: {
+                    maxCategories: planLimits.maxCategories,
+                    maxResultsPerRun: planLimits.maxResultsPerRun,
+                    frequency: planLimits.defaultCron,
+                },
+                warnings: stripped.length > 0 || warnings.length > 0 ? {
+                    message: 'Some filters were adjusted based on your plan',
+                    strippedFilters: stripped,
+                    adjustments: warnings,
+                    upgradeTip: stripped.length > 0 ? `Upgrade to ${userPlan === 'FREE' ? 'PRO' : 'BUSINESS'} to unlock more filters` : undefined,
+                } : undefined,
+            });
         } catch (error: any) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
@@ -598,6 +798,61 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             return reply.code(500).send({
                 error: 'Internal server error',
                 message: 'Failed to generate preview'
+            });
+        }
+    });
+
+    /**
+     * GET /automation/wizard-config
+     * Get configuration for mission wizard (categories, plan limits, etc.)
+     */
+    fastify.get('/wizard-config', {
+        preHandler: fastify.authenticate
+    }, async (request, reply) => {
+        const userPlan = (request.user as any).plan || 'FREE';
+
+        try {
+            // Import categories from data file
+            const { AMAZON_IT_CATEGORIES } = await import('../data/amazon-categories');
+
+            const planLimits = PLAN_FILTER_LIMITS[userPlan] || PLAN_FILTER_LIMITS.FREE;
+
+            return reply.send({
+                categories: AMAZON_IT_CATEGORIES.map(cat => ({
+                    id: cat.id.toString(),
+                    name: cat.name,
+                    nameEN: cat.nameEN,
+                    isGated: cat.isGated,
+                    avgDiscount: cat.avgDiscount,
+                    priceRange: cat.priceRange,
+                    competition: cat.competition,
+                })),
+                planLimits: {
+                    plan: userPlan,
+                    maxCategories: planLimits.maxCategories,
+                    maxResultsPerRun: planLimits.maxResultsPerRun,
+                    frequency: planLimits.defaultCron,
+                    frequencyLabel: userPlan === 'BUSINESS' ? 'Every 30 minutes' :
+                                    userPlan === 'PRO' ? 'Every 2 hours' : 'Every 6 hours',
+                    allowedFilters: planLimits.allowedFilters,
+                },
+                filterTiers: {
+                    FREE: ['categories', 'minScore'],
+                    PRO: ['minPrice', 'maxPrice', 'minDiscount', 'minRating', 'minReviews', 'maxSalesRank'],
+                    BUSINESS: ['amazonOnly', 'fbaOnly', 'hasCoupon', 'primeOnly', 'brandInclude', 'brandExclude', 'listedAfter'],
+                },
+                scorePresets: [
+                    { value: 0, label: 'all', labelIT: 'Tutte le Offerte' },
+                    { value: 50, label: 'decent', labelIT: 'Offerte Discrete' },
+                    { value: 70, label: 'good', labelIT: 'Buone Offerte', recommended: true },
+                    { value: 85, label: 'excellent', labelIT: 'Solo Eccellenti' },
+                ],
+            });
+        } catch (error: any) {
+            fastify.log.error(error);
+            return reply.code(500).send({
+                error: 'Internal server error',
+                message: 'Failed to fetch wizard configuration'
             });
         }
     });

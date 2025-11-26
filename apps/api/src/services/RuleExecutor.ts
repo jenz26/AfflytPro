@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma, AutomationRule } from '@prisma/client';
 import { ScoringEngine } from './ScoringEngine';
 import { MessageFormatter } from './MessageFormatter';
 import { TelegramBotService } from './TelegramBotService';
@@ -8,6 +8,179 @@ import { needsKeepaRefresh, getPlanLimits } from '../config/planLimits';
 
 const prisma = new PrismaClient();
 const securityService = new SecurityService();
+
+// ═══════════════════════════════════════════════════════════════
+// PLAN-BASED LIMITS FOR QUERY
+// ═══════════════════════════════════════════════════════════════
+
+const PLAN_RESULTS_LIMIT: Record<string, number> = {
+    FREE: 5,
+    PRO: 15,
+    BUSINESS: 30,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DYNAMIC QUERY BUILDER
+// ═══════════════════════════════════════════════════════════════
+
+interface RuleWithFilters extends AutomationRule {
+    user: { plan: string };
+}
+
+/**
+ * Build dynamic Prisma query based on rule filters and user plan
+ * Only applies filters that are allowed for the user's plan
+ */
+function buildProductQuery(rule: RuleWithFilters): {
+    where: Prisma.ProductWhereInput;
+    take: number;
+    orderBy: Prisma.ProductOrderByWithRelationInput;
+} {
+    const userPlan = rule.user?.plan || 'FREE';
+    const isPro = userPlan === 'PRO' || userPlan === 'BUSINESS';
+    const isBusiness = userPlan === 'BUSINESS';
+
+    const where: Prisma.ProductWhereInput = {
+        // Always apply: Fresh data only (last 24h)
+        lastPriceCheckAt: {
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // FREE TIER FILTERS (always applied)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Categories (required)
+    if (rule.categories && rule.categories.length > 0) {
+        where.category = { in: rule.categories };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRO TIER FILTERS (only for PRO and BUSINESS)
+    // ═══════════════════════════════════════════════════════════════
+
+    if (isPro) {
+        // Price range
+        if (rule.minPrice !== null || rule.maxPrice !== null) {
+            where.currentPrice = {};
+            if (rule.minPrice !== null && rule.minPrice !== undefined) {
+                where.currentPrice.gte = rule.minPrice;
+            }
+            if (rule.maxPrice !== null && rule.maxPrice !== undefined) {
+                where.currentPrice.lte = rule.maxPrice;
+            }
+        }
+
+        // Minimum discount
+        if (rule.minDiscount !== null && rule.minDiscount !== undefined) {
+            where.discount = { gte: rule.minDiscount };
+        }
+
+        // Minimum rating (stored as 0-500 in rule, 0-5 in DB)
+        if (rule.minRating !== null && rule.minRating !== undefined) {
+            where.rating = { gte: rule.minRating / 100 };
+        }
+
+        // Minimum reviews
+        if (rule.minReviews !== null && rule.minReviews !== undefined) {
+            where.reviewCount = { gte: rule.minReviews };
+        }
+
+        // Max sales rank
+        if (rule.maxSalesRank !== null && rule.maxSalesRank !== undefined) {
+            where.salesRank = { lte: rule.maxSalesRank };
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BUSINESS TIER FILTERS (only for BUSINESS)
+    // ═══════════════════════════════════════════════════════════════
+
+    if (isBusiness) {
+        // Amazon only
+        if (rule.amazonOnly) {
+            where.isAmazonSeller = true;
+        }
+
+        // FBA only
+        if (rule.fbaOnly) {
+            where.isFBA = true;
+        }
+
+        // Has coupon
+        if (rule.hasCoupon) {
+            where.hasCoupon = true;
+        }
+
+        // Prime only
+        if (rule.primeOnly) {
+            where.isPrime = true;
+        }
+
+        // Brand include (case-insensitive)
+        if (rule.brandInclude && rule.brandInclude.length > 0) {
+            where.brandName = {
+                in: rule.brandInclude,
+                mode: 'insensitive',
+            };
+        }
+
+        // Brand exclude (case-insensitive)
+        if (rule.brandExclude && rule.brandExclude.length > 0) {
+            where.NOT = {
+                brandName: {
+                    in: rule.brandExclude,
+                    mode: 'insensitive',
+                },
+            };
+        }
+
+        // Listed after
+        if (rule.listedAfter) {
+            where.listedAt = { gte: rule.listedAfter };
+        }
+    }
+
+    // Get max results based on plan
+    const maxResults = PLAN_RESULTS_LIMIT[userPlan] || PLAN_RESULTS_LIMIT.FREE;
+
+    return {
+        where,
+        take: maxResults * 3, // Fetch extra for scoring filter
+        orderBy: { discount: 'desc' },
+    };
+}
+
+/**
+ * Log applied filters for debugging
+ */
+function logAppliedFilters(rule: RuleWithFilters): void {
+    const userPlan = rule.user?.plan || 'FREE';
+    console.log(`   Plan: ${userPlan}`);
+    console.log(`   Filters applied:`);
+    console.log(`     - Categories: ${rule.categories.join(', ')}`);
+    console.log(`     - Min Score: ${rule.minScore}`);
+
+    if (userPlan === 'PRO' || userPlan === 'BUSINESS') {
+        if (rule.minPrice) console.log(`     - Min Price: €${rule.minPrice}`);
+        if (rule.maxPrice) console.log(`     - Max Price: €${rule.maxPrice}`);
+        if (rule.minDiscount) console.log(`     - Min Discount: ${rule.minDiscount}%`);
+        if (rule.minRating) console.log(`     - Min Rating: ${rule.minRating / 100} stars`);
+        if (rule.minReviews) console.log(`     - Min Reviews: ${rule.minReviews}`);
+        if (rule.maxSalesRank) console.log(`     - Max Sales Rank: ${rule.maxSalesRank}`);
+    }
+
+    if (userPlan === 'BUSINESS') {
+        if (rule.amazonOnly) console.log(`     - Amazon Only: Yes`);
+        if (rule.fbaOnly) console.log(`     - FBA Only: Yes`);
+        if (rule.hasCoupon) console.log(`     - Has Coupon: Yes`);
+        if (rule.primeOnly) console.log(`     - Prime Only: Yes`);
+        if (rule.brandInclude?.length) console.log(`     - Brand Include: ${rule.brandInclude.join(', ')}`);
+        if (rule.brandExclude?.length) console.log(`     - Brand Exclude: ${rule.brandExclude.join(', ')}`);
+        if (rule.listedAfter) console.log(`     - Listed After: ${rule.listedAfter.toISOString().split('T')[0]}`);
+    }
+}
 
 /**
  * Get user's Amazon affiliate tag from Credential Vault
@@ -106,34 +279,31 @@ export class RuleExecutor {
 
             console.log(`✅ Loaded rule: "${rule.name}"`);
             console.log(`   User: ${rule.user.email}`);
-            console.log(`   Min Score: ${rule.minScore}`);
-            console.log(`   Categories: ${rule.categories}`);
-            console.log(`   Max Price: ${rule.maxPrice ? `€${rule.maxPrice}` : 'No limit'}\n`);
 
-            // ===== STEP 2: Targeting - Find Deals (with Cache) =====
-            console.log('🎯 STEP 2: Targeting deals from cache...');
+            // Log all applied filters
+            logAppliedFilters(rule as RuleWithFilters);
+            console.log('');
 
-            // Categories is now a native array in PostgreSQL
-            const categories = rule.categories;
+            // ===== STEP 2: Targeting - Find Deals (with Dynamic Query) =====
+            console.log('🎯 STEP 2: Targeting deals from cache with tier-based filters...');
+
             const cacheService = new ProductCacheService();
 
-            // Search in cached products (fresh data < 24h)
+            // Build dynamic query based on rule filters and user plan
+            const query = buildProductQuery(rule as RuleWithFilters);
+
+            console.log(`   Query filters: ${JSON.stringify(query.where, null, 2).split('\n').slice(0, 10).join('\n')}...`);
+
+            // Search in cached products with all applicable filters
             const deals = await prisma.product.findMany({
-                where: {
-                    category: { in: categories },
-                    currentPrice: rule.maxPrice ? { lte: rule.maxPrice } : undefined,
-                    // Only include fresh cached products
-                    lastPriceCheckAt: {
-                        gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-                    }
-                },
-                take: 50, // Limit for performance
-                orderBy: {
-                    discount: 'desc' // Prioritize high discounts
-                }
+                where: query.where,
+                take: query.take,
+                orderBy: query.orderBy,
             });
 
-            console.log(`✅ Found ${deals.length} cached deals (fresh < 24h)\n`);
+            const userPlan = rule.user?.plan || 'FREE';
+            const maxResults = PLAN_RESULTS_LIMIT[userPlan] || PLAN_RESULTS_LIMIT.FREE;
+            console.log(`✅ Found ${deals.length} matching deals (max to publish: ${maxResults})\n`);
 
             // If too few deals, warn but continue
             if (deals.length < 5) {
@@ -211,10 +381,12 @@ export class RuleExecutor {
             // ===== STEP 5: Generate Links & Publish =====
             console.log('📢 STEP 5: Generating short links and publishing to Telegram...');
 
-            // Limit to top 10 deals to avoid spam
+            // Limit deals based on user plan
             const dealsToPublish = scoredDeals
                 .sort((a, b) => b.score - a.score)
-                .slice(0, 10);
+                .slice(0, maxResults);
+
+            console.log(`   Publishing top ${dealsToPublish.length} deals (plan limit: ${maxResults})`);
 
             // Get Telegram bot token from user credentials
             const telegramCredential = rule.user.credentials?.find(
@@ -354,7 +526,8 @@ export class RuleExecutor {
                 where: { id: ruleId },
                 data: {
                     lastRunAt: new Date(),
-                    totalRuns: { increment: 1 }
+                    totalRuns: { increment: 1 },
+                    dealsPublished: { increment: dealsPublished },
                 }
             });
 
