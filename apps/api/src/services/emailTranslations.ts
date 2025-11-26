@@ -1,5 +1,6 @@
 /**
- * Email Translations
+ * Email Translations - Afflyt Pro
+ * Professional, concise, brand-aligned copy
  * Supports: Italian (it), English (en)
  */
 
@@ -9,160 +10,166 @@ export const emailTranslations = {
   // ==================== WELCOME EMAIL ====================
   welcome: {
     it: {
-      subject: '🎉 Benvenuto su {{appName}}! Verifica la tua email',
-      title: 'Benvenuto su {{appName}}',
-      greeting: 'Ciao {{name}}! 👋',
-      intro: 'Grazie per esserti registrato su <strong style="color: #00E5E0;">{{appName}}</strong>! Sei a un passo dall\'accedere alla piattaforma di affiliate marketing più avanzata.',
-      cta: 'Per completare la registrazione e attivare il tuo account, clicca il pulsante qui sotto:',
-      buttonText: '✨ Verifica Email',
-      expiry: 'Il link scadrà tra <strong>24 ore</strong>.',
-      fallbackLink: 'Se non riesci a cliccare il pulsante, copia e incolla questo link nel browser:',
-      featuresTitle: 'Cosa potrai fare con {{appName}}:',
-      features: [
-        'Trovare i migliori deal Amazon automaticamente',
-        'Pubblicare su Telegram con un click',
-        'Tracciare click e conversioni in tempo reale',
-        'Automatizzare completamente il tuo canale'
-      ],
-      footer: 'Non hai richiesto questa email? Puoi ignorarla in sicurezza.',
-      copyright: '© {{year}} {{appName}}. Tutti i diritti riservati.',
+      subject: 'Benvenuto su {{appName}}',
+      title: 'Verifica la tua email',
+      greeting: 'Ciao{{name}},',
+      intro: 'Benvenuto su {{appName}}. Per attivare il tuo account, verifica la tua email:',
+      buttonText: 'Verifica Email',
+      expiry: 'Il link è valido per <strong>24 ore</strong>.',
+      footer: 'Se non hai richiesto questa registrazione, ignora questa email.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text version
-      plainIntro: 'Grazie per esserti registrato su {{appName}}!',
-      plainCta: 'Per completare la registrazione e attivare il tuo account, visita questo link:',
-      plainExpiry: 'Il link scadrà tra 24 ore.',
-      plainFooter: 'Se non hai richiesto questa email, puoi ignorarla in sicurezza.'
+      plainIntro: 'Benvenuto su {{appName}}. Per attivare il tuo account, verifica la tua email:',
+      plainExpiry: 'Il link è valido per 24 ore.',
+      plainFooter: 'Se non hai richiesto questa registrazione, ignora questa email.'
     },
     en: {
-      subject: '🎉 Welcome to {{appName}}! Verify your email',
-      title: 'Welcome to {{appName}}',
-      greeting: 'Hi {{name}}! 👋',
-      intro: 'Thank you for signing up to <strong style="color: #00E5E0;">{{appName}}</strong>! You\'re one step away from accessing the most advanced affiliate marketing platform.',
-      cta: 'To complete your registration and activate your account, click the button below:',
-      buttonText: '✨ Verify Email',
-      expiry: 'This link will expire in <strong>24 hours</strong>.',
-      fallbackLink: 'If you can\'t click the button, copy and paste this link in your browser:',
-      featuresTitle: 'What you can do with {{appName}}:',
-      features: [
-        'Find the best Amazon deals automatically',
-        'Publish to Telegram with one click',
-        'Track clicks and conversions in real-time',
-        'Fully automate your channel'
-      ],
-      footer: 'Didn\'t request this email? You can safely ignore it.',
-      copyright: '© {{year}} {{appName}}. All rights reserved.',
+      subject: 'Welcome to {{appName}}',
+      title: 'Verify your email',
+      greeting: 'Hi{{name}},',
+      intro: 'Welcome to {{appName}}. To activate your account, verify your email:',
+      buttonText: 'Verify Email',
+      expiry: 'This link is valid for <strong>24 hours</strong>.',
+      footer: 'If you didn\'t request this registration, you can ignore this email.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text version
-      plainIntro: 'Thank you for signing up to {{appName}}!',
-      plainCta: 'To complete your registration and activate your account, visit this link:',
-      plainExpiry: 'This link will expire in 24 hours.',
-      plainFooter: 'If you didn\'t request this email, you can safely ignore it.'
+      plainIntro: 'Welcome to {{appName}}. To activate your account, verify your email:',
+      plainExpiry: 'This link is valid for 24 hours.',
+      plainFooter: 'If you didn\'t request this registration, you can ignore this email.'
     }
   },
 
   // ==================== MAGIC LINK EMAIL ====================
   magicLink: {
     it: {
-      subject: '✨ Il tuo link di accesso a {{appName}}',
-      headerTitle: '✨ Magic Link',
-      headerSubtitle: 'Accesso istantaneo senza password',
-      greeting: 'Ciao {{name}}! 👋',
-      intro: 'Hai richiesto un link magico per accedere a <strong style="color: #9f7aea;">{{appName}}</strong>.',
-      cta: 'Clicca il pulsante qui sotto per accedere istantaneamente:',
-      buttonText: '🚀 Accedi a {{appName}}',
-      expiry: '⏱️ Questo link scadrà tra <strong>15 minuti</strong>.',
-      footer: 'Se non hai richiesto questo link, puoi ignorare questa email in sicurezza.',
-      fallbackLink: 'Link diretto:',
-      securityNote: '🔒 I Magic Link sono monouso e sicuri',
-      copyright: '© {{year}} {{appName}}. Tutti i diritti riservati.',
+      subject: 'Accedi ad {{appName}}',
+      title: 'Accedi al tuo account',
+      greeting: 'Ciao{{name}},',
+      intro: 'Accedi al tuo account cliccando il pulsante qui sotto:',
+      buttonText: 'Accedi ad {{appName}}',
+      expiry: 'Questo link è valido per <strong>15 minuti</strong> e può essere usato una sola volta.',
+      footer: 'Se non hai richiesto questo accesso, ignora questa email.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'Hai richiesto un link magico per accedere a {{appName}}.',
-      plainCta: 'Per accedere, visita questo link:',
-      plainExpiry: 'Questo link scadrà tra 15 minuti.',
-      plainFooter: 'Se non hai richiesto questo link, puoi ignorarlo in sicurezza.'
+      plainIntro: 'Accedi al tuo account {{appName}} visitando questo link:',
+      plainExpiry: 'Questo link è valido per 15 minuti e può essere usato una sola volta.',
+      plainFooter: 'Se non hai richiesto questo accesso, ignora questa email.'
     },
     en: {
-      subject: '✨ Your {{appName}} login link',
-      headerTitle: '✨ Magic Link',
-      headerSubtitle: 'Instant passwordless access',
-      greeting: 'Hi {{name}}! 👋',
-      intro: 'You requested a magic link to access <strong style="color: #9f7aea;">{{appName}}</strong>.',
-      cta: 'Click the button below to sign in instantly:',
-      buttonText: '🚀 Sign in to {{appName}}',
-      expiry: '⏱️ This link will expire in <strong>15 minutes</strong>.',
-      footer: 'If you didn\'t request this link, you can safely ignore this email.',
-      fallbackLink: 'Direct link:',
-      securityNote: '🔒 Magic Links are single-use and secure',
-      copyright: '© {{year}} {{appName}}. All rights reserved.',
+      subject: 'Sign in to {{appName}}',
+      title: 'Access your account',
+      greeting: 'Hi{{name}},',
+      intro: 'Access your account by clicking the button below:',
+      buttonText: 'Sign in to {{appName}}',
+      expiry: 'This link is valid for <strong>15 minutes</strong> and can be used only once.',
+      footer: 'If you didn\'t request this, you can ignore this email.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'You requested a magic link to access {{appName}}.',
-      plainCta: 'To sign in, visit this link:',
-      plainExpiry: 'This link will expire in 15 minutes.',
-      plainFooter: 'If you didn\'t request this link, you can safely ignore it.'
+      plainIntro: 'Access your {{appName}} account by visiting this link:',
+      plainExpiry: 'This link is valid for 15 minutes and can be used only once.',
+      plainFooter: 'If you didn\'t request this, you can ignore this email.'
     }
   },
 
   // ==================== PASSWORD RESET EMAIL ====================
   passwordReset: {
     it: {
-      subject: '🔐 Reimposta la tua password - {{appName}}',
-      headerTitle: '🔐 Reset Password',
-      greeting: 'Ciao {{name}},',
-      intro: 'Abbiamo ricevuto una richiesta per reimpostare la password del tuo account {{appName}}.',
-      cta: 'Se hai richiesto tu il reset, clicca il pulsante qui sotto:',
-      buttonText: '🔑 Reimposta Password',
-      expiry: '⚠️ Questo link scadrà tra <strong>1 ora</strong> per motivi di sicurezza.',
-      ignoreNote: 'Se non hai richiesto il reset della password, ignora questa email. La tua password rimarrà invariata.',
-      fallbackLink: 'Link diretto:',
-      securityTip: '🛡️ <strong>Suggerimento di sicurezza:</strong> Non condividere mai questo link con nessuno. Il team di {{appName}} non ti chiederà mai la password.',
-      emailSentTo: 'Email inviata a {{email}}',
-      copyright: '© {{year}} {{appName}}. Tutti i diritti riservati.',
+      subject: 'Reimposta la tua password',
+      title: 'Reset Password',
+      greeting: 'Ciao{{name}},',
+      intro: 'Hai richiesto il reset della password per il tuo account {{appName}}.',
+      cta: 'Clicca il pulsante per reimpostare:',
+      buttonText: 'Reimposta Password',
+      expiry: 'Questo link scadrà tra <strong>1 ora</strong>.',
+      ignoreNote: 'Se non hai richiesto questo reset, ignora questa email. La tua password rimarrà invariata.',
+      securityTip: '<strong>Nota di sicurezza:</strong> Non condividere mai questo link. Il team {{appName}} non ti chiederà mai la password.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'Abbiamo ricevuto una richiesta per reimpostare la password del tuo account {{appName}}.',
+      plainIntro: 'Hai richiesto il reset della password per il tuo account {{appName}}.',
       plainCta: 'Per reimpostare la password, visita questo link:',
-      plainExpiry: 'Questo link scadrà tra 1 ora per motivi di sicurezza.',
-      plainIgnore: 'Se non hai richiesto il reset della password, ignora questa email.'
+      plainExpiry: 'Questo link scadrà tra 1 ora.',
+      plainIgnore: 'Se non hai richiesto questo reset, ignora questa email.'
     },
     en: {
-      subject: '🔐 Reset your password - {{appName}}',
-      headerTitle: '🔐 Reset Password',
-      greeting: 'Hi {{name}},',
-      intro: 'We received a request to reset the password for your {{appName}} account.',
-      cta: 'If you requested this reset, click the button below:',
-      buttonText: '🔑 Reset Password',
-      expiry: '⚠️ This link will expire in <strong>1 hour</strong> for security reasons.',
-      ignoreNote: 'If you didn\'t request a password reset, ignore this email. Your password will remain unchanged.',
-      fallbackLink: 'Direct link:',
-      securityTip: '🛡️ <strong>Security tip:</strong> Never share this link with anyone. The {{appName}} team will never ask for your password.',
-      emailSentTo: 'Email sent to {{email}}',
-      copyright: '© {{year}} {{appName}}. All rights reserved.',
+      subject: 'Reset your password',
+      title: 'Reset Password',
+      greeting: 'Hi{{name}},',
+      intro: 'You requested a password reset for your {{appName}} account.',
+      cta: 'Click the button to reset:',
+      buttonText: 'Reset Password',
+      expiry: 'This link will expire in <strong>1 hour</strong>.',
+      ignoreNote: 'If you didn\'t request this reset, ignore this email. Your password will remain unchanged.',
+      securityTip: '<strong>Security note:</strong> Never share this link. The {{appName}} team will never ask for your password.',
+      copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'We received a request to reset the password for your {{appName}} account.',
+      plainIntro: 'You requested a password reset for your {{appName}} account.',
       plainCta: 'To reset your password, visit this link:',
-      plainExpiry: 'This link will expire in 1 hour for security reasons.',
-      plainIgnore: 'If you didn\'t request a password reset, ignore this email.'
+      plainExpiry: 'This link will expire in 1 hour.',
+      plainIgnore: 'If you didn\'t request this reset, ignore this email.'
     }
   },
 
   // ==================== VERIFICATION REMINDER EMAIL ====================
   verificationReminder: {
     it: {
-      subject: '⏰ Ricordati di verificare la tua email - {{appName}}',
-      headerTitle: '⏰ Email non ancora verificata',
-      intro: 'Ciao {{name}}, abbiamo notato che non hai ancora verificato la tua email. Per accedere a tutte le funzionalità di {{appName}}, verifica il tuo account:',
-      buttonText: '✨ Verifica Email',
+      subject: 'Verifica la tua email - {{appName}}',
+      title: 'Verifica la tua email',
+      greeting: 'Ciao{{name}},',
+      intro: 'Verifica la tua email per accedere a tutte le funzionalità di {{appName}}:',
+      buttonText: 'Verifica Email',
+      expiry: 'Il link è valido per <strong>24 ore</strong>.',
+      footer: 'Se hai già verificato, ignora questa email.',
       copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'Non hai ancora verificato la tua email per {{appName}}.',
-      plainCta: 'Verifica qui:'
+      plainIntro: 'Verifica la tua email per accedere a {{appName}}:',
+      plainExpiry: 'Il link è valido per 24 ore.',
+      plainFooter: 'Se hai già verificato, ignora questa email.'
     },
     en: {
-      subject: '⏰ Remember to verify your email - {{appName}}',
-      headerTitle: '⏰ Email not verified yet',
-      intro: 'Hi {{name}}, we noticed you haven\'t verified your email yet. To access all {{appName}} features, please verify your account:',
-      buttonText: '✨ Verify Email',
+      subject: 'Verify your email - {{appName}}',
+      title: 'Verify your email',
+      greeting: 'Hi{{name}},',
+      intro: 'Verify your email to access all {{appName}} features:',
+      buttonText: 'Verify Email',
+      expiry: 'This link is valid for <strong>24 hours</strong>.',
+      footer: 'If you\'ve already verified, you can ignore this email.',
       copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        help: 'Help'
+      },
       // Plain text
-      plainIntro: 'You haven\'t verified your email for {{appName}} yet.',
-      plainCta: 'Verify here:'
+      plainIntro: 'Verify your email to access {{appName}}:',
+      plainExpiry: 'This link is valid for 24 hours.',
+      plainFooter: 'If you\'ve already verified, you can ignore this email.'
     }
   }
 };
@@ -181,11 +188,18 @@ export function getEmailTranslation<T extends keyof typeof emailTranslations>(
 /**
  * Replace template variables in a string
  */
-export function replaceVariables(template: string, variables: Record<string, string | number>): string {
+export function replaceVariables(
+  template: string,
+  variables: Record<string, string | number | undefined | null>
+): string {
   let result = template;
+
   for (const [key, value] of Object.entries(variables)) {
-    result = result.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+    if (value !== undefined && value !== null) {
+      result = result.replace(new RegExp(`{{${key}}}`, 'g'), String(value));
+    }
   }
+
   return result;
 }
 
@@ -197,4 +211,19 @@ export function normalizeLocale(locale?: string | null): SupportedLocale {
   const normalized = locale.toLowerCase().substring(0, 2);
   if (normalized === 'en') return 'en';
   return 'it'; // Default to Italian
+}
+
+/**
+ * Generate greeting with proper name handling
+ * If name is present: "Ciao Marco,"
+ * If name is absent: "Ciao,"
+ */
+export function generateGreeting(
+  greetingTemplate: string,
+  name?: string | null
+): string {
+  if (!name || name.trim() === '') {
+    return greetingTemplate.replace(/{{name}}/g, '');
+  }
+  return greetingTemplate.replace(/{{name}}/g, ` ${name}`);
 }
