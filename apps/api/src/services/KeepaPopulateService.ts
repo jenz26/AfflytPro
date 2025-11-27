@@ -110,6 +110,7 @@ export class KeepaPopulateService {
             const dealParams: Record<string, any> = {
                 page: 0,
                 domainId: KEEPA_DOMAIN_IT,  // 8 = Italy
+                priceTypes: [0],  // 0 = Amazon price (required, only ONE value allowed)
                 hasReviews: true,
                 isRangeEnabled: true,
                 deltaPercentRange: [minDiscountPercent, 100]
