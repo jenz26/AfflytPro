@@ -104,49 +104,63 @@ export class KeepaPopulateService {
         let tokensUsed = 0;
 
         try {
-            // Build the deals request
-            // Keepa Deals API parameters
-            const dealRequest = {
-                domain: KEEPA_DOMAIN_IT,
-                selection: JSON.stringify({
-                    // Price types to include
-                    // 0=Amazon, 1=New 3rd party, 2=Used, 7=Amazon Warehouse
-                    priceTypes: [0, 1, 2, 7],
+            // Build the deals request using correct Keepa API parameters
+            // Reference: https://keepaapi.readthedocs.io/en/latest/api_methods.html
+            const dealParams = {
+                // Domain ID: 8 = Italy
+                domainId: KEEPA_DOMAIN_IT,
 
-                    // Only deals with minimum rating
-                    deltaPercentRange: [minDiscountPercent, 100],
+                // Page for pagination (0-indexed)
+                page: 0,
 
-                    // Rating filter (min 2 stars = 200)
-                    currentRatingRange: [minRating, 500],
+                // Price types to include
+                // 0=Amazon, 1=New 3rd party, 2=Used, 7=Amazon Warehouse, etc.
+                priceTypes: [0, 1, 2, 7],
 
-                    // Must have reviews
-                    hasReviews: true,
+                // Discount percentage range [min, max] - e.g., [10, 100] for 10%+ discount
+                deltaPercentRange: [minDiscountPercent, 100],
 
-                    // Include out of stock? No
-                    isOutOfStock: false,
+                // Minimum rating (0-50 scale, so 20 = 2 stars, 40 = 4 stars)
+                minRating: Math.floor(minRating / 10), // Convert from 0-500 to 0-50
 
-                    // Category filter (root categories)
-                    rootCatInclude: categories,
+                // Must have reviews
+                hasReviews: true,
 
-                    // Sort by discount percentage descending
-                    sort: [['deltaPercent', 'desc']],
+                // Exclude out of stock items
+                isOutOfStock: false,
 
-                    // Pagination
-                    page: 0,
-                    perPage: Math.min(maxDeals, 150) // Keepa max is 150 per request
-                })
+                // Category filter (root categories)
+                includeCategories: categories,
+
+                // Sort type: 0 = default (most recent deals first)
+                sortType: 0,
+
+                // Enable filters
+                isFilterEnabled: true,
+                isRangeEnabled: true
             };
 
             console.log('📡 Calling Keepa Deals API...');
+            console.log('   Parameters:', JSON.stringify(dealParams, null, 2));
 
+            // Keepa expects 'selection' as a JSON string
             const response = await this.client.get<KeepaDealsResponse>('/deal', {
                 params: {
                     key: this.apiKey,
-                    ...dealRequest
+                    domain: KEEPA_DOMAIN_IT,
+                    selection: JSON.stringify(dealParams)
                 }
             });
 
-            const { deals, tokensLeft, refillIn, refillRate } = response.data;
+            // Debug: log raw response structure
+            console.log('📦 Raw response keys:', Object.keys(response.data));
+
+            // Keepa returns 'dr' for deals array, not 'deals'
+            const responseData = response.data as any;
+            const deals = responseData.dr || responseData.deals || [];
+            const tokensLeft = responseData.tokensLeft ?? 0;
+            const refillIn = responseData.refillIn ?? 0;
+            const refillRate = responseData.refillRate ?? 0;
 
             // Estimate tokens used (deals API costs ~5 tokens)
             tokensUsed = 5;
@@ -158,6 +172,7 @@ export class KeepaPopulateService {
 
             if (!deals || deals.length === 0) {
                 console.log('⚠️  No deals found matching criteria');
+                console.log('   This could mean: no deals match filters OR API returned empty');
                 return { saved: 0, skipped: 0, errors: [], tokensUsed };
             }
 
@@ -182,10 +197,20 @@ export class KeepaPopulateService {
         } catch (error: any) {
             console.error('❌ Keepa API error:', error.message);
 
+            // Log full error details for debugging
+            if (error.response) {
+                console.error('   Status:', error.response.status);
+                console.error('   Data:', JSON.stringify(error.response.data, null, 2));
+                console.error('   Headers:', JSON.stringify(error.response.headers, null, 2));
+            }
+
             if (error.response?.status === 429) {
                 errors.push('Rate limit exceeded - token quota depleted');
             } else if (error.response?.status === 401) {
                 errors.push('Invalid API key');
+            } else if (error.response?.status === 400) {
+                const errorMsg = error.response.data?.error || error.response.data?.message || 'Bad request - check parameters';
+                errors.push(`Bad request: ${errorMsg}`);
             } else {
                 errors.push(error.message);
             }
