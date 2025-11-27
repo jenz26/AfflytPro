@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff, ExternalLink, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { API_BASE } from '@/lib/api/config';
+import { detectEmailProvider, getWebmailUrl, type EmailProviderInfo } from '@/lib/email-provider-detection';
 
 type AuthMode = 'login' | 'register' | 'magic-link' | 'forgot-password';
 type AlertType = 'error' | 'success' | 'info';
@@ -29,6 +30,7 @@ export default function AuthPage() {
     const [emailSent, setEmailSent] = useState(false);
     const [resendCountdown, setResendCountdown] = useState(0);
     const [sentEmail, setSentEmail] = useState('');
+    const [emailProvider, setEmailProvider] = useState<EmailProviderInfo | null>(null);
 
     const t = useTranslations('auth');
     const tFeatures = useTranslations('auth.features');
@@ -153,6 +155,7 @@ export default function AuthPage() {
 
             const data = await res.json();
             setSentEmail(email);
+            setEmailProvider(detectEmailProvider(email));
             setEmailSent(true);
             setResendCountdown(60); // 60 seconds before can resend
             showAlert('success', data.message);
@@ -232,6 +235,7 @@ export default function AuthPage() {
         setEmailSent(false);
         setResendCountdown(0);
         setSentEmail('');
+        setEmailProvider(null);
     };
 
     const switchMode = (mode: AuthMode) => {
@@ -544,15 +548,102 @@ export default function AuthPage() {
                                 </p>
                                 <p className="text-afflyt-cyan-400 font-mono text-lg">{sentEmail || email}</p>
 
-                                {/* Tips Card */}
+                                {/* Webmail Quick Open Button */}
+                                {authMode === 'magic-link' && emailProvider?.webmailUrl && (
+                                    <a
+                                        href={emailProvider.webmailUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-afflyt-cyan-500 to-blue-500 hover:from-afflyt-cyan-400 hover:to-blue-400 text-white font-semibold rounded-lg transition-all shadow-lg shadow-afflyt-cyan-500/20 hover:shadow-afflyt-cyan-500/30"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                        {t('emailSent.openWebmail', { provider: emailProvider.name })}
+                                    </a>
+                                )}
+
+                                {/* Provider Warning for Outlook/Hotmail */}
+                                {authMode === 'magic-link' && emailProvider?.hasDeliveryIssues && (
+                                    <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-left">
+                                        <div className="flex items-start gap-3">
+                                            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="text-sm font-medium text-amber-300 mb-1">
+                                                    {t('emailSent.providerWarning.title', { provider: emailProvider.name })}
+                                                </p>
+                                                <p className="text-sm text-amber-200/80">
+                                                    {emailProvider.type === 'outlook' || emailProvider.type === 'hotmail'
+                                                        ? t('emailSent.providerWarning.outlook')
+                                                        : emailProvider.type === 'corporate'
+                                                        ? t('emailSent.providerWarning.corporate')
+                                                        : t('emailSent.tips.checkSpam')
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Tips Card - Dynamic based on provider */}
                                 {authMode === 'magic-link' && (
                                     <div className="mt-6 p-4 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-left">
                                         <p className="text-sm font-medium text-white mb-3">{t('emailSent.tips.title')}</p>
                                         <ul className="space-y-2 text-sm text-gray-400">
-                                            <li className="flex items-start gap-2">
-                                                <span className="text-afflyt-cyan-400 mt-0.5">•</span>
-                                                <span>{t('emailSent.tips.checkSpam')}</span>
-                                            </li>
+                                            {/* Dynamic tips based on email provider */}
+                                            {emailProvider?.tips.includes('checkJunk') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.checkJunk')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('checkFocused') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.checkFocused')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('checkPromotions') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.checkPromotions')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('addToContacts') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.addToContacts')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('corporateWarning') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.corporateWarning')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('checkQuarantine') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.checkQuarantine')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('contactIT') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.contactIT')}</span>
+                                                </li>
+                                            )}
+                                            {emailProvider?.tips.includes('pecWarning') && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-amber-400 mt-0.5">!</span>
+                                                    <span className="text-amber-300">{t('emailSent.tips.pecWarning')}</span>
+                                                </li>
+                                            )}
+                                            {/* Default tips if no specific ones */}
+                                            {(!emailProvider || emailProvider.tips.includes('checkSpam')) && (
+                                                <li className="flex items-start gap-2">
+                                                    <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                    <span>{t('emailSent.tips.checkSpam')}</span>
+                                                </li>
+                                            )}
                                             <li className="flex items-start gap-2">
                                                 <span className="text-afflyt-cyan-400 mt-0.5">•</span>
                                                 <span>{t('emailSent.tips.searchEmail')}</span>

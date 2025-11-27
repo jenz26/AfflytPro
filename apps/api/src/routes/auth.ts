@@ -10,6 +10,7 @@ import {
   TOKEN_EXPIRY,
   TokenType,
 } from '../services/AuthEmailService';
+import { isDisposableEmail } from '../lib/disposable-emails';
 
 // ==================== VALIDATION SCHEMAS ====================
 
@@ -165,24 +166,52 @@ async function createAuthToken(
  */
 async function verifyAuthToken(
   rawToken: string,
-  type: TokenType
-): Promise<{ valid: boolean; userId?: string; error?: string }> {
+  type: TokenType,
+  request?: FastifyRequest
+): Promise<{ valid: boolean; userId?: string; error?: string; errorCode?: string }> {
   const hashedToken = hashToken(rawToken);
 
-  const token = await prisma.authToken.findFirst({
+  // First check if token exists at all (including used ones)
+  const anyToken = await prisma.authToken.findFirst({
     where: {
       token: hashedToken,
       type,
-      usedAt: null,
-      expiresAt: { gt: new Date() },
     },
   });
 
-  if (!token) {
-    return { valid: false, error: 'Token non valido o scaduto' };
+  if (!anyToken) {
+    return { valid: false, error: 'Token non valido o scaduto', errorCode: 'invalid_token' };
   }
 
-  return { valid: true, userId: token.userId };
+  // Check if token was already used (token reuse attempt)
+  if (anyToken.usedAt) {
+    // Log suspicious activity
+    await logAuthEvent('MAGIC_LINK_EXPIRED', {
+      userId: anyToken.userId,
+      ipAddress: request?.ip,
+      userAgent: request?.headers['user-agent'],
+      metadata: {
+        reason: 'token_reuse_attempt',
+        usedAt: anyToken.usedAt.toISOString(),
+      },
+    });
+    return {
+      valid: false,
+      error: 'Questo link è già stato utilizzato. Richiedi un nuovo link.',
+      errorCode: 'token_already_used',
+    };
+  }
+
+  // Check if token is expired
+  if (anyToken.expiresAt < new Date()) {
+    return {
+      valid: false,
+      error: 'Il link è scaduto. Richiedi un nuovo link.',
+      errorCode: 'token_expired',
+    };
+  }
+
+  return { valid: true, userId: anyToken.userId };
 }
 
 /**
@@ -275,6 +304,16 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const { email, password, name, locale } = registerSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
+
+        // Check for disposable email
+        if (isDisposableEmail(normalizedEmail)) {
+          return reply.code(400).send({
+            error: 'disposable_email',
+            message: locale === 'en'
+              ? 'Disposable email addresses are not allowed. Please use a permanent email.'
+              : 'Gli indirizzi email temporanei non sono consentiti. Usa un\'email permanente.',
+          });
+        }
 
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -373,9 +412,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const { token } = verifyEmailSchema.parse(request.body);
 
-        const verification = await verifyAuthToken(token, 'EMAIL_VERIFICATION');
+        const verification = await verifyAuthToken(token, 'EMAIL_VERIFICATION', request);
         if (!verification.valid) {
-          return reply.code(400).send({ message: verification.error });
+          return reply.code(400).send({
+            message: verification.error,
+            errorCode: verification.errorCode,
+          });
         }
 
         // Mark email as verified
@@ -681,6 +723,16 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         // If user doesn't exist, create a new passwordless account
         if (!user) {
+          // Block disposable emails for new signups
+          if (isDisposableEmail(normalizedEmail)) {
+            return reply.code(400).send({
+              error: 'disposable_email',
+              message: locale === 'en'
+                ? 'Disposable email addresses are not allowed. Please use a permanent email.'
+                : 'Gli indirizzi email temporanei non sono consentiti. Usa un\'email permanente.',
+            });
+          }
+
           user = await prisma.user.create({
             data: {
               email: normalizedEmail,
@@ -749,9 +801,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const { token } = verifyMagicLinkSchema.parse(request.body);
 
-        const verification = await verifyAuthToken(token, 'MAGIC_LINK');
+        const verification = await verifyAuthToken(token, 'MAGIC_LINK', request);
         if (!verification.valid) {
-          return reply.code(400).send({ message: verification.error });
+          return reply.code(400).send({
+            message: verification.error,
+            errorCode: verification.errorCode,
+          });
         }
 
         // Get user and update last login
@@ -879,9 +934,12 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const { token, password } = resetPasswordSchema.parse(request.body);
 
-        const verification = await verifyAuthToken(token, 'PASSWORD_RESET');
+        const verification = await verifyAuthToken(token, 'PASSWORD_RESET', request);
         if (!verification.valid) {
-          return reply.code(400).send({ message: verification.error });
+          return reply.code(400).send({
+            message: verification.error,
+            errorCode: verification.errorCode,
+          });
         }
 
         // Hash new password

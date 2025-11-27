@@ -51,10 +51,25 @@
       "resetInstructions": "Ti abbiamo inviato le istruzioni per il reset.",
       "tips": {
         "title": "Non trovi l'email?",
-        "checkSpam": "Controlla la cartella spam o promozioni",
+        "checkSpam": "Controlla la cartella spam",
+        "checkPromotions": "Controlla la cartella promozioni",
+        "checkJunk": "Controlla la cartella posta indesiderata",
+        "checkFocused": "Controlla la posta \"Altra\" (Focused Inbox)",
+        "addToContacts": "Aggiungi noreply@afflyt.io ai contatti",
         "searchEmail": "Cerca email da noreply@afflyt.io",
-        "linkExpiry": "Il link scade dopo 15 minuti"
+        "linkExpiry": "Il link scade dopo 15 minuti",
+        "corporateWarning": "Le email aziendali potrebbero avere filtri più rigidi",
+        "checkQuarantine": "Controlla la quarantena email aziendale",
+        "contactIT": "Contatta il tuo reparto IT se non ricevi l'email",
+        "pecWarning": "Le PEC potrebbero non ricevere email standard"
       },
+      "providerWarning": {
+        "title": "Nota importante per {provider}",
+        "outlook": "Outlook/Hotmail ha filtri anti-spam molto rigidi. L'email potrebbe essere nella cartella Posta indesiderata o in \"Altra posta\".",
+        "corporate": "Le email aziendali spesso hanno filtri di sicurezza avanzati. Se non ricevi l'email, contatta il tuo reparto IT.",
+        "pec": "Gli indirizzi PEC non possono ricevere email da mittenti standard. Usa un indirizzo email normale."
+      },
+      "openWebmail": "Apri {provider}",
       "resendIn": "Reinvia tra {seconds}s",
       "resendLink": "Reinvia link di accesso",
       "needHelp": "Hai bisogno di aiuto?",

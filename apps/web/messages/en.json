@@ -51,10 +51,25 @@
       "resetInstructions": "We sent you reset instructions.",
       "tips": {
         "title": "Can't find the email?",
-        "checkSpam": "Check your spam or promotions folder",
+        "checkSpam": "Check your spam folder",
+        "checkPromotions": "Check your promotions folder",
+        "checkJunk": "Check your junk mail folder",
+        "checkFocused": "Check \"Other\" mail (Focused Inbox)",
+        "addToContacts": "Add noreply@afflyt.io to your contacts",
         "searchEmail": "Search for emails from noreply@afflyt.io",
-        "linkExpiry": "The link expires after 15 minutes"
+        "linkExpiry": "The link expires after 15 minutes",
+        "corporateWarning": "Corporate emails may have stricter filters",
+        "checkQuarantine": "Check your corporate email quarantine",
+        "contactIT": "Contact your IT department if you don't receive the email",
+        "pecWarning": "PEC addresses cannot receive standard emails"
       },
+      "providerWarning": {
+        "title": "Important note for {provider}",
+        "outlook": "Outlook/Hotmail has very strict spam filters. The email may be in your Junk folder or \"Other\" mail.",
+        "corporate": "Corporate emails often have advanced security filters. If you don't receive the email, contact your IT department.",
+        "pec": "PEC addresses cannot receive emails from standard senders. Use a regular email address."
+      },
+      "openWebmail": "Open {provider}",
       "resendIn": "Resend in {seconds}s",
       "resendLink": "Resend access link",
       "needHelp": "Need help?",

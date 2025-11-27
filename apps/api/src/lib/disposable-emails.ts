@@ -1,0 +1,156 @@
+/**
+ * Disposable Email Detection
+ * Blocks signup/registration from temporary email services
+ */
+
+// Common disposable email domains
+// This list can be extended or loaded from external source
+const DISPOSABLE_DOMAINS = new Set([
+  // Most common disposable services
+  'tempmail.com',
+  'temp-mail.org',
+  'guerrillamail.com',
+  'guerrillamail.org',
+  'guerrillamail.net',
+  'guerrillamail.biz',
+  '10minutemail.com',
+  '10minutemail.net',
+  'mailinator.com',
+  'mailinator.net',
+  'trashmail.com',
+  'trashmail.net',
+  'throwaway.email',
+  'throwawaymail.com',
+  'getnada.com',
+  'nada.email',
+  'tempail.com',
+  'fakeinbox.com',
+  'sharklasers.com',
+  'guerrillamail.info',
+  'grr.la',
+  'spam4.me',
+  'spam.me',
+  'dispostable.com',
+  'mailnesia.com',
+  'maildrop.cc',
+  'yopmail.com',
+  'yopmail.fr',
+  'cool.fr.nf',
+  'jetable.fr.nf',
+  'nospam.ze.tc',
+  'nomail.xl.cx',
+  'mega.zik.dj',
+  'speed.1s.fr',
+  'courriel.fr.nf',
+  'moncourrier.fr.nf',
+  'monemail.fr.nf',
+  'monmail.fr.nf',
+  'tempomail.fr',
+  'mytrashmail.com',
+  'mt2009.com',
+  'thankyou2010.com',
+  'trash2009.com',
+  'mt2014.com',
+  'mailcatch.com',
+  'mintemail.com',
+  'discard.email',
+  'discardmail.com',
+  'spambog.com',
+  'spambog.de',
+  'spambog.ru',
+  'mailexpire.com',
+  'tempinbox.com',
+  'tempmailaddress.com',
+  'emailondeck.com',
+  'fakemailgenerator.com',
+  'inboxalias.com',
+  'jetable.org',
+  'kasmail.com',
+  'link2mail.net',
+  'mailcatch.com',
+  'mailslite.com',
+  'mailzilla.com',
+  'moakt.com',
+  'mohmal.com',
+  'mt2015.com',
+  'objectmail.com',
+  'otherinbox.com',
+  'proxymail.eu',
+  'rcpt.at',
+  'rejectmail.com',
+  'safetymail.info',
+  'safetypost.de',
+  'sendspamhere.com',
+  'sogetthis.com',
+  'soodonims.com',
+  'spambox.info',
+  'spamex.com',
+  'spamgoes.in',
+  'spamherelots.com',
+  'spamspot.com',
+  'tempail.com',
+  'tempe-mail.com',
+  'tempemail.co.za',
+  'tempemail.com',
+  'tempemail.net',
+  'tempinbox.co.uk',
+  'tempmail.it',
+  'tempmail.net',
+  'tempomail.fr',
+  'temporaryemail.net',
+  'temporaryforwarding.com',
+  'temporaryinbox.com',
+  'temporarymailaddress.com',
+  'throwawayemailaddress.com',
+  'tradermail.info',
+  'turual.com',
+  'wegwerfmail.de',
+  'wegwerfmail.net',
+  'wegwerfmail.org',
+  'wh4f.org',
+  'willhackforfood.biz',
+  'willselfdestruct.com',
+  'mailnator.com',
+  'binkmail.com',
+  'bobmail.info',
+  'chammy.info',
+  'devnullmail.com',
+  'letthemeatspam.com',
+  'mailbidon.com',
+  'mailinator2.com',
+  'mailmetrash.com',
+  'notmailinator.com',
+  'ourklips.com',
+  'putthisinyourspamdatabase.com',
+  'sendspamhere.com',
+  'thisisnotmyrealemail.com',
+  'trash-mail.at',
+  'trash-mail.com',
+  'trash-mail.de',
+  'trashmail.at',
+  'trashmail.me',
+  'trashmail.ws',
+  'uggsrock.com',
+  'veryrealemail.com',
+  'zoemail.com',
+]);
+
+/**
+ * Check if email domain is from a disposable email service
+ */
+export function isDisposableEmail(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase().trim();
+
+  if (!domain) {
+    return false;
+  }
+
+  return DISPOSABLE_DOMAINS.has(domain);
+}
+
+/**
+ * Get list of blocked domains (for display in error messages)
+ */
+export function getBlockedDomainsCount(): number {
+  return DISPOSABLE_DOMAINS.size;
+}
