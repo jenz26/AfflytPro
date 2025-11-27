@@ -48,7 +48,17 @@
       "title": "Check your email!",
       "verifyAccount": "We sent you a link to verify your account.",
       "accessLink": "We sent you an access link.",
-      "resetInstructions": "We sent you reset instructions."
+      "resetInstructions": "We sent you reset instructions.",
+      "tips": {
+        "title": "Can't find the email?",
+        "checkSpam": "Check your spam or promotions folder",
+        "searchEmail": "Search for emails from noreply@afflyt.io",
+        "linkExpiry": "The link expires after 15 minutes"
+      },
+      "resendIn": "Resend in {seconds}s",
+      "resendLink": "Resend access link",
+      "needHelp": "Need help?",
+      "contactSupport": "Contact support"
     },
     "messages": {
       "loginSuccess": "Login successful!",
@@ -56,7 +66,8 @@
       "connectionError": "Server connection error",
       "passwordsMismatch": "Passwords do not match",
       "passwordRequirements": "Password must contain at least 8 characters, one uppercase, one lowercase and one number",
-      "registrationError": "Error during registration"
+      "registrationError": "Error during registration",
+      "magicLinkResent": "Access link resent!"
     },
     "verifyEmail": {
       "missingToken": "Verification token missing.",

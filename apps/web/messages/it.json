@@ -48,7 +48,17 @@
       "title": "Controlla la tua email!",
       "verifyAccount": "Ti abbiamo inviato un link per verificare il tuo account.",
       "accessLink": "Ti abbiamo inviato un link di accesso.",
-      "resetInstructions": "Ti abbiamo inviato le istruzioni per il reset."
+      "resetInstructions": "Ti abbiamo inviato le istruzioni per il reset.",
+      "tips": {
+        "title": "Non trovi l'email?",
+        "checkSpam": "Controlla la cartella spam o promozioni",
+        "searchEmail": "Cerca email da noreply@afflyt.io",
+        "linkExpiry": "Il link scade dopo 15 minuti"
+      },
+      "resendIn": "Reinvia tra {seconds}s",
+      "resendLink": "Reinvia link di accesso",
+      "needHelp": "Hai bisogno di aiuto?",
+      "contactSupport": "Contatta il supporto"
     },
     "messages": {
       "loginSuccess": "Login effettuato con successo!",
@@ -56,7 +66,8 @@
       "connectionError": "Errore di connessione al server",
       "passwordsMismatch": "Le password non coincidono",
       "passwordRequirements": "La password deve contenere almeno 8 caratteri, una maiuscola, una minuscola e un numero",
-      "registrationError": "Errore durante la registrazione"
+      "registrationError": "Errore durante la registrazione",
+      "magicLinkResent": "Link di accesso reinviato!"
     },
     "verifyEmail": {
       "missingToken": "Token di verifica mancante.",

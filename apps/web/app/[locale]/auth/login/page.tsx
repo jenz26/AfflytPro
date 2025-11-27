@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -23,10 +23,12 @@ export default function AuthPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [authMode, setAuthMode] = useState<AuthMode>('login');
+    const [authMode, setAuthMode] = useState<AuthMode>('magic-link');
     const [isLoading, setIsLoading] = useState(false);
     const [alert, setAlert] = useState<AlertState | null>(null);
     const [emailSent, setEmailSent] = useState(false);
+    const [resendCountdown, setResendCountdown] = useState(0);
+    const [sentEmail, setSentEmail] = useState('');
 
     const t = useTranslations('auth');
     const tFeatures = useTranslations('auth.features');
@@ -41,6 +43,15 @@ export default function AuthPage() {
         const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
         router.push(newPathname);
     };
+
+    // Countdown timer for resend
+    useEffect(() => {
+        if (resendCountdown <= 0) return;
+        const timer = setInterval(() => {
+            setResendCountdown((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [resendCountdown]);
 
     const showAlert = (type: AlertType, message: string) => {
         setAlert({ type, message });
@@ -141,10 +152,35 @@ export default function AuthPage() {
             });
 
             const data = await res.json();
+            setSentEmail(email);
             setEmailSent(true);
+            setResendCountdown(60); // 60 seconds before can resend
             showAlert('success', data.message);
         } catch (error) {
             console.error('Magic link error:', error);
+            showAlert('error', t('messages.connectionError'));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendMagicLink = async () => {
+        if (resendCountdown > 0) return;
+        setIsLoading(true);
+        setAlert(null);
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/magic-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: sentEmail, locale })
+            });
+
+            const data = await res.json();
+            setResendCountdown(60);
+            showAlert('success', t('messages.magicLinkResent'));
+        } catch (error) {
+            console.error('Resend magic link error:', error);
             showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);
@@ -194,6 +230,8 @@ export default function AuthPage() {
         setName('');
         setAlert(null);
         setEmailSent(false);
+        setResendCountdown(0);
+        setSentEmail('');
     };
 
     const switchMode = (mode: AuthMode) => {
@@ -288,13 +326,13 @@ export default function AuthPage() {
                                 <h2 className="text-3xl font-bold text-white mb-2">{getTitle()}</h2>
                                 <p className="text-gray-400 mb-8">{getSubtitle()}</p>
 
-                                {/* Auth Mode Toggle for Login */}
+                                {/* Auth Mode Toggle - Magic Link (primary) | Password (secondary) */}
                                 {(authMode === 'login' || authMode === 'magic-link') && (
                                     <div className="flex p-1 bg-afflyt-dark-50 rounded-lg mb-6 border border-afflyt-glass-border">
                                         <button
                                             onClick={() => switchMode('magic-link')}
-                                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${authMode === 'magic-link'
-                                                ? 'bg-afflyt-glass-white text-afflyt-cyan-400 shadow-sm'
+                                            className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${authMode === 'magic-link'
+                                                ? 'bg-gradient-to-r from-afflyt-cyan-500/20 to-blue-500/20 text-afflyt-cyan-400 shadow-sm border border-afflyt-cyan-500/30'
                                                 : 'text-gray-400 hover:text-gray-200'
                                             }`}
                                         >
@@ -302,9 +340,9 @@ export default function AuthPage() {
                                         </button>
                                         <button
                                             onClick={() => switchMode('login')}
-                                            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${authMode === 'login'
-                                                ? 'bg-afflyt-glass-white text-afflyt-cyan-400 shadow-sm'
-                                                : 'text-gray-400 hover:text-gray-200'
+                                            className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all ${authMode === 'login'
+                                                ? 'bg-afflyt-glass-white text-white shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-300'
                                             }`}
                                         >
                                             {t('tabs.password')}
@@ -493,9 +531,9 @@ export default function AuthPage() {
                                 )}
                             </>
                         ) : (
-                            /* Email Sent Confirmation */
-                            <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-afflyt-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            /* Email Sent Confirmation - Enhanced */
+                            <div className="text-center py-6">
+                                <div className="w-16 h-16 bg-afflyt-cyan-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                                     <Mail className="w-8 h-8 text-afflyt-cyan-400" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">{t('emailSent.title')}</h3>
@@ -504,19 +542,72 @@ export default function AuthPage() {
                                     {authMode === 'magic-link' && t('emailSent.accessLink')}
                                     {authMode === 'forgot-password' && t('emailSent.resetInstructions')}
                                 </p>
-                                <p className="text-afflyt-cyan-400 font-mono">{email}</p>
+                                <p className="text-afflyt-cyan-400 font-mono text-lg">{sentEmail || email}</p>
 
-                                <div className="mt-6">
+                                {/* Tips Card */}
+                                {authMode === 'magic-link' && (
+                                    <div className="mt-6 p-4 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-left">
+                                        <p className="text-sm font-medium text-white mb-3">{t('emailSent.tips.title')}</p>
+                                        <ul className="space-y-2 text-sm text-gray-400">
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                <span>{t('emailSent.tips.checkSpam')}</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                <span>{t('emailSent.tips.searchEmail')}</span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <span className="text-afflyt-cyan-400 mt-0.5">•</span>
+                                                <span>{t('emailSent.tips.linkExpiry')}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Resend Button with Countdown */}
+                                {authMode === 'magic-link' && (
+                                    <div className="mt-6">
+                                        <button
+                                            onClick={handleResendMagicLink}
+                                            disabled={resendCountdown > 0 || isLoading}
+                                            className={`text-sm transition-colors ${
+                                                resendCountdown > 0
+                                                    ? 'text-gray-600 cursor-not-allowed'
+                                                    : 'text-afflyt-cyan-400 hover:text-afflyt-cyan-300'
+                                            }`}
+                                        >
+                                            {resendCountdown > 0
+                                                ? t('emailSent.resendIn', { seconds: resendCountdown })
+                                                : t('emailSent.resendLink')
+                                            }
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Back to Login */}
+                                <div className="mt-4 pt-4 border-t border-afflyt-glass-border">
                                     <button
                                         onClick={() => {
                                             resetForm();
-                                            setAuthMode('login');
+                                            setAuthMode('magic-link');
                                         }}
-                                        className="text-sm text-gray-400 hover:text-afflyt-cyan-400 transition-colors"
+                                        className="text-sm text-gray-500 hover:text-gray-300 transition-colors"
                                     >
                                         {t('links.backToLogin')}
                                     </button>
                                 </div>
+
+                                {/* Support Link */}
+                                <p className="mt-4 text-xs text-gray-600">
+                                    {t('emailSent.needHelp')}{' '}
+                                    <a
+                                        href="mailto:support@afflyt.io"
+                                        className="text-afflyt-cyan-400/70 hover:text-afflyt-cyan-400 transition-colors"
+                                    >
+                                        {t('emailSent.contactSupport')}
+                                    </a>
+                                </p>
                             </div>
                         )}
                     </GlassCard>
