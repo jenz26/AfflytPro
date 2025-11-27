@@ -258,8 +258,7 @@ async function checkCacheStatus(categories: string[]): Promise<{
 }
 
 /**
- * Fetch deals from Keepa and populate cache for specific categories
- * Uses KeepaPopulateService which already handles DB saving
+ * Fetch deals from Keepa and populate cache
  */
 async function refreshCacheFromKeepa(categories: string[]): Promise<{
     success: boolean;
@@ -267,81 +266,25 @@ async function refreshCacheFromKeepa(categories: string[]): Promise<{
     tokensUsed: number;
     errors: string[];
 }> {
-    console.log('📡 Refreshing cache from Keepa...');
-    console.log(`   Categories to refresh: ${categories.join(', ')}`);
+    if (!process.env.KEEPA_API_KEY) {
+        return { success: false, dealsSaved: 0, tokensUsed: 0, errors: ['KEEPA_API_KEY not configured'] };
+    }
 
     const keepaService = new KeepaPopulateService();
-    let totalSaved = 0;
-    let totalTokens = 0;
-    const allErrors: string[] = [];
-
-    // Check if API key is available
-    if (!process.env.KEEPA_API_KEY) {
-        console.log('   ⚠️  KEEPA_API_KEY not set - cannot fetch from Keepa');
-        return {
-            success: false,
-            dealsSaved: 0,
-            tokensUsed: 0,
-            errors: ['KEEPA_API_KEY not configured']
-        };
-    }
-
-    // Fetch deals from Keepa (the service already saves to DB)
-    // We fetch all categories at once since Keepa deals API is efficient
     try {
         const result = await keepaService.populateDeals({
-            maxDeals: 100,           // Fetch more deals per category
-            minRating: 200,          // 2 stars minimum
-            minDiscountPercent: 5    // 5% minimum discount
+            maxDeals: 100,
+            minRating: 200,
+            minDiscountPercent: 5
         });
-
-        totalSaved = result.saved;
-        totalTokens = result.tokensUsed;
-        allErrors.push(...result.errors);
-
-        console.log(`   ✅ Keepa refresh complete: ${totalSaved} deals saved`);
-        console.log(`   📊 Tokens used: ${totalTokens}`);
-
+        return {
+            success: result.saved > 0,
+            dealsSaved: result.saved,
+            tokensUsed: result.tokensUsed,
+            errors: result.errors
+        };
     } catch (error: any) {
-        console.error(`   ❌ Keepa fetch error: ${error.message}`);
-        allErrors.push(error.message);
-    }
-
-    return {
-        success: totalSaved > 0,
-        dealsSaved: totalSaved,
-        tokensUsed: totalTokens,
-        errors: allErrors
-    };
-}
-
-/**
- * Log applied filters for debugging
- */
-function logAppliedFilters(rule: RuleWithFilters): void {
-    const userPlan = rule.user?.plan || 'FREE';
-    console.log(`   Plan: ${userPlan}`);
-    console.log(`   Filters applied:`);
-    console.log(`     - Categories: ${rule.categories.join(', ')}`);
-    console.log(`     - Min Score: ${rule.minScore}`);
-
-    if (userPlan === 'PRO' || userPlan === 'BUSINESS') {
-        if (rule.minPrice) console.log(`     - Min Price: €${rule.minPrice}`);
-        if (rule.maxPrice) console.log(`     - Max Price: €${rule.maxPrice}`);
-        if (rule.minDiscount) console.log(`     - Min Discount: ${rule.minDiscount}%`);
-        if (rule.minRating) console.log(`     - Min Rating: ${rule.minRating / 100} stars`);
-        if (rule.minReviews) console.log(`     - Min Reviews: ${rule.minReviews}`);
-        if (rule.maxSalesRank) console.log(`     - Max Sales Rank: ${rule.maxSalesRank}`);
-    }
-
-    if (userPlan === 'BUSINESS') {
-        if (rule.amazonOnly) console.log(`     - Amazon Only: Yes`);
-        if (rule.fbaOnly) console.log(`     - FBA Only: Yes`);
-        if (rule.hasCoupon) console.log(`     - Has Coupon: Yes`);
-        if (rule.primeOnly) console.log(`     - Prime Only: Yes`);
-        if (rule.brandInclude?.length) console.log(`     - Brand Include: ${rule.brandInclude.join(', ')}`);
-        if (rule.brandExclude?.length) console.log(`     - Brand Exclude: ${rule.brandExclude.join(', ')}`);
-        if (rule.listedAfter) console.log(`     - Listed After: ${rule.listedAfter.toISOString().split('T')[0]}`);
+        return { success: false, dealsSaved: 0, tokensUsed: 0, errors: [error.message] };
     }
 }
 
@@ -408,13 +351,7 @@ export class RuleExecutor {
         let dealsPublished = 0;
 
         try {
-            console.log('\n' + '🤖'.repeat(35));
-            console.log('🤖 AUTOMATION RULE EXECUTOR - START');
-            console.log('🤖'.repeat(35) + '\n');
-
-            // ===== STEP 1: Load Rule =====
-            console.log('📋 STEP 1: Loading automation rule...');
-
+            // STEP 1: Load Rule
             const rule = await prisma.automationRule.findUnique({
                 where: { id: ruleId },
                 include: {
@@ -440,79 +377,31 @@ export class RuleExecutor {
                 throw new Error(`Rule is inactive: ${rule.name}`);
             }
 
-            console.log(`✅ Loaded rule: "${rule.name}"`);
-            console.log(`   User: ${rule.user.email}`);
-
-            // Log all applied filters
-            logAppliedFilters(rule as RuleWithFilters);
-            console.log('');
-
-            // ===== STEP 2: Targeting - Find Deals (with Dynamic Query) =====
-            console.log('🎯 STEP 2: Targeting deals with tier-based filters...');
-
+            // STEP 2: Targeting
             const cacheService = new ProductCacheService();
             const currentUserPlan = rule.user?.plan || 'FREE';
             const maxResults = PLAN_RESULTS_LIMIT[currentUserPlan] || PLAN_RESULTS_LIMIT.FREE;
-
-            // Build dynamic query based on rule filters and user plan
             const query = buildProductQuery(rule as RuleWithFilters);
 
-            console.log(`   Query filters: ${JSON.stringify(query.where, null, 2).split('\n').slice(0, 10).join('\n')}...`);
-
-            // ═══════════════════════════════════════════════════════════════
-            // STEP 2a: Check cache status and refresh from Keepa if needed
-            // ═══════════════════════════════════════════════════════════════
-            console.log('\n   📦 Checking cache status...');
+            // Check cache and refresh from Keepa if needed
             const cacheStatus = await checkCacheStatus(rule.categories);
-            console.log(`   Cache status: ${cacheStatus.totalCached} deals cached for categories: ${rule.categories.join(', ')}`);
-
             if (cacheStatus.needsRefresh) {
-                console.log(`   ⚠️  Cache insufficient for: ${cacheStatus.categoriesNeedingRefresh.join(', ')}`);
-                console.log('   🔄 Triggering Keepa refresh...\n');
-
-                const refreshResult = await refreshCacheFromKeepa(cacheStatus.categoriesNeedingRefresh);
-
-                if (refreshResult.success) {
-                    console.log(`   ✅ Cache refreshed: ${refreshResult.dealsSaved} new deals fetched`);
-                } else if (refreshResult.errors.length > 0) {
-                    console.log(`   ⚠️  Keepa refresh had issues: ${refreshResult.errors.join(', ')}`);
-                    // Continue anyway - use whatever is in cache
-                }
-                console.log('');
-            } else {
-                console.log('   ✅ Cache is sufficient, no Keepa refresh needed\n');
+                await refreshCacheFromKeepa(cacheStatus.categoriesNeedingRefresh);
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // STEP 2b: Query products from cache (now potentially refreshed)
-            // ═══════════════════════════════════════════════════════════════
-            console.log('   🔍 Querying cached products...');
-
-            // Search in cached products with all applicable filters
+            // Query products from cache
             const deals = await prisma.product.findMany({
                 where: query.where,
                 take: query.take,
                 orderBy: query.orderBy,
             });
 
-            console.log(`✅ Found ${deals.length} matching deals (max to publish: ${maxResults})\n`);
-
-            // If still too few deals after refresh, log warning
-            if (deals.length < 5) {
-                console.log('⚠️  Warning: Very few deals found even after cache check.');
-                console.log('   Possible causes: strict filters, rare category, or Keepa API issue.\n');
-            }
-
-            // ===== STEP 3: Scoring - Filter by Deal Score =====
-            console.log('⭐ STEP 3: Calculating Deal Scores...');
-
+            // STEP 3: Scoring
             const scoringEngine = new ScoringEngine();
             const scoredDeals = [];
 
             for (const deal of deals) {
                 dealsProcessed++;
-
-                // Calculate score using ScoringEngine
                 const scoreData = scoringEngine.calculateDealScore({
                     currentPrice: deal.currentPrice,
                     originalPrice: deal.originalPrice,
@@ -524,20 +413,11 @@ export class RuleExecutor {
                 });
 
                 if (scoreData.score >= rule.minScore) {
-                    scoredDeals.push({
-                        ...deal,
-                        score: scoreData.score,
-                        scoreBreakdown: scoreData
-                    });
-
-                    console.log(`   ✓ ${deal.title.substring(0, 50)}... - Score: ${scoreData.score}`);
+                    scoredDeals.push({ ...deal, score: scoreData.score, scoreBreakdown: scoreData });
                 }
             }
 
-            console.log(`✅ ${scoredDeals.length} deals passed score threshold (>= ${rule.minScore})\n`);
-
             if (scoredDeals.length === 0) {
-                console.log('ℹ️  No deals to publish. Execution complete.\n');
                 return {
                     success: true,
                     dealsProcessed,
@@ -547,16 +427,12 @@ export class RuleExecutor {
                 };
             }
 
-            // ===== STEP 4: A/B Split (if configured) =====
+            // STEP 4: A/B Split (if configured)
             let selectedVariant = null;
             if (rule.split) {
-                console.log('🔀 STEP 4: Applying A/B Split...');
-
                 const variants = rule.split.variants as any[];
-                // Weighted random selection
                 const totalWeight = variants.reduce((sum: number, v: any) => sum + v.weight, 0);
                 let random = Math.random() * totalWeight;
-
                 for (const variant of variants) {
                     random -= variant.weight;
                     if (random <= 0) {
@@ -564,144 +440,48 @@ export class RuleExecutor {
                         break;
                     }
                 }
-
-                console.log(`✅ Selected variant: ${selectedVariant.name} (weight: ${selectedVariant.weight}%)\n`);
-            } else {
-                console.log('⏭️  STEP 4: No A/B split configured, skipping...\n');
             }
 
-            // ===== STEP 5: Generate Links & Publish =====
-            console.log('📢 STEP 5: Generating short links and publishing to Telegram...');
-
-            // Use dealsPerRun from rule (new system) or fallback to plan limits
+            // STEP 5: Generate Links & Publish
             const dealsLimit = rule.dealsPerRun || maxResults;
 
-            // ===== DEDUPLICATION: Filter out already published deals =====
+            // Deduplication: Filter out already published deals
             let deduplicatedDeals = scoredDeals;
-            let skippedDuplicates = 0;
-
             if (rule.channel) {
-                console.log(`   Checking deduplication (window: ${rule.dedupeWindowHours}h)...`);
-
-                const publishedAsins = await getPublishedAsins(
-                    rule.channel.id,
-                    rule.dedupeWindowHours
-                );
-
+                const publishedAsins = await getPublishedAsins(rule.channel.id, rule.dedupeWindowHours);
                 if (publishedAsins.size > 0) {
-                    const beforeCount = scoredDeals.length;
                     deduplicatedDeals = scoredDeals.filter(deal => !publishedAsins.has(deal.asin));
-                    skippedDuplicates = beforeCount - deduplicatedDeals.length;
-
-                    if (skippedDuplicates > 0) {
-                        console.log(`   ⏭️  Skipped ${skippedDuplicates} already published deals`);
-                    }
                 }
             }
 
-            // Sort by discount (best deals first) and limit
             const dealsToPublish = deduplicatedDeals
                 .sort((a, b) => b.score - a.score)
                 .slice(0, dealsLimit);
 
-            console.log(`   Publishing top ${dealsToPublish.length} deals (limit: ${dealsLimit})`);
-
-            // Get Telegram bot token from user credentials
-            const telegramCredential = rule.user.credentials?.find(
-                (c: any) => c.provider === 'TELEGRAM_BOT'
-            );
-
+            // Get Telegram bot token
+            const telegramCredential = rule.user.credentials?.find((c: any) => c.provider === 'TELEGRAM_BOT');
             if (!telegramCredential) {
-                const errorMsg = 'No Telegram bot token found in user credentials';
-                errors.push(errorMsg);
-                console.error(`❌ ${errorMsg}\n`);
-
-                return {
-                    success: false,
-                    dealsProcessed,
-                    dealsPublished: 0,
-                    errors: [errorMsg],
-                    executionTime: Date.now() - startTime
-                };
+                errors.push('No Telegram bot token');
+                return { success: false, dealsProcessed, dealsPublished: 0, errors, executionTime: Date.now() - startTime };
             }
 
-            // Get user's Amazon affiliate tag - MANDATORY for publishing
+            // Get user's Amazon affiliate tag
             let userAmazonTag: string;
             try {
                 userAmazonTag = await getUserAmazonTag(rule.userId);
-                console.log(`   ✅ Amazon tag found: ${userAmazonTag}`);
             } catch (tagError: any) {
-                const errorMsg = tagError.message || 'Nessun tag Amazon affiliato configurato';
-                errors.push(errorMsg);
-                console.error(`❌ ${errorMsg}\n`);
-
-                // TODO: Send notification to user (email/telegram/in-app)
-                // NotificationService.notify(rule.userId, {
-                //     type: 'AUTOMATION_ERROR',
-                //     title: 'Automazione bloccata',
-                //     message: 'Configura il tuo tag Amazon affiliato per pubblicare offerte.',
-                //     action: { type: 'link', url: '/settings/credentials' }
-                // });
-
-                return {
-                    success: false,
-                    dealsProcessed,
-                    dealsPublished: 0,
-                    errors: [errorMsg],
-                    executionTime: Date.now() - startTime
-                };
+                errors.push(tagError.message || 'No Amazon tag configured');
+                return { success: false, dealsProcessed, dealsPublished: 0, errors, executionTime: Date.now() - startTime };
             }
 
-            const botToken = securityService.decrypt(telegramCredential.key); // Decrypt token
-            const channelId = rule.channel!.channelId; // e.g., '@mychannel' or '-1002882115796'
-
-            // Get user plan for refresh logic
+            const botToken = securityService.decrypt(telegramCredential.key);
+            const channelId = rule.channel!.channelId;
             const userPlan = rule.user.plan as string;
-            const planLimits = getPlanLimits(userPlan);
 
-            console.log(`   Plan: ${userPlan}`);
-            console.log(`   Keepa Refresh Policy: ${planLimits.keepa.forceRefreshIfOlderThan === null ? 'No force refresh' : planLimits.keepa.forceRefreshIfOlderThan === 0 ? 'Always refresh' : `Refresh if > ${planLimits.keepa.forceRefreshIfOlderThan / 60}h old`}\n`);
-
+            // Publish deals
             for (const deal of dealsToPublish) {
                 try {
-                    // Check if Keepa refresh is needed before publishing
-                    const minutesSinceRefresh = Math.floor(
-                        (Date.now() - new Date(deal.lastPriceCheckAt).getTime()) / 60000
-                    );
-
-                    console.log(`\n   📦 Deal: ${deal.title.substring(0, 40)}...`);
-                    console.log(`      Data age: ${Math.floor(minutesSinceRefresh / 60)}h ${minutesSinceRefresh % 60}m`);
-
-                    if (needsKeepaRefresh(userPlan, minutesSinceRefresh)) {
-                        console.log(`      🔄 Data too old, refreshing from Keepa...`);
-
-                        // TODO: Implement actual Keepa API refresh here
-                        // For now, just log the action
-                        console.log(`      ⚠️  Keepa refresh not yet implemented, using cached data`);
-
-                        // When Keepa refresh is implemented:
-                        // 1. Call KeepaEngine.fetchFromKeepa(deal.asin, rule.userId)
-                        // 2. Update Product in database with fresh data
-                        // 3. Recalculate score
-                        // 4. If score < rule.minScore, skip this deal
-                        // 5. Update deal object with fresh data
-
-                        // Example:
-                        // const freshData = await keepaEngine.fetchFromKeepa(deal.asin, rule.userId);
-                        // const freshScore = scoringEngine.calculateDealScore(freshData);
-                        // if (freshScore.score < rule.minScore) {
-                        //     console.log(`      ⏭️  Score dropped to ${freshScore.score}, skipping...`);
-                        //     continue;
-                        // }
-                        // deal = { ...deal, ...freshData, score: freshScore.score };
-                    } else {
-                        console.log(`      ✅ Data fresh enough, proceeding...`);
-                    }
-
-                    // Build Amazon affiliate URL with user's tag (already validated above)
                     const affiliateLink = `https://amazon.it/dp/${deal.asin}?tag=${userAmazonTag}`;
-
-                    // Use TelegramBotService to create short link and publish
                     const result = await TelegramBotService.sendDealToChannel(
                         channelId,
                         botToken,
@@ -710,7 +490,7 @@ export class RuleExecutor {
                             title: deal.title,
                             price: deal.currentPrice,
                             originalPrice: deal.originalPrice,
-                            discount: deal.discount / 100, // Convert to decimal (33 → 0.33)
+                            discount: deal.discount / 100,
                             rating: deal.rating || 0,
                             reviewCount: deal.reviewCount || 0,
                             imageUrl: deal.imageUrl || undefined,
@@ -720,42 +500,21 @@ export class RuleExecutor {
 
                     if (result.success) {
                         dealsPublished++;
-                        console.log(`   ✓ Published: ${deal.title.substring(0, 50)}... (Score: ${deal.score})`);
-                        console.log(`     Short URL: ${result.shortUrl}`);
                     } else {
-                        const errorMsg = `Failed to publish ${deal.asin}: ${result.error}`;
-                        errors.push(errorMsg);
-                        console.error(`   ✗ ${errorMsg}`);
+                        errors.push(`${deal.asin}: ${result.error}`);
                     }
-
                 } catch (error: any) {
-                    const errorMsg = `Failed to publish deal ${deal.asin}: ${error.message}`;
-                    errors.push(errorMsg);
-                    console.error(`   ✗ ${errorMsg}`);
+                    errors.push(`${deal.asin}: ${error.message}`);
                 }
             }
 
-            console.log(`✅ Published ${dealsPublished} deals\n`);
-
-            // ===== Record published deals for deduplication =====
+            // Record published deals for deduplication
             if (rule.channel && dealsPublished > 0) {
-                const publishedAsins = dealsToPublish
-                    .slice(0, dealsPublished)
-                    .map(d => d.asin);
-
-                await recordPublishedDeals(
-                    rule.channel.id,
-                    publishedAsins,
-                    rule.id,
-                    rule.dedupeWindowHours
-                );
-
-                console.log(`📝 Recorded ${publishedAsins.length} deals in history for deduplication`);
+                const publishedAsins = dealsToPublish.slice(0, dealsPublished).map(d => d.asin);
+                await recordPublishedDeals(rule.channel.id, publishedAsins, rule.id, rule.dedupeWindowHours);
             }
 
-            // ===== STEP 6: Update Usage Stats =====
-            console.log('📊 STEP 6: Updating usage statistics...');
-
+            // STEP 6: Update Usage Stats
             await prisma.automationRule.update({
                 where: { id: ruleId },
                 data: {
@@ -766,48 +525,16 @@ export class RuleExecutor {
             });
 
             const executionTime = Date.now() - startTime;
-            console.log(`✅ Stats updated\n`);
 
-            // ===== Summary =====
-            console.log('📈 EXECUTION SUMMARY');
-            console.log('='.repeat(70));
-            console.log(`Rule: ${rule.name}`);
-            console.log(`Deals Processed: ${dealsProcessed}`);
-            console.log(`Deals Published: ${dealsPublished}`);
-            console.log(`Execution Time: ${executionTime}ms`);
-            console.log(`Errors: ${errors.length}`);
-            console.log('='.repeat(70) + '\n');
+            // Log summary (single line)
+            console.log(`[Rule] "${rule.name}" completed: ${dealsPublished}/${dealsProcessed} deals published (${executionTime}ms)`);
 
-            if (errors.length > 0) {
-                console.log('⚠️  ERRORS:');
-                errors.forEach(err => console.log(`   - ${err}`));
-                console.log('');
-            }
-
-            console.log('🤖'.repeat(35));
-            console.log('🤖 AUTOMATION RULE EXECUTOR - COMPLETE');
-            console.log('🤖'.repeat(35) + '\n');
-
-            return {
-                success: true,
-                dealsProcessed,
-                dealsPublished,
-                errors,
-                executionTime
-            };
+            return { success: true, dealsProcessed, dealsPublished, errors, executionTime };
 
         } catch (error: any) {
             const executionTime = Date.now() - startTime;
-            console.error('\n❌ RULE EXECUTION FAILED:', error.message);
-            console.error('🤖'.repeat(35) + '\n');
-
-            return {
-                success: false,
-                dealsProcessed,
-                dealsPublished,
-                errors: [error.message, ...errors],
-                executionTime
-            };
+            console.error(`[Rule] Execution failed: ${error.message}`);
+            return { success: false, dealsProcessed, dealsPublished, errors: [error.message, ...errors], executionTime };
         }
     }
 }

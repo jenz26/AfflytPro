@@ -51,18 +51,12 @@ interface KeepaRawDeal {
 export class KeepaPopulateService {
     private client: AxiosInstance;
     private apiKey: string;
-    private loggedDealStructure = false;
 
     constructor() {
         this.apiKey = process.env.KEEPA_API_KEY || '';
-
-        if (!this.apiKey) {
-            console.warn('[KeepaPopulate] WARNING: KEEPA_API_KEY not set!');
-        }
-
         this.client = axios.create({
             baseURL: 'https://api.keepa.com',
-            timeout: 60000, // 60s timeout for deals endpoint
+            timeout: 60000,
         });
     }
 
@@ -78,21 +72,12 @@ export class KeepaPopulateService {
     } = {}): Promise<{ saved: number; skipped: number; errors: string[]; tokensUsed: number }> {
         const {
             maxDeals = 50,
-            minRating = 200,      // 2 stars
+            minRating = 200,
             minDiscountPercent = 5
         } = options;
 
-        console.log('\n' + '='.repeat(60));
-        console.log('🔍 KEEPA POPULATE SERVICE - START');
-        console.log('='.repeat(60));
-        console.log(`   Max deals: ${maxDeals}`);
-        console.log(`   Categories: ALL`);
-        console.log(`   Min rating: ${minRating / 100} stars`);
-        console.log(`   Min discount: ${minDiscountPercent}%`);
-        console.log('');
-
         if (!this.apiKey) {
-            console.error('❌ No KEEPA_API_KEY set!');
+            console.error('[Keepa] No API key configured');
             return { saved: 0, skipped: 0, errors: ['No API key'], tokensUsed: 0 };
         }
 
@@ -122,13 +107,7 @@ export class KeepaPopulateService {
                 dealParams.minRating = Math.floor(minRating / 10);
             }
 
-            // Don't filter by category - get deals from ALL categories
-
-            console.log('📡 Calling Keepa Deals API...');
-            console.log('   Domain:', KEEPA_DOMAIN_IT, '(Italy)');
-            console.log('   Selection:', JSON.stringify(dealParams));
-
-            // Keepa API call - NO domain in URL, only in selection JSON
+            // Keepa API call
             const response = await this.client.get('/deal', {
                 params: {
                     key: this.apiKey,
@@ -136,77 +115,43 @@ export class KeepaPopulateService {
                 }
             });
 
-            // Response structure: { deals: { dr: [...], categoryIds, categoryNames }, tokensLeft, ... }
             const responseData = response.data as any;
             const deals = responseData.deals?.dr || [];
-            const tokensLeft = responseData.tokensLeft ?? 0;
-            const refillIn = responseData.refillIn ?? 0;
-            const refillRate = responseData.refillRate ?? 0;
-
-            console.log('📦 Response received - Categories:', responseData.deals?.categoryNames?.slice(0, 5).join(', '));
-
-            // Estimate tokens used (deals API costs ~5 tokens)
             tokensUsed = 5;
 
-            console.log(`✅ Received ${deals?.length || 0} deals from Keepa`);
-            console.log(`   Tokens left: ${tokensLeft}`);
-            console.log(`   Refill in: ${refillIn}ms (rate: ${refillRate}/min)`);
-            console.log('');
-
             if (!deals || deals.length === 0) {
-                console.log('⚠️  No deals found matching criteria');
-                console.log('   This could mean: no deals match filters OR API returned empty');
                 return { saved: 0, skipped: 0, errors: [], tokensUsed };
             }
 
-            // Process and save each deal
-            console.log('💾 Saving deals to database...');
-
+            // Process and save deals
             for (const deal of deals.slice(0, maxDeals)) {
                 try {
                     const product = await this.saveDeal(deal);
                     if (product) {
                         saved++;
-                        console.log(`   ✓ ${deal.asin}: ${deal.title?.substring(0, 40)}... (${deal.deltaPercent?.[0] || 0}% off)`);
                     } else {
                         skipped++;
                     }
                 } catch (error: any) {
                     errors.push(`${deal.asin}: ${error.message}`);
-                    console.error(`   ✗ ${deal.asin}: ${error.message}`);
                 }
             }
 
         } catch (error: any) {
-            console.error('❌ Keepa API error:', error.message);
-
-            // Log full error details for debugging
-            if (error.response) {
-                console.error('   Status:', error.response.status);
-                console.error('   Data:', JSON.stringify(error.response.data, null, 2));
-                console.error('   Headers:', JSON.stringify(error.response.headers, null, 2));
-            }
-
+            console.error('[Keepa] API error:', error.response?.status || error.message);
             if (error.response?.status === 429) {
-                errors.push('Rate limit exceeded - token quota depleted');
+                errors.push('Rate limit exceeded');
             } else if (error.response?.status === 401) {
                 errors.push('Invalid API key');
-            } else if (error.response?.status === 400) {
-                const errorMsg = error.response.data?.error || error.response.data?.message || 'Bad request - check parameters';
-                errors.push(`Bad request: ${errorMsg}`);
             } else {
                 errors.push(error.message);
             }
         }
 
-        console.log('\n' + '='.repeat(60));
-        console.log('📊 KEEPA POPULATE SUMMARY');
-        console.log('='.repeat(60));
-        console.log(`   Deals saved: ${saved}`);
-        console.log(`   Deals skipped: ${skipped}`);
-        console.log(`   Errors: ${errors.length}`);
-        console.log(`   Tokens used: ~${tokensUsed}`);
-        console.log('='.repeat(60) + '\n');
+        // Only log summary if there were issues
+        if (errors.length > 0) {
+            console.error(`[Keepa] Populate completed with ${errors.length} errors`);
+        }
 
         return { saved, skipped, errors, tokensUsed };
     }
@@ -215,15 +160,6 @@ export class KeepaPopulateService {
      * Save a single deal to the database
      */
     private async saveDeal(deal: any): Promise<any> {
-        // Debug: log first deal structure to understand the format
-        if (!this.loggedDealStructure) {
-            console.log('📋 Deal structure sample:', JSON.stringify(deal, null, 2));
-            this.loggedDealStructure = true;
-        }
-
-        // Deals API returns different structure than Product API
-        // Fields: asin, title, image (array of bytes), current, avg, delta, deltaPercent, etc.
-
         // Get current price - deal.current is array of prices by type [Amazon, New, Used, etc]
         const currentPriceRaw = deal.current?.[0] ?? deal.current?.[1] ?? deal.current?.[2];
         const currentPriceCents = typeof currentPriceRaw === 'number' && currentPriceRaw > 0
