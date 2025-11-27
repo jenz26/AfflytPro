@@ -105,15 +105,12 @@ export class KeepaPopulateService {
 
         try {
             // Build the deals request using correct Keepa API parameters
-            // Based on the Python library and Keepa documentation:
-            // - domain is passed as URL param (not in selection)
-            // - selection contains only the filter params as JSON
+            // domainId MUST be inside the selection JSON, NOT as a URL param
 
-            // Minimal parameters to start - we can add more once basic call works
             const dealParams: Record<string, any> = {
                 page: 0,
-                // Only essential filters
-                priceTypes: [0, 1, 2, 7],  // Amazon, New, Used, Warehouse
+                domainId: KEEPA_DOMAIN_IT,  // 8 = Italy - MUST be inside selection
+                priceTypes: [0, 1, 2, 7],   // Amazon, New, Used, Warehouse
                 hasReviews: true,
                 sortType: 0,
                 deltaPercentRange: [minDiscountPercent, 100]
@@ -128,25 +125,22 @@ export class KeepaPopulateService {
             console.log('   Domain:', KEEPA_DOMAIN_IT, '(Italy)');
             console.log('   Selection:', JSON.stringify(dealParams));
 
-            // Keepa API call
-            // domain goes in URL params, selection is JSON stringified filter object
+            // Keepa API call - NO domain in URL, only in selection JSON
             const response = await this.client.get('/deal', {
                 params: {
                     key: this.apiKey,
-                    domain: KEEPA_DOMAIN_IT,
                     selection: JSON.stringify(dealParams)
                 }
             });
 
-            // Debug: log raw response structure
-            console.log('📦 Raw response keys:', Object.keys(response.data));
-
-            // Keepa returns 'dr' for deals array, not 'deals'
+            // Response structure: { deals: { dr: [...], categoryIds, categoryNames }, tokensLeft, ... }
             const responseData = response.data as any;
-            const deals = responseData.dr || responseData.deals || [];
+            const deals = responseData.deals?.dr || [];
             const tokensLeft = responseData.tokensLeft ?? 0;
             const refillIn = responseData.refillIn ?? 0;
             const refillRate = responseData.refillRate ?? 0;
+
+            console.log('📦 Response received - Categories:', responseData.deals?.categoryNames?.slice(0, 5).join(', '));
 
             // Estimate tokens used (deals API costs ~5 tokens)
             tokensUsed = 5;
