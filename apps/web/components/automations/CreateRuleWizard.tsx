@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
+import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 interface WizardProps {
     onComplete: (rule: any) => void;
@@ -84,6 +85,37 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         { id: 4, title: t('steps.destination.title'), description: t('steps.destination.description') },
         { id: 5, title: t('steps.review.title'), description: t('steps.review.description') }
     ];
+
+    // Funzione per stimare il numero di deal basato sui filtri
+    const estimateDeals = () => {
+        const catCount = rule.categories.length;
+        const score = rule.minScore;
+        const maxPrice = rule.maxPrice;
+
+        // Base: 30 deal per categoria
+        let estimate = catCount * 30;
+
+        // Riduzione per score alto
+        if (score >= 85) estimate *= 0.3;
+        else if (score >= 70) estimate *= 0.5;
+        else if (score >= 50) estimate *= 0.75;
+
+        // Riduzione per prezzo basso
+        if (maxPrice) {
+            if (maxPrice <= 30) estimate *= 0.4;
+            else if (maxPrice <= 50) estimate *= 0.6;
+            else if (maxPrice <= 100) estimate *= 0.8;
+        }
+
+        return Math.round(estimate);
+    };
+
+    const getEstimateStatus = () => {
+        const estimate = estimateDeals();
+        if (estimate < 5) return { status: 'low', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30', icon: TrendingDown };
+        if (estimate < 15) return { status: 'moderate', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/30', icon: AlertTriangle };
+        return { status: 'good', color: 'text-afflyt-profit-400', bg: 'bg-afflyt-profit-400/10 border-afflyt-profit-400/30', icon: TrendingUp };
+    };
 
     const categories = [
         { id: 'Electronics', label: t('categories.Electronics') },
@@ -235,6 +267,30 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                 />
                             </div>
                         </div>
+
+                        {/* Live Preview Panel */}
+                        {rule.categories.length > 0 && (
+                            <div className={`p-4 rounded-lg border ${getEstimateStatus().bg}`}>
+                                <div className="flex items-center gap-3 mb-2">
+                                    {(() => {
+                                        const StatusIcon = getEstimateStatus().icon;
+                                        return <StatusIcon className={`w-5 h-5 ${getEstimateStatus().color}`} />;
+                                    })()}
+                                    <span className="text-sm font-medium text-white">Stima Deal Giornalieri</span>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className={`text-3xl font-bold font-mono ${getEstimateStatus().color}`}>
+                                        ~{estimateDeals()}
+                                    </span>
+                                    <span className="text-sm text-gray-400">deal/giorno</span>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">
+                                    {getEstimateStatus().status === 'low' && '⚠️ Filtri molto restrittivi. Considera di abbassare il minScore o aumentare il maxPrice.'}
+                                    {getEstimateStatus().status === 'moderate' && '💡 Buon equilibrio tra qualità e quantità.'}
+                                    {getEstimateStatus().status === 'good' && '✅ Ottima configurazione! Troverai molti deal.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 );
 

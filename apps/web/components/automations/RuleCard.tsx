@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
     Zap,
     Play,
@@ -10,7 +11,11 @@ import {
     Package,
     Copy,
     Target,
-    Activity
+    Activity,
+    ChevronDown,
+    ChevronUp,
+    Save,
+    X
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -44,10 +49,16 @@ interface RuleCardProps {
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
     onDuplicate: (id: string) => void;
+    onQuickEdit?: (id: string, updates: { minScore?: number; maxPrice?: number }) => void;
 }
 
-export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate }: RuleCardProps) => {
+export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate, onQuickEdit }: RuleCardProps) => {
     const t = useTranslations('automations.card');
+    const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
+    const [quickEditValues, setQuickEditValues] = useState({
+        minScore: rule.minScore,
+        maxPrice: rule.maxPrice
+    });
 
     const categories = JSON.parse(rule.categories);
     const stats = rule.stats || {
@@ -66,10 +77,17 @@ export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate
 
     const getPerformanceBadge = () => {
         const rate = stats.conversionRate;
-        if (rate > 5) return { label: t('performance.topPerformer'), color: 'text-orange-400 bg-orange-500/20' };
-        if (rate > 3) return { label: t('performance.highPerformance'), color: 'text-afflyt-cyan-400 bg-afflyt-cyan-500/20' };
-        if (rate > 1) return { label: t('performance.moderate'), color: 'text-yellow-400 bg-yellow-500/20' };
-        return { label: t('performance.optimizing'), color: 'text-gray-400 bg-gray-500/20' };
+        if (rate > 5) return { label: t('performance.topPerformer'), color: 'text-amber-400 bg-amber-500/20 border border-amber-500/30', icon: '🏆' };
+        if (rate > 3) return { label: t('performance.highPerformance'), color: 'text-afflyt-cyan-400 bg-afflyt-cyan-500/20 border border-afflyt-cyan-500/30', icon: '🥈' };
+        if (rate > 1) return { label: t('performance.moderate'), color: 'text-yellow-400 bg-yellow-500/20 border border-yellow-500/30', icon: '📈' };
+        return { label: t('performance.optimizing'), color: 'text-gray-400 bg-gray-500/20 border border-gray-500/30', icon: '🔧' };
+    };
+
+    const getRunningStatus = () => {
+        if (rule.status === 'running') return { label: 'In esecuzione', color: 'text-afflyt-cyan-400 animate-pulse' };
+        if (rule.status === 'error') return { label: 'Errore', color: 'text-red-400' };
+        if (!rule.isActive) return { label: 'In pausa', color: 'text-gray-400' };
+        return { label: 'Attiva', color: 'text-afflyt-profit-400' };
     };
 
     const perfBadge = getPerformanceBadge();
@@ -125,7 +143,8 @@ export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     {rule.name}
                                     {stats.conversionRate > 0 && (
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${perfBadge.color}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 ${perfBadge.color}`}>
+                                            <span>{perfBadge.icon}</span>
                                             {perfBadge.label}
                                         </span>
                                     )}
@@ -232,6 +251,77 @@ export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate
                     )}
                 </div>
 
+                {/* Quick Edit Panel */}
+                {isQuickEditOpen && onQuickEdit && (
+                    <div className="p-4 bg-afflyt-dark-100 rounded-lg mb-4 border border-afflyt-cyan-500/30">
+                        <div className="flex items-center justify-between mb-4">
+                            <span className="text-sm font-medium text-white">Modifica Rapida</span>
+                            <button
+                                onClick={() => setIsQuickEditOpen(false)}
+                                className="text-gray-400 hover:text-white"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Min Score */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs text-gray-400">Min Score</label>
+                                    <span className="text-sm font-mono text-afflyt-cyan-400">{quickEditValues.minScore}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={quickEditValues.minScore}
+                                    onChange={(e) => setQuickEditValues({ ...quickEditValues, minScore: Number(e.target.value) })}
+                                    className="w-full h-2 bg-afflyt-dark-50 rounded-lg appearance-none cursor-pointer accent-afflyt-cyan-400"
+                                />
+                            </div>
+
+                            {/* Max Price */}
+                            <div>
+                                <label className="text-xs text-gray-400 block mb-2">Max Prezzo (€)</label>
+                                <input
+                                    type="number"
+                                    value={quickEditValues.maxPrice || ''}
+                                    onChange={(e) => setQuickEditValues({ ...quickEditValues, maxPrice: e.target.value ? Number(e.target.value) : undefined })}
+                                    placeholder="Nessun limite"
+                                    className="w-full px-3 py-2 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white text-sm placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-4">
+                            <CyberButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setQuickEditValues({ minScore: rule.minScore, maxPrice: rule.maxPrice });
+                                    setIsQuickEditOpen(false);
+                                }}
+                                className="flex-1"
+                            >
+                                Annulla
+                            </CyberButton>
+                            <CyberButton
+                                variant="primary"
+                                size="sm"
+                                onClick={() => {
+                                    onQuickEdit(rule.id, quickEditValues);
+                                    setIsQuickEditOpen(false);
+                                }}
+                                className="flex-1"
+                            >
+                                <Save className="w-3 h-3 mr-1" />
+                                Salva
+                            </CyberButton>
+                        </div>
+                    </div>
+                )}
+
                 {/* Action Bar - Always Visible */}
                 <div className="pt-4 border-t border-afflyt-glass-border">
                     <div className="flex items-center gap-2">
@@ -244,6 +334,21 @@ export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate
                             <Play className="w-3 h-3 mr-1" />
                             {t('actions.test')}
                         </CyberButton>
+
+                        {/* Quick Edit Toggle */}
+                        {onQuickEdit && (
+                            <button
+                                onClick={() => setIsQuickEditOpen(!isQuickEditOpen)}
+                                className={`p-2 border rounded-lg transition-colors ${isQuickEditOpen
+                                    ? 'bg-afflyt-cyan-500/20 border-afflyt-cyan-500/40 text-afflyt-cyan-400'
+                                    : 'hover:bg-afflyt-cyan-500/10 border-afflyt-glass-border hover:border-afflyt-cyan-500/40 text-gray-400 hover:text-afflyt-cyan-400'
+                                    }`}
+                                title="Modifica rapida"
+                            >
+                                {isQuickEditOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </button>
+                        )}
+
                         <button
                             onClick={() => onEdit(rule.id)}
                             className="p-2 hover:bg-afflyt-cyan-500/10 border border-afflyt-glass-border hover:border-afflyt-cyan-500/40 rounded-lg transition-colors"

@@ -17,6 +17,8 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RuleCard } from '@/components/automations/RuleCard';
 import { CreateRuleWizard } from '@/components/automations/CreateRuleWizard';
 import { EmptyState } from '@/components/automations/EmptyState';
+import { TemplateWizard } from '@/components/automations/TemplateWizard';
+import { AutomationTemplate } from '@/components/automations/TemplateCard';
 import { API_BASE } from '@/lib/api/config';
 
 interface AutomationRule {
@@ -53,6 +55,7 @@ export default function AutomationStudioPage() {
     const [loading, setLoading] = useState(true);
     const [ruleToDelete, setRuleToDelete] = useState<AutomationRule | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<AutomationTemplate | null>(null);
 
     useEffect(() => {
         fetchRules();
@@ -122,6 +125,7 @@ export default function AutomationStudioPage() {
 
                 if (response.ok) {
                     setShowWizard(false);
+                    setSelectedTemplate(null);
                     fetchRules();
                 } else {
                     const error = await response.json();
@@ -175,6 +179,23 @@ export default function AutomationStudioPage() {
         } catch (error) {
             console.error('Failed to run rule:', error);
             alert(t('testError'));
+        }
+    };
+
+    const handleQuickEdit = async (id: string, updates: { minScore?: number; maxPrice?: number }) => {
+        try {
+            const token = localStorage.getItem('token');
+            await fetch(`${API_BASE}/automation/rules/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updates)
+            });
+            fetchRules();
+        } catch (error) {
+            console.error('Failed to quick edit rule:', error);
         }
     };
 
@@ -386,7 +407,10 @@ export default function AutomationStudioPage() {
             {/* Main Content Area */}
             <div className="p-8">
                 {filteredRules.length === 0 ? (
-                    <EmptyState onCreateClick={() => setShowWizard(true)} />
+                    <EmptyState
+                        onCreateClick={() => setShowWizard(true)}
+                        onTemplateSelect={(template) => setSelectedTemplate(template)}
+                    />
                 ) : (
                     <div className={`grid gap-6 ${viewMode === 'grid'
                         ? 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'
@@ -401,6 +425,7 @@ export default function AutomationStudioPage() {
                                 onEdit={handleEdit}
                                 onDelete={handleDeleteClick}
                                 onDuplicate={handleDuplicate}
+                                onQuickEdit={handleQuickEdit}
                             />
                         ))}
                     </div>
@@ -449,6 +474,15 @@ export default function AutomationStudioPage() {
                 variant="danger"
                 isLoading={isDeleting}
             />
+
+            {/* Template Wizard Modal */}
+            {selectedTemplate && (
+                <TemplateWizard
+                    template={selectedTemplate}
+                    onComplete={handleCreateRule}
+                    onCancel={() => setSelectedTemplate(null)}
+                />
+            )}
         </div>
     );
 }
