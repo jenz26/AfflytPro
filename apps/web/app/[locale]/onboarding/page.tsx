@@ -16,6 +16,7 @@ import {
     PlanType
 } from '@/components/onboarding';
 import { API_BASE } from '@/lib/api/config';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 type OnboardingStep = 'welcome' | 'plan' | 'telegram' | 'email' | 'automation' | 'complete';
 
@@ -121,6 +122,18 @@ export default function OnboardingPage() {
             progress
         });
     }, [isInitialized, currentStep, surveyData, selectedChannels, selectedPlan, progress]);
+
+    // Track onboarding step changes
+    useEffect(() => {
+        if (!isInitialized) return;
+        const stepIndex = ['welcome', 'plan', 'telegram', 'email', 'automation', 'complete'].indexOf(currentStep);
+        Analytics.trackOnboardingStep(stepIndex + 1, currentStep);
+
+        // Track completion
+        if (currentStep === 'complete') {
+            Analytics.trackOnboardingCompleted();
+        }
+    }, [isInitialized, currentStep]);
 
     const handleWelcomeComplete = (data: SurveyData) => {
         console.log('Survey completed:', data);

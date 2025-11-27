@@ -21,8 +21,8 @@ declare global {
   }
 }
 
-const TAWK_PROPERTY_ID = '69285669cb59ac1958eae2c7';
-const TAWK_WIDGET_ID = '1jb2p33cj';
+const TAWK_PROPERTY_ID = process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID || '';
+const TAWK_WIDGET_ID = process.env.NEXT_PUBLIC_TAWK_WIDGET_ID || '';
 
 interface TawkChatProps {
   /**
@@ -43,6 +43,12 @@ export function TawkChat({ user }: TawkChatProps) {
   const locale = useLocale();
 
   useEffect(() => {
+    // Skip if not configured
+    if (!TAWK_PROPERTY_ID || !TAWK_WIDGET_ID) {
+      console.warn('[Tawk] Missing TAWK_PROPERTY_ID or TAWK_WIDGET_ID');
+      return;
+    }
+
     // Initialize Tawk_API
     window.Tawk_API = window.Tawk_API || {};
     window.Tawk_LoadStart = new Date();

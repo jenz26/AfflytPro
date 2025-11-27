@@ -9,6 +9,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import { API_BASE } from '@/lib/api/config';
 import { detectEmailProvider, getWebmailUrl, type EmailProviderInfo } from '@/lib/email-provider-detection';
+import { Analytics } from '@/components/analytics/PostHogProvider';
+import { setMonitoringUser } from '@/lib/monitoring';
 
 type AuthMode = 'login' | 'register' | 'magic-link' | 'forgot-password';
 type AlertType = 'error' | 'success' | 'info';
@@ -46,6 +48,11 @@ export default function AuthPage() {
         router.push(newPathname);
     };
 
+    // Track page view on mount
+    useEffect(() => {
+        Analytics.trackLoginPageView();
+    }, []);
+
     // Countdown timer for resend
     useEffect(() => {
         if (resendCountdown <= 0) return;
@@ -78,6 +85,16 @@ export default function AuthPage() {
 
             if (res.ok) {
                 localStorage.setItem('token', data.token);
+                // Track login success and set user context across all services
+                Analytics.trackLoginSuccess('password');
+                if (data.user?.id) {
+                    setMonitoringUser({
+                        id: data.user.id,
+                        email: data.user.email,
+                        name: data.user.name,
+                        plan: data.user.plan,
+                    });
+                }
                 showAlert('success', t('messages.loginSuccess'));
                 setTimeout(() => {
                     window.location.href = `/${locale}/dashboard`;
@@ -154,13 +171,17 @@ export default function AuthPage() {
             });
 
             const data = await res.json();
+            const provider = detectEmailProvider(email);
             setSentEmail(email);
-            setEmailProvider(detectEmailProvider(email));
+            setEmailProvider(provider);
             setEmailSent(true);
             setResendCountdown(60); // 60 seconds before can resend
+            // Track magic link requested
+            Analytics.trackMagicLinkRequested(provider.type, data.isNewUser || false);
             showAlert('success', data.message);
         } catch (error) {
             console.error('Magic link error:', error);
+            Analytics.trackLoginError('magic_link_send_failed');
             showAlert('error', t('messages.connectionError'));
         } finally {
             setIsLoading(false);

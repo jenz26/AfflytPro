@@ -4,7 +4,7 @@
 
 import * as Sentry from '@sentry/node';
 
-const SENTRY_DSN = 'https://6fc678f2979a0db796ee56109ccbd09d@o4510437320491008.ingest.de.sentry.io/4510437334319184';
+const SENTRY_DSN = process.env.SENTRY_DSN || 'https://6fc678f2979a0db796ee56109ccbd09d@o4510437320491008.ingest.de.sentry.io/4510437334319184';
 
 /**
  * Initialize Sentry for the API

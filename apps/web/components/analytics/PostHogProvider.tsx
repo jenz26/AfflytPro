@@ -5,8 +5,8 @@ import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-const POSTHOG_KEY = 'phc_jfMIDU4cty3HlgaBsY9f3FHjGnfPaASzn30u7XwvnFC';
-const POSTHOG_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
 
 /**
  * Initialize PostHog

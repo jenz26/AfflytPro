@@ -7,6 +7,8 @@ import { CheckCircle2, XCircle, Loader2, Sparkles } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
+import { Analytics } from '@/components/analytics/PostHogProvider';
+import { setMonitoringUser } from '@/lib/monitoring';
 
 type Status = 'loading' | 'success' | 'error';
 
@@ -44,6 +46,17 @@ export default function MagicLinkPage() {
                     if (data.token) {
                         localStorage.setItem('token', data.token);
                     }
+                    // Track magic link success and set user context across all services
+                    Analytics.trackMagicLinkClicked();
+                    Analytics.trackLoginSuccess('magic_link');
+                    if (data.user?.id) {
+                        setMonitoringUser({
+                            id: data.user.id,
+                            email: data.user.email,
+                            name: data.user.name,
+                            plan: data.user.plan,
+                        });
+                    }
                     // Redirect after short delay
                     setTimeout(() => {
                         router.push(`/${locale}/dashboard`);
@@ -51,6 +64,8 @@ export default function MagicLinkPage() {
                 } else {
                     setStatus('error');
                     setMessage(data.message || t('invalidOrExpired'));
+                    // Track error
+                    Analytics.trackLoginError(data.errorCode || 'magic_link_invalid');
                 }
             } catch (error) {
                 setStatus('error');
