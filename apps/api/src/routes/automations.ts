@@ -1,14 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
-import { PrismaClient, TriggerType, ActionType, PlanType } from '@prisma/client';
+import { TriggerType, ActionType } from '@prisma/client';
 import { RuleExecutor } from '../services/RuleExecutor';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import {
-    checkAutomationLimit,
-    checkActiveAutomationLimit,
-    checkMinScore,
-    checkABTesting,
-} from '../middleware/planGuard';
+import { checkActiveAutomationLimit, checkMinScore } from '../middleware/planGuard';
 
 // ═══════════════════════════════════════════════════════════════
 // VALIDATION SCHEMAS
@@ -293,17 +288,34 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.post<{
         Body: z.infer<typeof createRuleSchema>;
     }>('/rules', {
-        preHandler: [
-            fastify.authenticate,
-            checkAutomationLimit,  // Check if user can create more rules
-            checkABTesting,        // Check if A/B testing is allowed
-        ]
+        preHandler: fastify.authenticate
     }, async (request, reply) => {
         console.log('[POST /rules] Handler starting');
         const userId = (request.user as any)?.id;
         const userPlan = (request.user as any)?.plan || 'FREE';
 
         console.log('[POST /rules] User ID:', userId, 'Plan:', userPlan);
+
+        // Check automation limit inline
+        try {
+            const automationCount = await prisma.automationRule.count({ where: { userId } });
+            console.log('[POST /rules] Current automation count:', automationCount);
+
+            const limits = PLAN_FILTER_LIMITS[userPlan] || PLAN_FILTER_LIMITS.FREE;
+            const maxAutomations = userPlan === 'BUSINESS' ? 50 : userPlan === 'PRO' ? 20 : 10;
+
+            if (automationCount >= maxAutomations) {
+                console.log('[POST /rules] Automation limit exceeded');
+                return reply.code(403).send({
+                    error: 'LIMIT_EXCEEDED',
+                    message: `You have reached the maximum of ${maxAutomations} automations for your ${userPlan} plan`,
+                });
+            }
+        } catch (err) {
+            console.error('[POST /rules] Error checking automation limit:', err);
+            return reply.code(500).send({ error: 'Internal error', message: 'Failed to check automation limit' });
+        }
+
         console.log('[POST /rules] Request body:', JSON.stringify(request.body, null, 2));
 
         try {
