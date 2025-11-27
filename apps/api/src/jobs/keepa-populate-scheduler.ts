@@ -11,7 +11,7 @@ import { keepaPopulateService } from '../services/KeepaPopulateService';
 // Configuration
 const POPULATE_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const MAX_DEALS_PER_RUN = 50;
-const MIN_DISCOUNT_PERCENT = 10;
+const MIN_DISCOUNT_PERCENT = 5;  // 5% minimum discount
 const MIN_RATING = 200; // 2 stars
 
 let isRunning = false;

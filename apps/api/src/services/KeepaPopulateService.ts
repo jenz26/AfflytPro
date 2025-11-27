@@ -11,7 +11,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import prisma from '../lib/prisma';
-import { AMAZON_IT_CATEGORIES, getNonGatedCategories } from '../data/amazon-categories';
+import { AMAZON_IT_CATEGORIES } from '../data/amazon-categories';
 import { KeepaUtils } from '../utils/keepa-utils';
 
 // Keepa domain codes
@@ -73,22 +73,20 @@ export class KeepaPopulateService {
      */
     async populateDeals(options: {
         maxDeals?: number;          // Max deals to fetch (default: 50)
-        categories?: number[];      // Category IDs to search (default: all non-gated)
         minRating?: number;         // Minimum rating 0-500 (default: 200 = 2 stars)
-        minDiscountPercent?: number;// Minimum discount % (default: 10)
+        minDiscountPercent?: number;// Minimum discount % (default: 5)
     } = {}): Promise<{ saved: number; skipped: number; errors: string[]; tokensUsed: number }> {
         const {
             maxDeals = 50,
-            categories = getNonGatedCategories().map(c => c.id),
             minRating = 200,      // 2 stars
-            minDiscountPercent = 10
+            minDiscountPercent = 5
         } = options;
 
         console.log('\n' + '='.repeat(60));
         console.log('🔍 KEEPA POPULATE SERVICE - START');
         console.log('='.repeat(60));
         console.log(`   Max deals: ${maxDeals}`);
-        console.log(`   Categories: ${categories.length}`);
+        console.log(`   Categories: ALL`);
         console.log(`   Min rating: ${minRating / 100} stars`);
         console.log(`   Min discount: ${minDiscountPercent}%`);
         console.log('');
@@ -106,20 +104,24 @@ export class KeepaPopulateService {
         try {
             // Build the deals request using correct Keepa API parameters
             // domainId MUST be inside the selection JSON, NOT as a URL param
+            // NOTE: priceTypes can only contain ONE value, not multiple!
+            // Omitting priceTypes returns all deal types
 
             const dealParams: Record<string, any> = {
                 page: 0,
-                domainId: KEEPA_DOMAIN_IT,  // 8 = Italy - MUST be inside selection
-                priceTypes: [0, 1, 2, 7],   // Amazon, New, Used, Warehouse
+                domainId: KEEPA_DOMAIN_IT,  // 8 = Italy
                 hasReviews: true,
-                sortType: 0,
+                isRangeEnabled: true,
                 deltaPercentRange: [minDiscountPercent, 100]
             };
 
-            // Only add category filter if we have specific categories
-            if (categories.length > 0 && categories.length < 20) {
-                dealParams.includeCategories = categories;
+            // Add minimum rating filter (Keepa uses 0-50 scale, not 0-500)
+            // 2 stars = 20 on Keepa scale
+            if (minRating > 0) {
+                dealParams.minRating = Math.floor(minRating / 10);
             }
+
+            // Don't filter by category - get deals from ALL categories
 
             console.log('📡 Calling Keepa Deals API...');
             console.log('   Domain:', KEEPA_DOMAIN_IT, '(Italy)');
