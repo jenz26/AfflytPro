@@ -575,6 +575,14 @@
           "title": "Categories",
           "description": "What to monitor"
         },
+        "target": {
+          "title": "Target",
+          "description": "Categories to monitor"
+        },
+        "parameters": {
+          "title": "Parameters",
+          "description": "Configure filters"
+        },
         "filters": {
           "title": "Filters",
           "description": "Customize"
