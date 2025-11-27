@@ -16,6 +16,7 @@ import validationRoutes from './routes/validation';
 import dealsRoutes from './routes/deals';
 import templatesRoutes from './routes/templates';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
+import { startKeepaPopulateScheduler } from './jobs/keepa-populate-scheduler';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
@@ -159,6 +160,9 @@ const start = async () => {
 
         // Start background automation scheduler
         startAutomationScheduler();
+
+        // Start Keepa populate scheduler (fetches deals every 6 hours)
+        startKeepaPopulateScheduler();
     } catch (err) {
         app.log.error(err);
         process.exit(1);

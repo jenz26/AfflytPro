@@ -1,5 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { KeepaEngine, KeepaProductFinderParams } from '../services/KeepaEngine';
+import { triggerPopulateJob } from '../jobs/keepa-populate-scheduler';
+import { keepaPopulateService } from '../services/KeepaPopulateService';
 
 const keepa = new KeepaEngine();
 
@@ -208,6 +210,83 @@ export default async function dealsRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({
         success: false,
         error: error.message || 'Failed to fetch stats'
+      });
+    }
+  });
+
+  // ============================================
+  // ADMIN ENDPOINTS - Keepa Population
+  // ============================================
+
+  /**
+   * GET /deals/admin/token-status
+   * Check Keepa token balance
+   */
+  fastify.get('/deals/admin/token-status', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
+    try {
+      const tokenStatus = await keepaPopulateService.getTokenStatus();
+
+      if (!tokenStatus) {
+        return reply.status(503).send({
+          success: false,
+          error: 'Could not fetch token status. Check KEEPA_API_KEY.'
+        });
+      }
+
+      return {
+        success: true,
+        tokens: tokenStatus
+      };
+    } catch (error: any) {
+      return reply.status(500).send({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * POST /deals/admin/populate
+   * Manually trigger deal population from Keepa
+   */
+  fastify.post('/deals/admin/populate', {
+    onRequest: [fastify.authenticate],
+    schema: {
+      body: {
+        type: 'object',
+        properties: {
+          maxDeals: { type: 'number', minimum: 1, maximum: 150, default: 50 },
+          minDiscountPercent: { type: 'number', minimum: 0, maximum: 100, default: 10 }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { maxDeals, minDiscountPercent } = request.body as any;
+
+      console.log(`[Admin] Manual populate triggered by user ${(request.user as any).id}`);
+
+      const result = await triggerPopulateJob({
+        maxDeals: maxDeals || 50,
+        minDiscountPercent: minDiscountPercent || 10
+      });
+
+      return {
+        success: true,
+        message: `Populated ${result.saved} deals`,
+        details: {
+          saved: result.saved,
+          skipped: result.skipped,
+          errors: result.errors.length
+        }
+      };
+    } catch (error: any) {
+      fastify.log.error('Error in manual populate:', error);
+      return reply.status(500).send({
+        success: false,
+        error: error.message || 'Failed to populate deals'
       });
     }
   });
