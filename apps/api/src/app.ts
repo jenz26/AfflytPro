@@ -17,6 +17,9 @@ import dealsRoutes from './routes/deals';
 import templatesRoutes from './routes/templates';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
 import { startKeepaPopulateScheduler } from './jobs/keepa-populate-scheduler';
+import { KeepaWorker } from './workers/keepaWorker';
+import { AutomationQueueScheduler } from './services/keepa/AutomationQueueScheduler';
+import prisma from './lib/prisma';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
@@ -163,6 +166,29 @@ const start = async () => {
 
         // Start Keepa populate scheduler (fetches deals every 6 hours)
         startKeepaPopulateScheduler();
+
+        // ==================== REDIS-BASED KEEPA QUEUE SYSTEM ====================
+        // Start only if REDIS_URL is configured
+        if (process.env.REDIS_URL) {
+            console.log('[Keepa Queue] Redis URL detected, starting queue system...');
+
+            // Start the Keepa worker (processes queue jobs)
+            const keepaWorker = new KeepaWorker(prisma);
+            keepaWorker.start();
+
+            // Start the automation queue scheduler (checks due automations every minute)
+            const automationQueueScheduler = new AutomationQueueScheduler(prisma);
+            automationQueueScheduler.start();
+
+            // Graceful shutdown
+            process.on('SIGTERM', () => {
+                console.log('[Keepa Queue] Shutting down...');
+                keepaWorker.stop();
+                automationQueueScheduler.stop();
+            });
+        } else {
+            console.log('[Keepa Queue] REDIS_URL not configured, queue system disabled');
+        }
     } catch (err) {
         app.log.error(err);
         process.exit(1);

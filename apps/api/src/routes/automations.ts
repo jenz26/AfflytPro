@@ -15,6 +15,24 @@ const triggerActionSchema = z.object({
     order: z.number().int().nonnegative().optional()
 });
 
+// Schedule presets with their values
+const SCHEDULE_PRESETS = {
+    relaxed: { intervalMinutes: 360, dealsPerRun: 3 },   // 6 ore
+    active: { intervalMinutes: 120, dealsPerRun: 3 },    // 2 ore
+    intensive: { intervalMinutes: 60, dealsPerRun: 5 },  // 1 ora
+    custom: { intervalMinutes: 360, dealsPerRun: 3 },    // default, user sets values
+} as const;
+
+/**
+ * Calculate next run time with jitter to avoid bot-like behavior
+ */
+function calculateNextRunWithJitter(intervalMinutes: number): Date {
+    // Jitter ±15% dell'intervallo (max ±30 min)
+    const jitterMax = Math.min(intervalMinutes * 0.15, 30);
+    const jitter = (Math.random() - 0.5) * 2 * jitterMax;
+    return new Date(Date.now() + (intervalMinutes + jitter) * 60 * 1000);
+}
+
 /**
  * Full create rule schema - includes all tier filters
  * Actual tier validation happens in validateFiltersForPlan()
@@ -44,6 +62,11 @@ const createRuleSchema = z.object({
     brandInclude: z.array(z.string()).optional(),
     brandExclude: z.array(z.string()).optional(),
     listedAfter: z.string().datetime().optional(),
+
+    // Scheduling (NEW)
+    schedulePreset: z.enum(['relaxed', 'active', 'intensive', 'custom']).default('relaxed'),
+    intervalMinutes: z.number().int().min(30).max(1440).optional(), // 30min - 24h
+    dealsPerRun: z.number().int().min(1).max(30).optional(),
 
     // Publishing
     channelId: z.string().uuid().optional().or(z.literal('')),
@@ -83,6 +106,11 @@ const updateRuleSchema = z.object({
     brandExclude: z.array(z.string()).optional(),
     listedAfter: z.string().datetime().nullable().optional(),
 
+    // Scheduling (NEW)
+    schedulePreset: z.enum(['relaxed', 'active', 'intensive', 'custom']).optional(),
+    intervalMinutes: z.number().int().min(30).max(1440).optional(),
+    dealsPerRun: z.number().int().min(1).max(30).optional(),
+
     // Publishing
     channelId: z.string().uuid().optional().or(z.literal('')),
     splitId: z.string().uuid().optional().or(z.literal('')),
@@ -101,6 +129,10 @@ interface PlanFilterLimits {
     maxCategories: number;
     maxResultsPerRun: number;
     defaultCron: string;
+    // Scheduling limits (NEW)
+    allowedPresets: string[];
+    minIntervalMinutes: number;
+    maxDealsPerRun: number;
 }
 
 const PLAN_FILTER_LIMITS: Record<string, PlanFilterLimits> = {
@@ -109,6 +141,10 @@ const PLAN_FILTER_LIMITS: Record<string, PlanFilterLimits> = {
         maxCategories: 3,
         maxResultsPerRun: 5,
         defaultCron: '0 */6 * * *', // Every 6 hours
+        // Scheduling
+        allowedPresets: ['relaxed', 'active'],
+        minIntervalMinutes: 120, // Min 2 ore
+        maxDealsPerRun: 3,
     },
     PRO: {
         allowedFilters: [
@@ -119,6 +155,10 @@ const PLAN_FILTER_LIMITS: Record<string, PlanFilterLimits> = {
         maxCategories: 8,
         maxResultsPerRun: 15,
         defaultCron: '0 */2 * * *', // Every 2 hours
+        // Scheduling
+        allowedPresets: ['relaxed', 'active', 'intensive', 'custom'],
+        minIntervalMinutes: 60, // Min 1 ora
+        maxDealsPerRun: 10,
     },
     BUSINESS: {
         allowedFilters: [
@@ -131,6 +171,10 @@ const PLAN_FILTER_LIMITS: Record<string, PlanFilterLimits> = {
         maxCategories: 16,
         maxResultsPerRun: 30,
         defaultCron: '*/30 * * * *', // Every 30 minutes
+        // Scheduling
+        allowedPresets: ['relaxed', 'active', 'intensive', 'custom'],
+        minIntervalMinutes: 30, // Min 30 minuti
+        maxDealsPerRun: 30,
     },
 };
 
@@ -337,6 +381,36 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             // Get plan limits for max results
             const planLimits = PLAN_FILTER_LIMITS[userPlan] || PLAN_FILTER_LIMITS.FREE;
 
+            // Validate and apply scheduling settings
+            let schedulePreset = parsed.schedulePreset || 'relaxed';
+            let intervalMinutes: number;
+            let dealsPerRun: number;
+
+            // Check if preset is allowed for this plan
+            if (!planLimits.allowedPresets.includes(schedulePreset)) {
+                schedulePreset = 'relaxed'; // Fallback to allowed preset
+                warnings.push(`Preset '${parsed.schedulePreset}' not available for ${userPlan} plan, using 'relaxed'`);
+            }
+
+            // Get values from preset or custom
+            if (schedulePreset === 'custom') {
+                intervalMinutes = Math.max(
+                    parsed.intervalMinutes || SCHEDULE_PRESETS.custom.intervalMinutes,
+                    planLimits.minIntervalMinutes
+                );
+                dealsPerRun = Math.min(
+                    parsed.dealsPerRun || SCHEDULE_PRESETS.custom.dealsPerRun,
+                    planLimits.maxDealsPerRun
+                );
+            } else {
+                const presetValues = SCHEDULE_PRESETS[schedulePreset as keyof typeof SCHEDULE_PRESETS];
+                intervalMinutes = presetValues.intervalMinutes;
+                dealsPerRun = Math.min(presetValues.dealsPerRun, planLimits.maxDealsPerRun);
+            }
+
+            // Calculate first nextRunAt with jitter (if rule is active)
+            const nextRunAt = parsed.isActive ? calculateNextRunWithJitter(intervalMinutes) : null;
+
             // Use provided triggers/actions or create defaults
             const triggers = parsed.triggers && parsed.triggers.length > 0
                 ? parsed.triggers
@@ -344,7 +418,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
             const actions = parsed.actions && parsed.actions.length > 0
                 ? parsed.actions
-                : [{ type: 'PUBLISH_CHANNEL', config: { maxDeals: planLimits.maxResultsPerRun }, order: 0 }];
+                : [{ type: 'PUBLISH_CHANNEL', config: { maxDeals: dealsPerRun }, order: 0 }];
 
             // Create rule with validated filters
             const rule = await prisma.automationRule.create({
@@ -374,6 +448,12 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     brandInclude: validFilters.brandInclude || [],
                     brandExclude: validFilters.brandExclude || [],
                     listedAfter: validFilters.listedAfter ? new Date(validFilters.listedAfter) : null,
+
+                    // Scheduling (NEW)
+                    schedulePreset,
+                    intervalMinutes,
+                    dealsPerRun,
+                    nextRunAt,
 
                     // Publishing
                     ...(parsed.channelId && parsed.channelId.trim() !== '' ? { channelId: parsed.channelId } : {}),
@@ -411,6 +491,17 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     maxCategories: planLimits.maxCategories,
                     maxResultsPerRun: planLimits.maxResultsPerRun,
                     frequency: planLimits.defaultCron,
+                    // Scheduling limits
+                    allowedPresets: planLimits.allowedPresets,
+                    minIntervalMinutes: planLimits.minIntervalMinutes,
+                    maxDealsPerRun: planLimits.maxDealsPerRun,
+                },
+                scheduling: {
+                    preset: schedulePreset,
+                    intervalMinutes,
+                    dealsPerRun,
+                    nextRunAt,
+                    estimatedDealsPerDay: Math.round((24 * 60 / intervalMinutes) * dealsPerRun),
                 },
                 warnings: stripped.length > 0 || warnings.length > 0 ? {
                     message: 'Some filters were adjusted based on your plan',
@@ -852,6 +943,10 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     frequencyLabel: userPlan === 'BUSINESS' ? 'Every 30 minutes' :
                                     userPlan === 'PRO' ? 'Every 2 hours' : 'Every 6 hours',
                     allowedFilters: planLimits.allowedFilters,
+                    // Scheduling limits
+                    allowedPresets: planLimits.allowedPresets,
+                    minIntervalMinutes: planLimits.minIntervalMinutes,
+                    maxDealsPerRun: planLimits.maxDealsPerRun,
                 },
                 filterTiers: {
                     FREE: ['categories', 'minScore'],
@@ -863,6 +958,57 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     { value: 50, label: 'decent', labelIT: 'Offerte Discrete' },
                     { value: 70, label: 'good', labelIT: 'Buone Offerte', recommended: true },
                     { value: 85, label: 'excellent', labelIT: 'Solo Eccellenti' },
+                ],
+                // Schedule presets (NEW)
+                schedulePresets: [
+                    {
+                        id: 'relaxed',
+                        label: 'Rilassato',
+                        labelEN: 'Relaxed',
+                        emoji: '🐢',
+                        intervalMinutes: 360,
+                        dealsPerRun: 3,
+                        estimatedPerDay: 12,
+                        description: '3 offerte ogni 6 ore',
+                        descriptionEN: '3 deals every 6 hours',
+                        availableFor: ['FREE', 'PRO', 'BUSINESS'],
+                    },
+                    {
+                        id: 'active',
+                        label: 'Attivo',
+                        labelEN: 'Active',
+                        emoji: '⚡',
+                        intervalMinutes: 120,
+                        dealsPerRun: 3,
+                        estimatedPerDay: 36,
+                        description: '3 offerte ogni 2 ore',
+                        descriptionEN: '3 deals every 2 hours',
+                        availableFor: ['FREE', 'PRO', 'BUSINESS'],
+                    },
+                    {
+                        id: 'intensive',
+                        label: 'Intensivo',
+                        labelEN: 'Intensive',
+                        emoji: '🔥',
+                        intervalMinutes: 60,
+                        dealsPerRun: 5,
+                        estimatedPerDay: 120,
+                        description: '5 offerte ogni ora',
+                        descriptionEN: '5 deals every hour',
+                        availableFor: ['PRO', 'BUSINESS'],
+                    },
+                    {
+                        id: 'custom',
+                        label: 'Personalizzato',
+                        labelEN: 'Custom',
+                        emoji: '⚙️',
+                        intervalMinutes: null, // User sets
+                        dealsPerRun: null, // User sets
+                        estimatedPerDay: null,
+                        description: 'Configura manualmente',
+                        descriptionEN: 'Configure manually',
+                        availableFor: ['PRO', 'BUSINESS'],
+                    },
                 ],
             });
         } catch (error: any) {

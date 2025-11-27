@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 const securityService = new SecurityService();
 
 // ═══════════════════════════════════════════════════════════════
-// PLAN-BASED LIMITS FOR QUERY
+// PLAN-BASED LIMITS FOR QUERY (fallback if dealsPerRun not set)
 // ═══════════════════════════════════════════════════════════════
 
 const PLAN_RESULTS_LIMIT: Record<string, number> = {
@@ -18,6 +18,53 @@ const PLAN_RESULTS_LIMIT: Record<string, number> = {
     PRO: 15,
     BUSINESS: 30,
 };
+
+// ═══════════════════════════════════════════════════════════════
+// DEDUPLICATION HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Get ASINs already published to a channel within the dedupe window
+ */
+async function getPublishedAsins(
+    channelId: string,
+    dedupeWindowHours: number
+): Promise<Set<string>> {
+    const cutoff = new Date(Date.now() - dedupeWindowHours * 60 * 60 * 1000);
+
+    const published = await prisma.channelDealHistory.findMany({
+        where: {
+            channelId,
+            publishedAt: { gte: cutoff }
+        },
+        select: { asin: true }
+    });
+
+    return new Set(published.map(p => p.asin));
+}
+
+/**
+ * Record published deals in history for deduplication
+ */
+async function recordPublishedDeals(
+    channelId: string,
+    asins: string[],
+    ruleId: string,
+    dedupeWindowHours: number
+): Promise<void> {
+    const expiresAt = new Date(Date.now() + dedupeWindowHours * 60 * 60 * 1000);
+
+    // Use createMany with skipDuplicates to handle race conditions
+    await prisma.channelDealHistory.createMany({
+        data: asins.map(asin => ({
+            channelId,
+            asin,
+            ruleId,
+            expiresAt
+        })),
+        skipDuplicates: true
+    });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // DYNAMIC QUERY BUILDER
@@ -381,12 +428,38 @@ export class RuleExecutor {
             // ===== STEP 5: Generate Links & Publish =====
             console.log('📢 STEP 5: Generating short links and publishing to Telegram...');
 
-            // Limit deals based on user plan
-            const dealsToPublish = scoredDeals
-                .sort((a, b) => b.score - a.score)
-                .slice(0, maxResults);
+            // Use dealsPerRun from rule (new system) or fallback to plan limits
+            const dealsLimit = rule.dealsPerRun || maxResults;
 
-            console.log(`   Publishing top ${dealsToPublish.length} deals (plan limit: ${maxResults})`);
+            // ===== DEDUPLICATION: Filter out already published deals =====
+            let deduplicatedDeals = scoredDeals;
+            let skippedDuplicates = 0;
+
+            if (rule.channel) {
+                console.log(`   Checking deduplication (window: ${rule.dedupeWindowHours}h)...`);
+
+                const publishedAsins = await getPublishedAsins(
+                    rule.channel.id,
+                    rule.dedupeWindowHours
+                );
+
+                if (publishedAsins.size > 0) {
+                    const beforeCount = scoredDeals.length;
+                    deduplicatedDeals = scoredDeals.filter(deal => !publishedAsins.has(deal.asin));
+                    skippedDuplicates = beforeCount - deduplicatedDeals.length;
+
+                    if (skippedDuplicates > 0) {
+                        console.log(`   ⏭️  Skipped ${skippedDuplicates} already published deals`);
+                    }
+                }
+            }
+
+            // Sort by discount (best deals first) and limit
+            const dealsToPublish = deduplicatedDeals
+                .sort((a, b) => b.score - a.score)
+                .slice(0, dealsLimit);
+
+            console.log(`   Publishing top ${dealsToPublish.length} deals (limit: ${dealsLimit})`);
 
             // Get Telegram bot token from user credentials
             const telegramCredential = rule.user.credentials?.find(
@@ -518,6 +591,22 @@ export class RuleExecutor {
             }
 
             console.log(`✅ Published ${dealsPublished} deals\n`);
+
+            // ===== Record published deals for deduplication =====
+            if (rule.channel && dealsPublished > 0) {
+                const publishedAsins = dealsToPublish
+                    .slice(0, dealsPublished)
+                    .map(d => d.asin);
+
+                await recordPublishedDeals(
+                    rule.channel.id,
+                    publishedAsins,
+                    rule.id,
+                    rule.dedupeWindowHours
+                );
+
+                console.log(`📝 Recorded ${publishedAsins.length} deals in history for deduplication`);
+            }
 
             // ===== STEP 6: Update Usage Stats =====
             console.log('📊 STEP 6: Updating usage statistics...');

@@ -11,7 +11,9 @@ import {
     Sparkles,
     CheckCircle,
     X,
-    Info
+    Info,
+    Clock,
+    Lock
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -53,8 +55,42 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         categories: editingRule?.categories || [] as string[], // Already an array from API
         minScore: editingRule?.minScore || 70,
         maxPrice: editingRule?.maxPrice || undefined as number | undefined,
-        channelId: editingRule?.channelId || ''
+        channelId: editingRule?.channelId || '',
+        // Scheduling (NEW)
+        schedulePreset: 'relaxed' as string
     });
+
+    // Schedule presets data
+    const schedulePresets = [
+        {
+            id: 'relaxed',
+            label: 'Rilassato',
+            emoji: '🐢',
+            intervalMinutes: 360,
+            dealsPerRun: 3,
+            estimatedPerDay: 12,
+            description: '3 offerte ogni 6 ore',
+        },
+        {
+            id: 'active',
+            label: 'Attivo',
+            emoji: '⚡',
+            intervalMinutes: 120,
+            dealsPerRun: 3,
+            estimatedPerDay: 36,
+            description: '3 offerte ogni 2 ore',
+        },
+        {
+            id: 'intensive',
+            label: 'Intensivo',
+            emoji: '🔥',
+            intervalMinutes: 60,
+            dealsPerRun: 5,
+            estimatedPerDay: 120,
+            description: '5 offerte ogni ora',
+            isPro: true,
+        },
+    ];
 
     useEffect(() => {
         const fetchChannels = async () => {
@@ -291,6 +327,61 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                 </p>
                             </div>
                         )}
+
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        {/* SCHEDULING SECTION (NEW) */}
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        <div className="border-t border-afflyt-glass-border my-6 pt-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                                    <Clock className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-white">Frequenza Pubblicazione</h4>
+                                    <p className="text-xs text-gray-400">Quanto spesso pubblicare offerte?</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                {schedulePresets.map((preset) => {
+                                    const isActive = rule.schedulePreset === preset.id;
+                                    const isPro = (preset as any).isPro;
+
+                                    return (
+                                        <button
+                                            key={preset.id}
+                                            onClick={() => !isPro && setRule({ ...rule, schedulePreset: preset.id })}
+                                            disabled={isPro}
+                                            className={`relative p-4 rounded-lg border text-left transition-all ${
+                                                isActive
+                                                    ? 'bg-purple-500/20 border-purple-500'
+                                                    : isPro
+                                                        ? 'bg-afflyt-dark-100/50 border-afflyt-glass-border opacity-60 cursor-not-allowed'
+                                                        : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/50'
+                                            }`}
+                                        >
+                                            {isPro && (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 bg-gray-800 text-xs text-gray-400 rounded-full">
+                                                    <Lock className="w-3 h-3" />
+                                                    PRO
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xl">{preset.emoji}</span>
+                                                <span className={`font-medium ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                                                    {preset.label}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-400">{preset.description}</p>
+                                            <p className={`text-xs mt-2 ${isActive ? 'text-purple-300' : 'text-gray-500'}`}>
+                                                ~{preset.estimatedPerDay} offerte/giorno
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 );
 
@@ -409,6 +500,13 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                     <span className="text-white">{channels.find(ch => ch.id === rule.channelId)?.name || t('step5.selected')}</span>
                                 </div>
                             )}
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Frequenza</span>
+                                <span className="text-purple-400">
+                                    {schedulePresets.find(p => p.id === rule.schedulePreset)?.emoji}{' '}
+                                    {schedulePresets.find(p => p.id === rule.schedulePreset)?.label}
+                                </span>
+                            </div>
                         </GlassCard>
 
                         <div className="space-y-3">

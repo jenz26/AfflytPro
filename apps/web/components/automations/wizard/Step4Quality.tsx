@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Gauge, Zap, TrendingUp, Star, Percent, Info } from 'lucide-react';
+import { Gauge, Zap, TrendingUp, Star, Percent, Info, Clock, Lock } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 interface ScorePreset {
@@ -11,10 +11,28 @@ interface ScorePreset {
     recommended?: boolean;
 }
 
+interface SchedulePreset {
+    id: string;
+    label: string;
+    labelEN: string;
+    emoji: string;
+    intervalMinutes: number | null;
+    dealsPerRun: number | null;
+    estimatedPerDay: number | null;
+    description: string;
+    descriptionEN: string;
+    availableFor: string[];
+}
+
 interface Step4QualityProps {
     minScore: number;
     presets: ScorePreset[];
     onChange: (minScore: number) => void;
+    // Scheduling (NEW)
+    schedulePreset?: string;
+    schedulePresets?: SchedulePreset[];
+    userPlan?: string;
+    onScheduleChange?: (preset: string) => void;
 }
 
 function getScoreColor(score: number): string {
@@ -31,7 +49,15 @@ function getScoreGradient(score: number): string {
     return 'from-gray-500 to-gray-600';
 }
 
-export function Step4Quality({ minScore, presets, onChange }: Step4QualityProps) {
+export function Step4Quality({
+    minScore,
+    presets,
+    onChange,
+    schedulePreset = 'relaxed',
+    schedulePresets = [],
+    userPlan = 'FREE',
+    onScheduleChange
+}: Step4QualityProps) {
     const t = useTranslations('automations.wizard.step4');
 
     return (
@@ -159,6 +185,92 @@ export function Step4Quality({ minScore, presets, onChange }: Step4QualityProps)
                     </div>
                 </div>
             </GlassCard>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* SCHEDULING SECTION (NEW) */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {schedulePresets.length > 0 && onScheduleChange && (
+                <>
+                    <div className="border-t border-afflyt-glass-border my-8" />
+
+                    {/* Scheduling Header */}
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                            <Clock className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-white">Frequenza Pubblicazione</h3>
+                            <p className="text-sm text-gray-400">Quanto spesso vuoi pubblicare offerte?</p>
+                        </div>
+                    </div>
+
+                    {/* Schedule Presets */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {schedulePresets.map((preset) => {
+                            const isActive = schedulePreset === preset.id;
+                            const isAvailable = preset.availableFor.includes(userPlan);
+
+                            return (
+                                <button
+                                    key={preset.id}
+                                    onClick={() => isAvailable && onScheduleChange(preset.id)}
+                                    disabled={!isAvailable}
+                                    className={`relative p-4 rounded-xl border text-left transition-all ${
+                                        isActive
+                                            ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500'
+                                            : isAvailable
+                                                ? 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/50'
+                                                : 'bg-afflyt-dark-100/50 border-afflyt-glass-border opacity-60 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {!isAvailable && (
+                                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 bg-gray-800 text-xs text-gray-400 rounded-full">
+                                            <Lock className="w-3 h-3" />
+                                            PRO
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="text-2xl">{preset.emoji}</span>
+                                        <div>
+                                            <div className={`font-bold ${isActive ? 'text-white' : 'text-gray-200'}`}>
+                                                {preset.label}
+                                            </div>
+                                            <div className="text-sm text-gray-400">
+                                                {preset.description}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {preset.estimatedPerDay && (
+                                        <div className={`mt-3 pt-3 border-t ${isActive ? 'border-purple-500/30' : 'border-afflyt-glass-border'}`}>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-gray-500">Stima giornaliera</span>
+                                                <span className={`font-medium ${isActive ? 'text-purple-300' : 'text-gray-300'}`}>
+                                                    ~{preset.estimatedPerDay} offerte/giorno
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Schedule Info */}
+                    <div className="flex items-start gap-3 p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                        <Info className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-gray-300">
+                            <p className="font-medium text-white mb-1">Come funziona?</p>
+                            <p>
+                                Le offerte vengono pubblicate automaticamente negli orari scelti.
+                                Un leggero jitter (±30 min) viene applicato per rendere il canale più naturale.
+                                Le offerte già pubblicate non verranno ripetute per 7 giorni.
+                            </p>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }

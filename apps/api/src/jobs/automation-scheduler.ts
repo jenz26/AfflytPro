@@ -1,17 +1,18 @@
 /**
- * Automation Scheduler - Executes automation rules based on schedule triggers
+ * Automation Scheduler - Executes automation rules based on nextRunAt
  *
- * Checks every 5 minutes for rules that should be executed based on:
- * - Cron expressions in triggers (custom or plan-based)
- * - Last execution time
- * - Rule active status
- * - User plan (FREE: 6h, PRO: 2-3h, BUSINESS: 30-90min)
+ * NEW SYSTEM (v2):
+ * - Uses nextRunAt field instead of cron parsing
+ * - Applies jitter to avoid bot-like behavior
+ * - Supports deduplication to avoid publishing same deals
+ * - Tracks empty runs for user notification
+ *
+ * Checks every minute for rules where nextRunAt <= now
  */
 
 import cron from 'node-cron';
 import { PrismaClient } from '@prisma/client';
 import { RuleExecutor } from '../services/RuleExecutor';
-import { PLAN_LIMITS, PlanType, getPlanLimits } from '../config/planLimits';
 
 const prisma = new PrismaClient();
 
@@ -19,96 +20,31 @@ const prisma = new PrismaClient();
 const runningExecutions = new Set<string>();
 
 /**
- * Parse common cron patterns to determine if rule should execute
+ * Calculate next run time with jitter to avoid bot-like behavior
  */
-function shouldExecuteRule(
-  lastRunAt: Date | null,
-  cronExpression: string,
-  now: Date = new Date()
-): boolean {
-  // First run - always execute
-  if (!lastRunAt) {
-    return true;
-  }
-
-  const minutesSinceLastRun = (now.getTime() - lastRunAt.getTime()) / (1000 * 60);
-
-  // Parse common cron patterns
-  // Format: "minute hour day month weekday"
-
-  // Every X hours: "0 */X * * *"
-  const everyHoursMatch = cronExpression.match(/0 \*\/(\d+) \* \* \*/);
-  if (everyHoursMatch) {
-    const hours = parseInt(everyHoursMatch[1]);
-    return minutesSinceLastRun >= hours * 60;
-  }
-
-  // Every X minutes: "*/X * * * *"
-  const everyMinutesMatch = cronExpression.match(/\*\/(\d+) \* \* \* \*/);
-  if (everyMinutesMatch) {
-    const minutes = parseInt(everyMinutesMatch[1]);
-    return minutesSinceLastRun >= minutes;
-  }
-
-  // Daily at specific time: "0 H * * *" (es: "0 9 * * *" = 9:00 AM)
-  const dailyMatch = cronExpression.match(/0 (\d+) \* \* \*/);
-  if (dailyMatch) {
-    const targetHour = parseInt(dailyMatch[1]);
-    const currentHour = now.getHours();
-    const lastRunHour = lastRunAt.getHours();
-
-    // Execute if:
-    // 1. Current hour matches target
-    // 2. Last run was more than 23 hours ago OR was before target hour today
-    if (currentHour === targetHour) {
-      const hoursSinceLastRun = minutesSinceLastRun / 60;
-      return hoursSinceLastRun >= 23 || lastRunHour < targetHour;
-    }
-  }
-
-  // Weekly at specific day and time: "0 H * * D" (es: "0 9 * * 1" = Monday 9 AM)
-  const weeklyMatch = cronExpression.match(/0 (\d+) \* \* (\d+)/);
-  if (weeklyMatch) {
-    const targetHour = parseInt(weeklyMatch[1]);
-    const targetDay = parseInt(weeklyMatch[2]);
-    const currentDay = now.getDay();
-    const currentHour = now.getHours();
-
-    // Execute if current day/hour matches and last run was > 6 days ago
-    if (currentDay === targetDay && currentHour === targetHour) {
-      const daysSinceLastRun = minutesSinceLastRun / (60 * 24);
-      return daysSinceLastRun >= 6;
-    }
-  }
-
-  // Default: execute if last run was more than 24 hours ago
-  return minutesSinceLastRun >= 1440;
+function calculateNextRunWithJitter(intervalMinutes: number): Date {
+  // Jitter ±15% dell'intervallo (max ±30 min)
+  const jitterMax = Math.min(intervalMinutes * 0.15, 30);
+  const jitter = (Math.random() - 0.5) * 2 * jitterMax;
+  return new Date(Date.now() + (intervalMinutes + jitter) * 60 * 1000);
 }
 
 /**
- * Check and execute automation rules
+ * Check and execute automation rules based on nextRunAt
  */
 async function checkAndExecuteRules() {
   try {
     const now = new Date();
-    console.log(`\n${'='.repeat(70)}`);
-    console.log(`🔍 Automation Scheduler Check - ${now.toLocaleString()}`);
-    console.log('='.repeat(70));
 
-    // Find active rules with SCHEDULE triggers
-    const rules = await prisma.automationRule.findMany({
+    // Find active rules where nextRunAt <= now
+    const dueRules = await prisma.automationRule.findMany({
       where: {
         isActive: true,
-        triggers: {
-          some: {
-            type: 'SCHEDULE'
-          }
+        nextRunAt: {
+          lte: now
         }
       },
       include: {
-        triggers: {
-          where: { type: 'SCHEDULE' }
-        },
         channel: true,
         user: {
           include: {
@@ -120,85 +56,171 @@ async function checkAndExecuteRules() {
       }
     });
 
-    if (rules.length === 0) {
-      console.log('ℹ️  No active scheduled automation rules found\n');
-      return;
+    if (dueRules.length === 0) {
+      return; // Nothing to do
     }
 
-    console.log(`📋 Found ${rules.length} active scheduled rule(s)\n`);
+    console.log(`\n[Scheduler] Found ${dueRules.length} rule(s) due for execution`);
 
-    // Check each rule
-    for (const rule of rules) {
+    for (const rule of dueRules) {
       // Skip if already running
       if (runningExecutions.has(rule.id)) {
-        console.log(`⏭️  Rule "${rule.name}" is already executing, skipping...`);
+        console.log(`[Scheduler] Rule "${rule.name}" already executing, skipping`);
         continue;
       }
 
-      // Check schedule triggers
-      for (const trigger of rule.triggers) {
-        const config = trigger.config as any;
-
-        // Get user plan and use plan-based cron if custom cron not specified
-        const userPlan = rule.user.plan as string;
-        const planLimits = getPlanLimits(userPlan);
-        const cronExpression = config.cron || planLimits.execution.cron;
-
-        console.log(`\n📋 Rule: "${rule.name}"`);
-        console.log(`   ID: ${rule.id}`);
-        console.log(`   Plan: ${userPlan}`);
-        console.log(`   Schedule: ${cronExpression}${config.cron ? ' (custom)' : ' (plan default)'}`);
-        console.log(`   Last Run: ${rule.lastRunAt ? rule.lastRunAt.toLocaleString() : 'Never'}`);
-
-        const shouldExecute = shouldExecuteRule(rule.lastRunAt, cronExpression, now);
-
-        if (shouldExecute) {
-          // Validate prerequisites
-          if (!rule.channel) {
-            console.log(`   ⚠️  No channel configured, skipping...`);
-            continue;
-          }
-
-          if (!rule.user.credentials || rule.user.credentials.length === 0) {
-            console.log(`   ⚠️  No Telegram bot token configured, skipping...`);
-            continue;
-          }
-
-          console.log(`   ✅ Should execute NOW!`);
-
-          // Mark as running
-          runningExecutions.add(rule.id);
-
-          // Execute asynchronously
-          (async () => {
-            try {
-              console.log(`   🚀 Starting execution...`);
-
-              const result = await RuleExecutor.executeRule(rule.id);
-
-              if (result.success) {
-                console.log(`   ✅ Execution completed successfully`);
-                console.log(`   📊 Processed: ${result.dealsProcessed}, Published: ${result.dealsPublished}`);
-              } else {
-                console.log(`   ❌ Execution failed`);
-                console.log(`   Errors: ${result.errors.join(', ')}`);
-              }
-            } catch (error: any) {
-              console.error(`   ❌ Fatal error executing rule "${rule.name}":`, error.message);
-            } finally {
-              // Remove from running set
-              runningExecutions.delete(rule.id);
-            }
-          })();
-        } else {
-          console.log(`   ⏭️  Not scheduled to run yet`);
-        }
+      // Validate prerequisites
+      if (!rule.channel) {
+        console.log(`[Scheduler] Rule "${rule.name}" has no channel, skipping`);
+        // Still update nextRunAt to avoid re-checking every minute
+        await updateNextRun(rule.id, rule.intervalMinutes);
+        continue;
       }
+
+      if (!rule.user.credentials || rule.user.credentials.length === 0) {
+        console.log(`[Scheduler] Rule "${rule.name}" user has no Telegram bot, skipping`);
+        await updateNextRun(rule.id, rule.intervalMinutes);
+        continue;
+      }
+
+      // Mark as running
+      runningExecutions.add(rule.id);
+
+      // Execute asynchronously (don't block other rules)
+      executeRuleAsync(rule);
+    }
+  } catch (error: any) {
+    console.error('[Scheduler] Error:', error.message);
+  }
+}
+
+/**
+ * Execute a rule asynchronously
+ */
+async function executeRuleAsync(rule: any) {
+  const startTime = Date.now();
+
+  try {
+    console.log(`[Scheduler] Executing rule "${rule.name}" (${rule.id})`);
+
+    const result = await RuleExecutor.executeRule(rule.id);
+
+    const duration = Date.now() - startTime;
+
+    if (result.success) {
+      console.log(
+        `[Scheduler] Rule "${rule.name}" completed: ` +
+        `${result.dealsPublished}/${result.dealsProcessed} deals published (${duration}ms)`
+      );
+
+      // Reset empty runs counter on success
+      if (result.dealsPublished > 0) {
+        await prisma.automationRule.update({
+          where: { id: rule.id },
+          data: { emptyRunsCount: 0 }
+        });
+      } else {
+        // Increment empty runs counter
+        await incrementEmptyRunsCount(rule.id);
+      }
+    } else {
+      console.log(
+        `[Scheduler] Rule "${rule.name}" failed: ${result.errors.join(', ')}`
+      );
+      // Increment empty runs on failure too
+      await incrementEmptyRunsCount(rule.id);
     }
 
-    console.log(`\n${'='.repeat(70)}\n`);
+    // Update next run time
+    await updateNextRun(rule.id, rule.intervalMinutes);
+
   } catch (error: any) {
-    console.error('❌ Automation scheduler error:', error);
+    console.error(`[Scheduler] Fatal error executing rule "${rule.name}":`, error.message);
+
+    // Still update next run to avoid blocking
+    await updateNextRun(rule.id, rule.intervalMinutes);
+    await incrementEmptyRunsCount(rule.id);
+
+  } finally {
+    runningExecutions.delete(rule.id);
+  }
+}
+
+/**
+ * Update nextRunAt with jitter
+ */
+async function updateNextRun(ruleId: string, intervalMinutes: number) {
+  const nextRun = calculateNextRunWithJitter(intervalMinutes);
+
+  await prisma.automationRule.update({
+    where: { id: ruleId },
+    data: {
+      lastRunAt: new Date(),
+      nextRunAt: nextRun,
+      totalRuns: { increment: 1 }
+    }
+  });
+}
+
+/**
+ * Increment empty runs counter and check for notification threshold
+ */
+async function incrementEmptyRunsCount(ruleId: string) {
+  const updated = await prisma.automationRule.update({
+    where: { id: ruleId },
+    data: {
+      emptyRunsCount: { increment: 1 }
+    },
+    select: {
+      emptyRunsCount: true,
+      name: true,
+      userId: true
+    }
+  });
+
+  // Notify user after 3 consecutive empty runs
+  if (updated.emptyRunsCount === 3) {
+    console.log(
+      `[Scheduler] Rule "${updated.name}" had 3 empty runs, should notify user`
+    );
+
+    // TODO: Send notification to user
+    // await sendEmptyRunsNotification(updated.userId, updated.name);
+  }
+}
+
+/**
+ * Initialize nextRunAt for rules that don't have it set
+ * (for migration from old system)
+ */
+async function initializeMissingNextRunAt() {
+  const rulesWithoutNextRun = await prisma.automationRule.findMany({
+    where: {
+      isActive: true,
+      nextRunAt: null
+    },
+    select: {
+      id: true,
+      intervalMinutes: true,
+      name: true
+    }
+  });
+
+  if (rulesWithoutNextRun.length === 0) {
+    return;
+  }
+
+  console.log(`[Scheduler] Initializing nextRunAt for ${rulesWithoutNextRun.length} rule(s)`);
+
+  for (const rule of rulesWithoutNextRun) {
+    const nextRun = calculateNextRunWithJitter(rule.intervalMinutes);
+
+    await prisma.automationRule.update({
+      where: { id: rule.id },
+      data: { nextRunAt: nextRun }
+    });
+
+    console.log(`[Scheduler] Set nextRunAt for "${rule.name}" to ${nextRun.toISOString()}`);
   }
 }
 
@@ -206,35 +228,31 @@ async function checkAndExecuteRules() {
  * Start automation scheduler
  */
 export function startAutomationScheduler() {
-  console.log('\n🤖 Starting Automation Scheduler...');
-  console.log('   Check Interval: Every 5 minutes');
-  console.log('   Supported Triggers: SCHEDULE (cron expressions)');
-  console.log('   Supported Actions: PUBLISH_CHANNEL');
-  console.log('\n   Plan-Based Frequencies:');
-  console.log(`   • FREE:     ${PLAN_LIMITS.FREE.execution.cron} (every 6 hours)`);
-  console.log(`   • PRO:      ${PLAN_LIMITS.PRO.execution.cron} (every 2-3 hours)`);
-  console.log(`   • BUSINESS: ${PLAN_LIMITS.BUSINESS.execution.cron} (every 30-90 min)\n`);
+  console.log('\n[Scheduler] Starting Automation Scheduler v2...');
+  console.log('[Scheduler] Check Interval: Every minute');
+  console.log('[Scheduler] Using: nextRunAt + jitter system\n');
 
-  // Run check every 5 minutes
-  cron.schedule('*/5 * * * *', async () => {
+  // Initialize missing nextRunAt values
+  initializeMissingNextRunAt();
+
+  // Run check every minute
+  cron.schedule('* * * * *', async () => {
     await checkAndExecuteRules();
   });
 
-  // Also run immediately on startup (for testing)
-  console.log('🔍 Running initial check...');
+  // Also run immediately on startup
   checkAndExecuteRules();
 
-  console.log('✅ Automation Scheduler started successfully\n');
+  console.log('[Scheduler] Started successfully\n');
 }
 
 /**
  * Stop automation scheduler (for graceful shutdown)
  */
 export function stopAutomationScheduler() {
-  console.log('🛑 Stopping Automation Scheduler...');
-  // Wait for running executions to complete
+  console.log('[Scheduler] Stopping...');
   if (runningExecutions.size > 0) {
-    console.log(`⏳ Waiting for ${runningExecutions.size} running execution(s) to complete...`);
+    console.log(`[Scheduler] Waiting for ${runningExecutions.size} execution(s) to complete...`);
   }
-  console.log('✅ Automation Scheduler stopped');
+  console.log('[Scheduler] Stopped');
 }

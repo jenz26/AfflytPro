@@ -177,6 +177,7 @@ model User {
   authEvents          AuthEvent[]
   notifications       Notification[]
   subscription        Subscription?
+  automations         Automation[]
 
   @@index([email])
   @@index([plan])
@@ -272,9 +273,31 @@ model Channel {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   automationRules AutomationRule[]
+  dealHistory     ChannelDealHistory[]
 
   @@index([userId])
   @@index([platform])
+}
+
+// === CHANNEL DEAL HISTORY (Deduplication) ===
+
+model ChannelDealHistory {
+  id          String   @id @default(cuid())
+
+  channelId   String
+  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  asin        String
+
+  ruleId      String?
+  rule        AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  publishedAt DateTime @default(now())
+  expiresAt   DateTime // Auto-cleanup: publishedAt + dedupeWindowHours
+
+  @@unique([channelId, asin])
+  @@index([channelId])
+  @@index([expiresAt])
 }
 
 // === PRODUCTS & AFFILIATE LINKS ===
@@ -524,6 +547,28 @@ model AutomationRule {
   split   AutomationSplit? @relation(fields: [splitId], references: [id], onDelete: SetNull)
 
   // ═══════════════════════════════════════════════════════════════
+  // SCHEDULING CONFIG
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Preset: 'relaxed' | 'active' | 'intensive' | 'custom'
+  schedulePreset     String    @default("relaxed")
+
+  /// Intervallo in minuti tra le esecuzioni
+  intervalMinutes    Int       @default(360)  // 6 ore default
+
+  /// Quante offerte pubblicare per esecuzione
+  dealsPerRun        Int       @default(3)
+
+  /// Prossima esecuzione schedulata (con jitter applicato)
+  nextRunAt          DateTime?
+
+  /// Finestra deduplicazione in ore (evita ripubblicazione stesso ASIN)
+  dedupeWindowHours  Int       @default(168)  // 7 giorni
+
+  /// Contatore run consecutive senza pubblicare (per notifica)
+  emptyRunsCount     Int       @default(0)
+
+  // ═══════════════════════════════════════════════════════════════
   // EXECUTION STATS
   // ═══════════════════════════════════════════════════════════════
 
@@ -554,9 +599,13 @@ model AutomationRule {
   // INDEXES
   // ═══════════════════════════════════════════════════════════════
 
+  // History relation for deduplication
+  publishHistory ChannelDealHistory[]
+
   @@index([userId])
   @@index([isActive])
   @@index([lastRunAt])
+  @@index([nextRunAt])
 }
 
 model AutomationTrigger {
@@ -950,4 +999,57 @@ model PaymentMethod {
   createdAt DateTime @default(now())
 
   @@index([subscriptionId])
+}
+
+// === KEEPA TOKEN TRACKING ===
+
+model KeepaTokenLog {
+  id           String   @id @default(cuid())
+  operation    String   // 'deal_search' | 'product_refresh'
+  tokenCost    Int
+  category     String?
+  asins        String[] // Lista ASIN se product call
+  jobId        String?
+  success      Boolean
+  responseTime Int      // ms
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([category])
+  @@index([operation])
+}
+
+// === NEW AUTOMATION MODEL (Redis Queue Compatible) ===
+
+model Automation {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  enabled     Boolean @default(true)
+
+  // Scheduling
+  intervalMinutes Int       @default(360) // Every 6 hours by default
+  nextRunAt       DateTime
+  lastRunAt       DateTime?
+
+  // Filters (JSON for flexibility)
+  filters Json // { categories, minDiscount, maxPrice, minRating, etc. }
+
+  // Publishing
+  telegramChatId String?
+  templateId     String?
+
+  // Stats
+  totalRuns      Int @default(0)
+  dealsPublished Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([enabled])
+  @@index([nextRunAt])
 }
