@@ -18,6 +18,11 @@ import templatesRoutes from './routes/templates';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
+import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
+
+// ==================== SENTRY INITIALIZATION ====================
+// Initialize Sentry before anything else
+initSentry();
 
 // ==================== ENVIRONMENT CHECKS ====================
 
@@ -108,6 +113,42 @@ app.register(notificationRoutes, { prefix: '/api' });
 // Health check
 app.get('/health', async () => {
     return { status: 'ok' };
+});
+
+// ==================== SENTRY ERROR HANDLER ====================
+// Global error handler to capture errors with Sentry
+app.setErrorHandler((error, request, reply) => {
+    // Set user context if authenticated
+    if (request.user) {
+        setUser({
+            id: request.user.id,
+            email: request.user.email,
+            plan: request.user.plan,
+        });
+    }
+
+    // Only capture 5xx errors (server errors) to Sentry
+    const statusCode = error.statusCode || 500;
+    if (statusCode >= 500) {
+        captureException(error as Error, {
+            url: request.url,
+            method: request.method,
+            params: request.params,
+            query: request.query,
+        });
+    }
+
+    // Log error
+    app.log.error(error);
+
+    // Send response
+    reply.status(statusCode).send({
+        statusCode,
+        error: error.name || 'Internal Server Error',
+        message: process.env.NODE_ENV === 'production' && statusCode >= 500
+            ? 'Si è verificato un errore interno'
+            : error.message,
+    });
 });
 
 const start = async () => {
