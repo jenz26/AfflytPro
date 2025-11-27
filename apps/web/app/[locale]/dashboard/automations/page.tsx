@@ -79,8 +79,10 @@ export default function AutomationStudioPage() {
     };
 
     const handleCreateRule = async (ruleData: any) => {
+        console.log('[handleCreateRule] Called with:', ruleData);
         try {
             const token = localStorage.getItem('token');
+            console.log('[handleCreateRule] Token exists:', !!token);
 
             // If editing, use PUT instead of POST
             if (editingRule) {
@@ -115,6 +117,12 @@ export default function AutomationStudioPage() {
                     ? ruleData.categories
                     : JSON.parse(ruleData.categories);
 
+                console.log('[handleCreateRule] Sending POST to:', `${API_BASE}/automation/rules`);
+                console.log('[handleCreateRule] Body:', {
+                    ...ruleData,
+                    categories: categoriesArray,
+                });
+
                 const response = await fetch(`${API_BASE}/automation/rules`, {
                     method: 'POST',
                     headers: {
@@ -129,18 +137,23 @@ export default function AutomationStudioPage() {
                     })
                 });
 
+                console.log('[handleCreateRule] Response status:', response.status);
+
                 if (response.ok) {
+                    const result = await response.json();
+                    console.log('[handleCreateRule] Success:', result);
                     setShowWizard(false);
                     setSelectedTemplate(null);
                     fetchRules();
                 } else {
                     const error = await response.json();
-                    alert(error.message || 'Failed to create rule');
+                    console.error('[handleCreateRule] Error response:', error);
+                    alert(error.message || error.errors?.[0]?.message || 'Failed to create rule');
                 }
             }
         } catch (error) {
-            console.error('Failed to save rule:', error);
-            alert('Failed to save rule');
+            console.error('[handleCreateRule] Exception:', error);
+            alert('Failed to save rule: ' + (error as Error).message);
         }
     };
 
