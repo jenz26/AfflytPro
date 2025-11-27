@@ -30,19 +30,19 @@
 
 ## P1 - Importanti (Funzionalità)
 
-- [ ] **4. Endpoint POST /auth/set-password**
+- [x] **4. Endpoint POST /auth/set-password** ✅
   - Per utenti passwordless che vogliono aggiungere password
   - Validazione: min 8 char, 1 uppercase, 1 number
   - Solo per utenti autenticati senza password
   - File: `apps/api/src/routes/auth.ts`
 
-- [ ] **5. Auth Events logging**
+- [x] **5. Auth Events logging** ✅
   - Creare tabella AuthEvent in Prisma
   - Loggare: magic_link_sent, magic_link_clicked, login_success, login_failed, logout
   - Per analytics e debug
   - Files: `apps/api/prisma/schema.prisma`, `apps/api/src/routes/auth.ts`
 
-- [ ] **6. Rate limit per email**
+- [x] **6. Rate limit per email** ✅
   - Aggiungere limite 3 magic link/ora per singola email
   - Oltre al rate limit per IP esistente
   - File: `apps/api/src/routes/auth.ts`
@@ -79,9 +79,9 @@
 | Priorità | Totale | Completati | % |
 |----------|--------|------------|---|
 | P0       | 3      | 3          | 100% |
-| P1       | 3      | 0          | 0% |
+| P1       | 3      | 3          | 100% |
 | P2       | 4      | 0          | 0% |
-| **TOTAL**| **10** | **3**      | **30%** |
+| **TOTAL**| **10** | **6**      | **60%** |
 
 ---
 

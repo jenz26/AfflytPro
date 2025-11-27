@@ -26,6 +26,33 @@ enum AuthTokenType {
   MAGIC_LINK
 }
 
+enum AuthEventType {
+  // Magic Link
+  MAGIC_LINK_SENT
+  MAGIC_LINK_CLICKED
+  MAGIC_LINK_EXPIRED
+
+  // Registration & Verification
+  USER_REGISTERED
+  EMAIL_VERIFIED
+
+  // Login/Logout
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  LOGOUT
+
+  // Password
+  PASSWORD_SET
+  PASSWORD_CHANGED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+
+  // Security
+  ACCOUNT_LOCKED
+  ACCOUNT_UNLOCKED
+  SESSION_REVOKED
+}
+
 // === NOTIFICATIONS ===
 
 enum NotificationType {
@@ -147,6 +174,7 @@ model User {
   onboardingProgress  OnboardingProgress?
   achievements        Achievement[]
   authTokens          AuthToken[]
+  authEvents          AuthEvent[]
   notifications       Notification[]
   subscription        Subscription?
 
@@ -175,6 +203,32 @@ model AuthToken {
   @@index([token])
   @@index([type])
   @@index([expiresAt])
+}
+
+// Auth Events - Audit log for authentication activities
+model AuthEvent {
+  id        String        @id @default(uuid())
+
+  // Event type
+  type      AuthEventType
+
+  // User (optional - some events like failed login may not have user)
+  userId    String?
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email     String?       // Store email for events without user (failed login attempts)
+
+  // Context
+  ipAddress String?
+  userAgent String?
+  metadata  Json?         // Additional context (e.g., failure reason, device info)
+
+  // Timestamp
+  createdAt DateTime      @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([type])
+  @@index([createdAt])
 }
 
 model ApiKey {

@@ -95,6 +95,40 @@ const registrationRateLimitConfig = {
 // ==================== HELPER FUNCTIONS ====================
 
 /**
+ * Log an authentication event for audit trail
+ */
+async function logAuthEvent(
+  type: 'MAGIC_LINK_SENT' | 'MAGIC_LINK_CLICKED' | 'MAGIC_LINK_EXPIRED' |
+        'USER_REGISTERED' | 'EMAIL_VERIFIED' |
+        'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT' |
+        'PASSWORD_SET' | 'PASSWORD_CHANGED' | 'PASSWORD_RESET_REQUESTED' | 'PASSWORD_RESET_COMPLETED' |
+        'ACCOUNT_LOCKED' | 'ACCOUNT_UNLOCKED' | 'SESSION_REVOKED',
+  options: {
+    userId?: string;
+    email?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    metadata?: Record<string, any>;
+  }
+): Promise<void> {
+  try {
+    await prisma.authEvent.create({
+      data: {
+        type,
+        userId: options.userId,
+        email: options.email,
+        ipAddress: options.ipAddress,
+        userAgent: options.userAgent,
+        metadata: options.metadata,
+      },
+    });
+  } catch (error) {
+    // Don't fail the request if logging fails
+    console.error('[AuthEvent] Failed to log event:', type, error);
+  }
+}
+
+/**
  * Create an auth token and store it in the database
  */
 async function createAuthToken(
@@ -301,6 +335,14 @@ export async function authRoutes(fastify: FastifyInstance) {
           fastify.log.warn({ email: normalizedEmail }, 'Failed to send welcome email');
         }
 
+        // Log registration event
+        await logAuthEvent('USER_REGISTERED', {
+          userId: user.id,
+          email: normalizedEmail,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+        });
+
         return reply.code(201).send({
           message: 'Registrazione completata! Controlla la tua email per verificare l\'account.',
           emailSent: emailResult.success,
@@ -347,6 +389,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         // Mark token as used
         await markTokenAsUsed(token);
+
+        // Log email verified event
+        await logAuthEvent('EMAIL_VERIFIED', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+        });
 
         // Generate JWT for auto-login
         const jwtToken = fastify.jwt.sign({
@@ -486,7 +536,24 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (!isValidPassword) {
           const { locked, remainingAttempts } = await handleFailedLogin(user.id);
 
+          // Log failed login
+          await logAuthEvent('LOGIN_FAILED', {
+            userId: user.id,
+            email: normalizedEmail,
+            ipAddress: request.ip,
+            userAgent: request.headers['user-agent'],
+            metadata: { reason: 'invalid_password', remainingAttempts },
+          });
+
           if (locked) {
+            // Log account locked
+            await logAuthEvent('ACCOUNT_LOCKED', {
+              userId: user.id,
+              email: normalizedEmail,
+              ipAddress: request.ip,
+              metadata: { duration: LOCKOUT_DURATION_MINUTES },
+            });
+
             return reply.code(423).send({
               message: `Troppi tentativi falliti. Account bloccato per ${LOCKOUT_DURATION_MINUTES} minuti.`,
             });
@@ -524,6 +591,15 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         // Reset failed attempts on successful login
         await resetFailedAttempts(user.id);
+
+        // Log successful login
+        await logAuthEvent('LOGIN_SUCCESS', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+          metadata: { method: 'password' },
+        });
 
         // Generate JWT token
         const token = fastify.jwt.sign({
@@ -575,6 +651,28 @@ export async function authRoutes(fastify: FastifyInstance) {
           ? 'Check your email for the access link.'
           : 'Controlla la tua email per il link di accesso.';
 
+        // Check email-based rate limit: max 3 magic links per hour per email
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        const recentMagicLinks = await prisma.authEvent.count({
+          where: {
+            email: normalizedEmail,
+            type: 'MAGIC_LINK_SENT',
+            createdAt: { gte: oneHourAgo },
+          },
+        });
+
+        if (recentMagicLinks >= 3) {
+          const rateLimitMessage = locale === 'en'
+            ? 'Too many requests for this email. Please try again in 1 hour.'
+            : 'Troppe richieste per questa email. Riprova tra 1 ora.';
+
+          return reply.code(429).send({
+            error: 'rate_limit_exceeded',
+            message: rateLimitMessage,
+            retryAfter: 3600, // seconds
+          });
+        }
+
         let user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
         });
@@ -613,6 +711,15 @@ export async function authRoutes(fastify: FastifyInstance) {
         if (!emailResult.success) {
           fastify.log.warn({ email: normalizedEmail }, 'Failed to send magic link email');
         }
+
+        // Log magic link sent
+        await logAuthEvent('MAGIC_LINK_SENT', {
+          userId: user.id,
+          email: normalizedEmail,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+          metadata: { isNewUser },
+        });
 
         return reply.send({
           message: successMessage,
@@ -659,6 +766,22 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         // Mark token as used
         await markTokenAsUsed(token);
+
+        // Log magic link login
+        await logAuthEvent('MAGIC_LINK_CLICKED', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+        });
+
+        await logAuthEvent('LOGIN_SUCCESS', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+          metadata: { method: 'magic_link' },
+        });
 
         // Generate JWT token
         const jwtToken = fastify.jwt.sign({
@@ -881,6 +1004,14 @@ export async function authRoutes(fastify: FastifyInstance) {
           data: { password: hashedPassword },
         });
 
+        // Log password changed event
+        await logAuthEvent('PASSWORD_CHANGED', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+        });
+
         return reply.send({ message: 'Password cambiata con successo' });
       } catch (err: any) {
         if (err instanceof z.ZodError) {
@@ -899,6 +1030,85 @@ export async function authRoutes(fastify: FastifyInstance) {
   );
 
   /**
+   * POST /auth/set-password
+   * Set password for passwordless users (opt-in to password auth)
+   * Only works if user doesn't already have a password
+   */
+  fastify.post<{
+    Body: { password: string };
+  }>(
+    '/set-password',
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const setPasswordSchema = z.object({
+          password: z
+            .string()
+            .min(8, 'La password deve contenere almeno 8 caratteri')
+            .regex(/[A-Z]/, 'La password deve contenere almeno una lettera maiuscola')
+            .regex(/[a-z]/, 'La password deve contenere almeno una lettera minuscola')
+            .regex(/[0-9]/, 'La password deve contenere almeno un numero'),
+        });
+
+        const { password } = setPasswordSchema.parse(request.body);
+
+        const user = await prisma.user.findUnique({
+          where: { id: request.user.id },
+        });
+
+        if (!user) {
+          return reply.code(404).send({ message: 'Utente non trovato' });
+        }
+
+        // Check if user already has a password
+        if (user.password) {
+          return reply.code(400).send({
+            message: 'Password già impostata. Usa "Cambia password" per modificarla.',
+            hasPassword: true,
+          });
+        }
+
+        // Hash and set password
+        const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: hashedPassword },
+        });
+
+        // Log password set event
+        await logAuthEvent('PASSWORD_SET', {
+          userId: user.id,
+          email: user.email,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+        });
+
+        fastify.log.info({ userId: user.id }, 'User set password (passwordless -> password enabled)');
+
+        return reply.send({
+          message: 'Password impostata con successo! Ora puoi accedere anche con email e password.',
+          passwordEnabled: true,
+        });
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          return reply.code(400).send({
+            message: 'Errore di validazione',
+            errors: err.issues.map((e: any) => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          });
+        }
+        fastify.log.error(err);
+        return reply.code(500).send({ message: 'Errore durante l\'impostazione della password' });
+      }
+    }
+  );
+
+  /**
    * POST /auth/logout
    * Logout (client-side token removal, but we can track it)
    */
@@ -908,6 +1118,13 @@ export async function authRoutes(fastify: FastifyInstance) {
       onRequest: [fastify.authenticate],
     },
     async (request, reply) => {
+      // Log logout event
+      await logAuthEvent('LOGOUT', {
+        userId: request.user.id,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+      });
+
       // In a more complex setup, we could blacklist the JWT here
       // For now, the client just removes the token
       return reply.send({ message: 'Logout effettuato' });
