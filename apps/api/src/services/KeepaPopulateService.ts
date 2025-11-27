@@ -225,7 +225,7 @@ export class KeepaPopulateService {
         // Deals API returns different structure than Product API
         // Fields: asin, title, image (array of bytes), current, avg, delta, deltaPercent, etc.
 
-        // Get current price - deal.current is array of prices by type
+        // Get current price - deal.current is array of prices by type [Amazon, New, Used, etc]
         const currentPriceRaw = deal.current?.[0] ?? deal.current?.[1] ?? deal.current?.[2];
         const currentPriceCents = typeof currentPriceRaw === 'number' && currentPriceRaw > 0
             ? currentPriceRaw
@@ -235,11 +235,27 @@ export class KeepaPopulateService {
             return null; // Skip if no valid price
         }
 
-        // Get discount percent - ensure it's a valid number
-        const discountRaw = deal.deltaPercent?.[0] ?? deal.deltaPercent?.[1] ?? 0;
-        const discountPercent = typeof discountRaw === 'number' && !isNaN(discountRaw) && discountRaw > 0 && discountRaw < 100
-            ? Math.round(discountRaw)
-            : 0;
+        // Get discount percent - deltaPercent is 2D array: deltaPercent[priceType][timeRange]
+        // priceType: 0=Amazon, 1=New, 2=Used, etc.
+        // timeRange: 0=1day, 1=7days, 2=30days, 3=90days
+        // We want the 30-day or 90-day comparison for Amazon price (index 0)
+        let discountPercent = 0;
+        if (deal.deltaPercent && Array.isArray(deal.deltaPercent)) {
+            // Try Amazon price type first (index 0), then New (index 1)
+            const amazonDeltas = deal.deltaPercent[0];
+            const newDeltas = deal.deltaPercent[1];
+
+            // Get 30-day delta (index 2) or 90-day (index 3)
+            const deltaValue = amazonDeltas?.[2] ?? amazonDeltas?.[3] ?? newDeltas?.[2] ?? newDeltas?.[3] ?? 0;
+
+            // deltaPercent is negative for price drops (we want positive discount)
+            if (typeof deltaValue === 'number' && deltaValue < 0) {
+                discountPercent = Math.abs(deltaValue);
+            }
+        }
+
+        // Clamp discount to valid range
+        discountPercent = Math.max(0, Math.min(99, Math.round(discountPercent)));
 
         // Calculate original price from current price and discount
         let originalPriceCents = currentPriceCents;
