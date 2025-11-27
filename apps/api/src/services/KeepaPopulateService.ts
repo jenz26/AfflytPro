@@ -105,46 +105,32 @@ export class KeepaPopulateService {
 
         try {
             // Build the deals request using correct Keepa API parameters
-            // Reference: https://keepaapi.readthedocs.io/en/latest/api_methods.html
-            const dealParams = {
-                // Domain ID: 8 = Italy
-                domainId: KEEPA_DOMAIN_IT,
+            // Based on the Python library and Keepa documentation:
+            // - domain is passed as URL param (not in selection)
+            // - selection contains only the filter params as JSON
 
-                // Page for pagination (0-indexed)
+            // Minimal parameters to start - we can add more once basic call works
+            const dealParams: Record<string, any> = {
                 page: 0,
-
-                // Price types to include
-                // 0=Amazon, 1=New 3rd party, 2=Used, 7=Amazon Warehouse, etc.
-                priceTypes: [0, 1, 2, 7],
-
-                // Discount percentage range [min, max] - e.g., [10, 100] for 10%+ discount
-                deltaPercentRange: [minDiscountPercent, 100],
-
-                // Minimum rating (0-50 scale, so 20 = 2 stars, 40 = 4 stars)
-                minRating: Math.floor(minRating / 10), // Convert from 0-500 to 0-50
-
-                // Must have reviews
+                // Only essential filters
+                priceTypes: [0, 1, 2, 7],  // Amazon, New, Used, Warehouse
                 hasReviews: true,
-
-                // Exclude out of stock items
-                isOutOfStock: false,
-
-                // Category filter (root categories)
-                includeCategories: categories,
-
-                // Sort type: 0 = default (most recent deals first)
                 sortType: 0,
-
-                // Enable filters
-                isFilterEnabled: true,
-                isRangeEnabled: true
+                deltaPercentRange: [minDiscountPercent, 100]
             };
 
-            console.log('📡 Calling Keepa Deals API...');
-            console.log('   Parameters:', JSON.stringify(dealParams, null, 2));
+            // Only add category filter if we have specific categories
+            if (categories.length > 0 && categories.length < 20) {
+                dealParams.includeCategories = categories;
+            }
 
-            // Keepa expects 'selection' as a JSON string
-            const response = await this.client.get<KeepaDealsResponse>('/deal', {
+            console.log('📡 Calling Keepa Deals API...');
+            console.log('   Domain:', KEEPA_DOMAIN_IT, '(Italy)');
+            console.log('   Selection:', JSON.stringify(dealParams));
+
+            // Keepa API call
+            // domain goes in URL params, selection is JSON stringified filter object
+            const response = await this.client.get('/deal', {
                 params: {
                     key: this.apiKey,
                     domain: KEEPA_DOMAIN_IT,
