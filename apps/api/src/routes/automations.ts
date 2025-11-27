@@ -299,11 +299,16 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
             checkABTesting,        // Check if A/B testing is allowed
         ]
     }, async (request, reply) => {
-        const userId = (request.user as any).id;
-        const userPlan = (request.user as any).plan || 'FREE';
+        console.log('[POST /rules] Handler starting');
+        const userId = (request.user as any)?.id;
+        const userPlan = (request.user as any)?.plan || 'FREE';
+
+        console.log('[POST /rules] User ID:', userId, 'Plan:', userPlan);
+        console.log('[POST /rules] Request body:', JSON.stringify(request.body, null, 2));
 
         try {
             const parsed = createRuleSchema.parse(request.body);
+            console.log('[POST /rules] Validation passed');
 
             // Validate filters based on user plan
             const { valid: validFilters, stripped, warnings } = validateFiltersForPlan(parsed, userPlan);

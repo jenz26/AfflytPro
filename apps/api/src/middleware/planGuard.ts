@@ -62,20 +62,39 @@ export async function checkAutomationLimit(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userId = request.user.id;
-  const userPlan = request.user.plan as string;
+  try {
+    console.log('[checkAutomationLimit] Starting check for user');
 
-  const count = await prisma.automationRule.count({
-    where: { userId },
-  });
+    if (!request.user) {
+      console.error('[checkAutomationLimit] No user on request!');
+      return reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+    }
 
-  if (!canCreateAutomation(userPlan, count)) {
-    const limits = PLAN_LIMITS[userPlan as PlanType];
-    throw new PlanGuardError(
-      `You've reached the limit of ${limits.automations.total} automations for ${getPlanLabel(userPlan)} plan`,
-      userPlan,
-      'more_automations'
-    );
+    const userId = request.user.id;
+    const userPlan = request.user.plan as string || 'FREE';
+
+    console.log('[checkAutomationLimit] User:', userId, 'Plan:', userPlan);
+
+    const count = await prisma.automationRule.count({
+      where: { userId },
+    });
+
+    console.log('[checkAutomationLimit] Current automation count:', count);
+
+    if (!canCreateAutomation(userPlan, count)) {
+      const limits = PLAN_LIMITS[userPlan as PlanType];
+      console.log('[checkAutomationLimit] Limit exceeded');
+      return reply.code(403).send(new PlanGuardError(
+        `You've reached the limit of ${limits.automations.total} automations for ${getPlanLabel(userPlan)} plan`,
+        userPlan,
+        'more_automations'
+      ).toJSON());
+    }
+
+    console.log('[checkAutomationLimit] Check passed');
+  } catch (error) {
+    console.error('[checkAutomationLimit] Error:', error);
+    return reply.code(500).send({ error: 'Internal error', message: 'Failed to check automation limit' });
   }
 }
 
@@ -172,16 +191,33 @@ export function checkABTesting(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
-  const body = request.body as any;
+  try {
+    console.log('[checkABTesting] Starting check');
 
-  // Only check if user is trying to use A/B testing
-  if (body.splitId && !hasFeature(userPlan, 'abTesting')) {
-    throw new PlanGuardError(
-      'A/B Testing is available from PRO plan',
-      userPlan,
-      'ab_testing'
-    );
+    if (!request.user) {
+      console.error('[checkABTesting] No user on request!');
+      return reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+    }
+
+    const userPlan = request.user.plan as string || 'FREE';
+    const body = request.body as any;
+
+    console.log('[checkABTesting] User plan:', userPlan, 'splitId:', body?.splitId);
+
+    // Only check if user is trying to use A/B testing
+    if (body?.splitId && !hasFeature(userPlan, 'abTesting')) {
+      console.log('[checkABTesting] A/B testing not allowed for plan');
+      return reply.code(403).send(new PlanGuardError(
+        'A/B Testing is available from PRO plan',
+        userPlan,
+        'ab_testing'
+      ).toJSON());
+    }
+
+    console.log('[checkABTesting] Check passed');
+  } catch (error) {
+    console.error('[checkABTesting] Error:', error);
+    return reply.code(500).send({ error: 'Internal error', message: 'Failed to check A/B testing access' });
   }
 }
 
