@@ -29,24 +29,23 @@ interface KeepaDealsResponse {
     refillRate: number;
 }
 
+// Keepa Deal object structure (from /deal endpoint)
+// See: https://github.com/keepacom/api_backend/blob/master/src/main/java/com/keepa/api/backend/structs/Deal.java
 interface KeepaRawDeal {
     asin: string;
     title: string;
-    image: string;
+    image: number[];        // Array of char codes (not string!)
     categories: number[];
     rootCat: number;
-    current: number[];      // Current prices by condition [Amazon, New, Used, etc]
-    avg: number[];          // Average prices
-    delta: number[];        // Price drops
-    deltaPercent: number[]; // Discount percentages
-    salesRank: number;
-    rating: number;         // 0-500 scale (4.5 stars = 450)
-    reviewCount: number;
-    isAmazon: boolean;
-    isPrime: boolean;
-    availabilityAmazon: number;
-    condition: number;      // 0=Amazon, 1=New, 2=Used, etc
+    current: number[];      // Current prices by type [Amazon, New, Used, etc]
+    avg: number[][];        // Average prices [priceType][timeRange]
+    delta: number[][];      // Price drops [priceType][timeRange]
+    deltaPercent: number[][]; // Discount percentages [priceType][timeRange]
+    minRating: number;      // Minimum rating filter (0-50 scale, not 0-500!)
+    creationDate: number;   // Keepa time minutes
     lastUpdate: number;
+    currentSince: number[]; // When current price started
+    // Note: salesRank, reviewCount, isAmazon, isPrime are NOT in Deal object
 }
 
 export class KeepaPopulateService {
@@ -278,6 +277,10 @@ export class KeepaPopulateService {
             imageUrl = `https://m.media-amazon.com/images/I/${deal.image}`;
         }
 
+        // Note: Deal object does NOT have salesRank, reviewCount, isAmazon, isPrime
+        // These fields would require a separate Product API call (costs more tokens)
+        // For now we save what we have from the Deal endpoint
+
         // Upsert to database
         const product = await prisma.product.upsert({
             where: { asin: deal.asin },
@@ -285,14 +288,11 @@ export class KeepaPopulateService {
                 title: deal.title || `Product ${deal.asin}`,
                 currentPrice: KeepaUtils.centsToEuros(currentPriceCents),
                 originalPrice: KeepaUtils.centsToEuros(originalPriceCents),
-                discount: Math.max(0, Math.min(100, discountPercent)),
-                salesRank: deal.salesRank || null,
-                rating: deal.rating ? KeepaUtils.keepaRatingToStars(deal.rating) : null,
-                reviewCount: deal.reviewCount || null,
+                discount: discountPercent,
+                // Deal API doesn't provide these - leave existing values or null
+                // salesRank, reviewCount, rating, isAmazonSeller, isPrime not updated
                 category: categoryName,
                 imageUrl,
-                isAmazonSeller: deal.isAmazon || false,
-                isPrime: deal.isPrime || false,
                 lastPriceCheckAt: new Date(),
                 keepaDataTTL: 1440, // 24 hours in minutes
                 updatedAt: new Date()
@@ -302,14 +302,15 @@ export class KeepaPopulateService {
                 title: deal.title || `Product ${deal.asin}`,
                 currentPrice: KeepaUtils.centsToEuros(currentPriceCents),
                 originalPrice: KeepaUtils.centsToEuros(originalPriceCents),
-                discount: Math.max(0, Math.min(100, discountPercent)),
-                salesRank: deal.salesRank || null,
-                rating: deal.rating ? KeepaUtils.keepaRatingToStars(deal.rating) : null,
-                reviewCount: deal.reviewCount || null,
+                discount: discountPercent,
+                // Deal API doesn't provide these fields
+                salesRank: null,
+                rating: null,
+                reviewCount: null,
                 category: categoryName,
                 imageUrl,
-                isAmazonSeller: deal.isAmazon || false,
-                isPrime: deal.isPrime || false,
+                isAmazonSeller: false,
+                isPrime: false,
                 lastPriceCheckAt: new Date(),
                 keepaDataTTL: 1440
             }
