@@ -5,6 +5,8 @@ import { TelegramBotService } from './TelegramBotService';
 import { ProductCacheService } from './ProductCacheService';
 import { SecurityService } from './SecurityService';
 import { needsKeepaRefresh, getPlanLimits } from '../config/planLimits';
+import { KeepaPopulateService } from './KeepaPopulateService';
+import { AMAZON_IT_CATEGORIES } from '../data/amazon-categories';
 
 const prisma = new PrismaClient();
 const securityService = new SecurityService();
@@ -199,6 +201,120 @@ function buildProductQuery(rule: RuleWithFilters): {
     };
 }
 
+// ═══════════════════════════════════════════════════════════════
+// KEEPA CACHE REFRESH LOGIC
+// ═══════════════════════════════════════════════════════════════
+
+// Minimum deals in cache per category before triggering Keepa refresh
+const MIN_CACHE_DEALS_PER_CATEGORY = 5;
+
+// Maximum age of cache before refresh (24 hours)
+const CACHE_MAX_AGE_HOURS = 24;
+
+/**
+ * Map Italian category names to Keepa category IDs
+ */
+function getCategoryIdFromName(categoryName: string): number | null {
+    const category = AMAZON_IT_CATEGORIES.find(
+        c => c.name.toLowerCase() === categoryName.toLowerCase() ||
+             c.nameEN.toLowerCase() === categoryName.toLowerCase()
+    );
+    return category?.id || null;
+}
+
+/**
+ * Check if cache is sufficient for given categories
+ * Returns categories that need Keepa refresh
+ */
+async function checkCacheStatus(categories: string[]): Promise<{
+    needsRefresh: boolean;
+    categoriesNeedingRefresh: string[];
+    totalCached: number;
+}> {
+    const cutoffDate = new Date(Date.now() - CACHE_MAX_AGE_HOURS * 60 * 60 * 1000);
+    let totalCached = 0;
+    const categoriesNeedingRefresh: string[] = [];
+
+    for (const category of categories) {
+        const count = await prisma.product.count({
+            where: {
+                category,
+                lastPriceCheckAt: { gte: cutoffDate }
+            }
+        });
+
+        totalCached += count;
+
+        if (count < MIN_CACHE_DEALS_PER_CATEGORY) {
+            categoriesNeedingRefresh.push(category);
+        }
+    }
+
+    return {
+        needsRefresh: categoriesNeedingRefresh.length > 0,
+        categoriesNeedingRefresh,
+        totalCached
+    };
+}
+
+/**
+ * Fetch deals from Keepa and populate cache for specific categories
+ * Uses KeepaPopulateService which already handles DB saving
+ */
+async function refreshCacheFromKeepa(categories: string[]): Promise<{
+    success: boolean;
+    dealsSaved: number;
+    tokensUsed: number;
+    errors: string[];
+}> {
+    console.log('📡 Refreshing cache from Keepa...');
+    console.log(`   Categories to refresh: ${categories.join(', ')}`);
+
+    const keepaService = new KeepaPopulateService();
+    let totalSaved = 0;
+    let totalTokens = 0;
+    const allErrors: string[] = [];
+
+    // Check if API key is available
+    if (!process.env.KEEPA_API_KEY) {
+        console.log('   ⚠️  KEEPA_API_KEY not set - cannot fetch from Keepa');
+        return {
+            success: false,
+            dealsSaved: 0,
+            tokensUsed: 0,
+            errors: ['KEEPA_API_KEY not configured']
+        };
+    }
+
+    // Fetch deals from Keepa (the service already saves to DB)
+    // We fetch all categories at once since Keepa deals API is efficient
+    try {
+        const result = await keepaService.populateDeals({
+            maxDeals: 100,           // Fetch more deals per category
+            minRating: 200,          // 2 stars minimum
+            minDiscountPercent: 5    // 5% minimum discount
+        });
+
+        totalSaved = result.saved;
+        totalTokens = result.tokensUsed;
+        allErrors.push(...result.errors);
+
+        console.log(`   ✅ Keepa refresh complete: ${totalSaved} deals saved`);
+        console.log(`   📊 Tokens used: ${totalTokens}`);
+
+    } catch (error: any) {
+        console.error(`   ❌ Keepa fetch error: ${error.message}`);
+        allErrors.push(error.message);
+    }
+
+    return {
+        success: totalSaved > 0,
+        dealsSaved: totalSaved,
+        tokensUsed: totalTokens,
+        errors: allErrors
+    };
+}
+
 /**
  * Log applied filters for debugging
  */
@@ -332,14 +448,45 @@ export class RuleExecutor {
             console.log('');
 
             // ===== STEP 2: Targeting - Find Deals (with Dynamic Query) =====
-            console.log('🎯 STEP 2: Targeting deals from cache with tier-based filters...');
+            console.log('🎯 STEP 2: Targeting deals with tier-based filters...');
 
             const cacheService = new ProductCacheService();
+            const currentUserPlan = rule.user?.plan || 'FREE';
+            const maxResults = PLAN_RESULTS_LIMIT[currentUserPlan] || PLAN_RESULTS_LIMIT.FREE;
 
             // Build dynamic query based on rule filters and user plan
             const query = buildProductQuery(rule as RuleWithFilters);
 
             console.log(`   Query filters: ${JSON.stringify(query.where, null, 2).split('\n').slice(0, 10).join('\n')}...`);
+
+            // ═══════════════════════════════════════════════════════════════
+            // STEP 2a: Check cache status and refresh from Keepa if needed
+            // ═══════════════════════════════════════════════════════════════
+            console.log('\n   📦 Checking cache status...');
+            const cacheStatus = await checkCacheStatus(rule.categories);
+            console.log(`   Cache status: ${cacheStatus.totalCached} deals cached for categories: ${rule.categories.join(', ')}`);
+
+            if (cacheStatus.needsRefresh) {
+                console.log(`   ⚠️  Cache insufficient for: ${cacheStatus.categoriesNeedingRefresh.join(', ')}`);
+                console.log('   🔄 Triggering Keepa refresh...\n');
+
+                const refreshResult = await refreshCacheFromKeepa(cacheStatus.categoriesNeedingRefresh);
+
+                if (refreshResult.success) {
+                    console.log(`   ✅ Cache refreshed: ${refreshResult.dealsSaved} new deals fetched`);
+                } else if (refreshResult.errors.length > 0) {
+                    console.log(`   ⚠️  Keepa refresh had issues: ${refreshResult.errors.join(', ')}`);
+                    // Continue anyway - use whatever is in cache
+                }
+                console.log('');
+            } else {
+                console.log('   ✅ Cache is sufficient, no Keepa refresh needed\n');
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // STEP 2b: Query products from cache (now potentially refreshed)
+            // ═══════════════════════════════════════════════════════════════
+            console.log('   🔍 Querying cached products...');
 
             // Search in cached products with all applicable filters
             const deals = await prisma.product.findMany({
@@ -348,14 +495,12 @@ export class RuleExecutor {
                 orderBy: query.orderBy,
             });
 
-            const currentUserPlan = rule.user?.plan || 'FREE';
-            const maxResults = PLAN_RESULTS_LIMIT[currentUserPlan] || PLAN_RESULTS_LIMIT.FREE;
             console.log(`✅ Found ${deals.length} matching deals (max to publish: ${maxResults})\n`);
 
-            // If too few deals, warn but continue
+            // If still too few deals after refresh, log warning
             if (deals.length < 5) {
-                console.log('⚠️  Warning: Very few cached deals found.');
-                console.log('   Consider running a cache refresh job to fetch more products from Keepa.\n');
+                console.log('⚠️  Warning: Very few deals found even after cache check.');
+                console.log('   Possible causes: strict filters, rare category, or Keepa API issue.\n');
             }
 
             // ===== STEP 3: Scoring - Filter by Deal Score =====
