@@ -110,6 +110,11 @@ export default function AutomationStudioPage() {
                 }
             } else {
                 // Create new rule
+                // Convert categories array to JSON string if needed
+                const categoriesData = Array.isArray(ruleData.categories)
+                    ? JSON.stringify(ruleData.categories)
+                    : ruleData.categories;
+
                 const response = await fetch(`${API_BASE}/automation/rules`, {
                     method: 'POST',
                     headers: {
@@ -118,6 +123,7 @@ export default function AutomationStudioPage() {
                     },
                     body: JSON.stringify({
                         ...ruleData,
+                        categories: categoriesData,
                         triggers: [{ type: 'SCHEDULE', config: {} }],
                         actions: [{ type: 'PUBLISH_CHANNEL', config: {}, order: 1 }]
                     })
