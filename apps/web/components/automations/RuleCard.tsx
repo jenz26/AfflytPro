@@ -27,7 +27,7 @@ interface RuleCardProps {
         name: string;
         description?: string;
         isActive: boolean;
-        categories: string;
+        categories: string[];  // API returns array
         minScore: number;
         maxPrice?: number;
         channelId?: string;
@@ -60,7 +60,7 @@ export const RuleCard = ({ rule, onToggle, onTest, onEdit, onDelete, onDuplicate
         maxPrice: rule.maxPrice
     });
 
-    const categories = JSON.parse(rule.categories);
+    const categories = rule.categories; // Already an array from API
     const stats = rule.stats || {
         dealsFound: 0,
         dealsPublished: 0,

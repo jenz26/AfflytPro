@@ -26,7 +26,7 @@ interface WizardProps {
         id: string;
         name: string;
         description?: string;
-        categories: string;
+        categories: string[];  // API returns array
         minScore: number;
         maxPrice?: number;
         channelId?: string;
@@ -50,7 +50,7 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
     const [rule, setRule] = useState({
         name: editingRule?.name || '',
         description: editingRule?.description || '',
-        categories: editingRule ? JSON.parse(editingRule.categories) : [] as string[],
+        categories: editingRule?.categories || [] as string[], // Already an array from API
         minScore: editingRule?.minScore || 70,
         maxPrice: editingRule?.maxPrice || undefined as number | undefined,
         channelId: editingRule?.channelId || ''

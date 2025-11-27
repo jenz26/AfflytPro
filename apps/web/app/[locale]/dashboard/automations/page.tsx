@@ -26,7 +26,7 @@ interface AutomationRule {
     name: string;
     description?: string;
     isActive: boolean;
-    categories: string;
+    categories: string[];  // API returns array
     minScore: number;
     maxPrice?: number;
     channelId?: string;
@@ -110,10 +110,10 @@ export default function AutomationStudioPage() {
                 }
             } else {
                 // Create new rule
-                // Convert categories array to JSON string if needed
-                const categoriesData = Array.isArray(ruleData.categories)
-                    ? JSON.stringify(ruleData.categories)
-                    : ruleData.categories;
+                // Categories must be an array for the API
+                const categoriesArray = Array.isArray(ruleData.categories)
+                    ? ruleData.categories
+                    : JSON.parse(ruleData.categories);
 
                 const response = await fetch(`${API_BASE}/automation/rules`, {
                     method: 'POST',
@@ -123,7 +123,7 @@ export default function AutomationStudioPage() {
                     },
                     body: JSON.stringify({
                         ...ruleData,
-                        categories: categoriesData,
+                        categories: categoriesArray,
                         triggers: [{ type: 'SCHEDULE', config: {} }],
                         actions: [{ type: 'PUBLISH_CHANNEL', config: {}, order: 1 }]
                     })
@@ -255,7 +255,7 @@ export default function AutomationStudioPage() {
                 body: JSON.stringify({
                     name: `${rule.name}${t('duplicateSuffix')}`,
                     description: rule.description,
-                    categories: JSON.parse(rule.categories),
+                    categories: rule.categories, // Already an array from API
                     minScore: rule.minScore,
                     maxPrice: rule.maxPrice,
                     channelId: rule.channelId,
