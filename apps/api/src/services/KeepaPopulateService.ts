@@ -52,6 +52,7 @@ interface KeepaRawDeal {
 export class KeepaPopulateService {
     private client: AxiosInstance;
     private apiKey: string;
+    private loggedDealStructure = false;
 
     constructor() {
         this.apiKey = process.env.KEEPA_API_KEY || '';
@@ -214,27 +215,35 @@ export class KeepaPopulateService {
     /**
      * Save a single deal to the database
      */
-    private async saveDeal(deal: KeepaRawDeal): Promise<any> {
-        // Get best current price from available conditions
-        // current array: [0]=Amazon, [1]=New, [2]=Used, etc
-        const amazonPrice = deal.current?.[0] > 0 ? deal.current[0] : null;
-        const newPrice = deal.current?.[1] > 0 ? deal.current[1] : null;
-        const usedPrice = deal.current?.[2] > 0 ? deal.current[2] : null;
+    private async saveDeal(deal: any): Promise<any> {
+        // Debug: log first deal structure to understand the format
+        if (!this.loggedDealStructure) {
+            console.log('📋 Deal structure sample:', JSON.stringify(deal, null, 2));
+            this.loggedDealStructure = true;
+        }
 
-        // Use the best available price (Amazon first, then New, then Used)
-        const currentPriceCents = amazonPrice || newPrice || usedPrice;
+        // Deals API returns different structure than Product API
+        // Fields: asin, title, image (array of bytes), current, avg, delta, deltaPercent, etc.
 
-        if (!currentPriceCents || currentPriceCents <= 0) {
+        // Get current price - deal.current is array of prices by type
+        const currentPriceRaw = deal.current?.[0] ?? deal.current?.[1] ?? deal.current?.[2];
+        const currentPriceCents = typeof currentPriceRaw === 'number' && currentPriceRaw > 0
+            ? currentPriceRaw
+            : null;
+
+        if (!currentPriceCents) {
             return null; // Skip if no valid price
         }
 
-        // Get original/list price from avg or calculate from delta
-        const avgPrice = deal.avg?.[0] || deal.avg?.[1] || currentPriceCents;
-        const discountPercent = deal.deltaPercent?.[0] || deal.deltaPercent?.[1] || 0;
+        // Get discount percent - ensure it's a valid number
+        const discountRaw = deal.deltaPercent?.[0] ?? deal.deltaPercent?.[1] ?? 0;
+        const discountPercent = typeof discountRaw === 'number' && !isNaN(discountRaw) && discountRaw > 0 && discountRaw < 100
+            ? Math.round(discountRaw)
+            : 0;
 
-        // Calculate original price if we have discount
-        let originalPriceCents = avgPrice;
-        if (discountPercent > 0 && discountPercent < 100) {
+        // Calculate original price from current price and discount
+        let originalPriceCents = currentPriceCents;
+        if (discountPercent > 0) {
             originalPriceCents = Math.round(currentPriceCents / (1 - discountPercent / 100));
         }
 
@@ -243,10 +252,15 @@ export class KeepaPopulateService {
         const category = AMAZON_IT_CATEGORIES.find(c => c.id === categoryId);
         const categoryName = category?.name || 'Altro';
 
-        // Build image URL
-        const imageUrl = deal.image
-            ? `https://m.media-amazon.com/images/I/${deal.image}`
-            : undefined;
+        // Build image URL - deal.image is array of char codes, need to convert
+        let imageUrl: string | undefined;
+        if (deal.image && Array.isArray(deal.image)) {
+            // Convert array of char codes to string
+            const imageFileName = String.fromCharCode(...deal.image);
+            imageUrl = `https://m.media-amazon.com/images/I/${imageFileName}`;
+        } else if (typeof deal.image === 'string') {
+            imageUrl = `https://m.media-amazon.com/images/I/${deal.image}`;
+        }
 
         // Upsert to database
         const product = await prisma.product.upsert({
