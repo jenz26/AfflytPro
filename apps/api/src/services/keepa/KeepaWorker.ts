@@ -91,7 +91,14 @@ export class KeepaWorker {
 
       const estimatedCost = this.estimateJobCost(nextJob);
       if (tokensAvailable < estimatedCost) {
-        // Not enough tokens, wait
+        // Not enough tokens, wait - log only once per minute to avoid spam
+        const lastWarnKey = 'keepa:last_token_warn';
+        const lastWarn = await this.redis.get(lastWarnKey);
+        const now = Date.now();
+        if (!lastWarn || now - parseInt(lastWarn, 10) > 60000) {
+          console.log(`[KeepaWorker] Waiting for tokens: have ${tokensAvailable}, need ${estimatedCost} for job ${nextJob.category}`);
+          await this.redis.set(lastWarnKey, now.toString(), 'EX', 120);
+        }
         return;
       }
 
