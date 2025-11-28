@@ -13,13 +13,17 @@ import {
     X,
     Info,
     Clock,
-    Lock
+    Lock,
+    Tag,
+    TrendingDown,
+    TrendingUp,
+    AlertTriangle,
+    BarChart3
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
-import { TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 
 interface WizardProps {
     onComplete: (rule: any) => void;
@@ -57,7 +61,10 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         maxPrice: editingRule?.maxPrice || undefined as number | undefined,
         channelId: editingRule?.channelId || '',
         // Scheduling (NEW)
-        schedulePreset: 'relaxed' as string
+        schedulePreset: 'relaxed' as string,
+        // Deal publish mode (NEW)
+        dealPublishMode: 'DISCOUNTED_ONLY' as 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH',
+        includeKeepaChart: false
     });
 
     // Schedule presets data
@@ -459,6 +466,125 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                 </span>
                             </div>
                         </div>
+
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        {/* DEAL PUBLISH MODE SECTION */}
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        <div className="border-t border-afflyt-glass-border my-6 pt-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                    <Tag className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-white">Tipo di Offerte</h4>
+                                    <p className="text-xs text-gray-400">Quali offerte vuoi pubblicare?</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {/* Discounted Only */}
+                                <button
+                                    onClick={() => setRule({ ...rule, dealPublishMode: 'DISCOUNTED_ONLY' })}
+                                    className={`w-full p-4 rounded-lg border transition-all text-left ${
+                                        rule.dealPublishMode === 'DISCOUNTED_ONLY'
+                                            ? 'bg-green-500/10 border-green-500/40'
+                                            : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-green-500/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Tag className={`w-5 h-5 ${rule.dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-green-400' : 'text-gray-500'}`} />
+                                        <div className="flex-1">
+                                            <p className={`font-medium ${rule.dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-white' : 'text-gray-300'}`}>
+                                                Solo Sconti Visibili
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                Solo offerte con prezzo barrato su Amazon (es. €29.99 → €19.99)
+                                            </p>
+                                        </div>
+                                        {rule.dealPublishMode === 'DISCOUNTED_ONLY' && (
+                                            <CheckCircle className="w-5 h-5 text-green-400" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Lowest Price */}
+                                <button
+                                    onClick={() => setRule({ ...rule, dealPublishMode: 'LOWEST_PRICE' })}
+                                    className={`w-full p-4 rounded-lg border transition-all text-left ${
+                                        rule.dealPublishMode === 'LOWEST_PRICE'
+                                            ? 'bg-blue-500/10 border-blue-500/40'
+                                            : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-blue-500/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <TrendingDown className={`w-5 h-5 ${rule.dealPublishMode === 'LOWEST_PRICE' ? 'text-blue-400' : 'text-gray-500'}`} />
+                                        <div className="flex-1">
+                                            <p className={`font-medium ${rule.dealPublishMode === 'LOWEST_PRICE' ? 'text-white' : 'text-gray-300'}`}>
+                                                Solo Minimi Storici
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                Quando il prezzo è al minimo (anche senza sconto visibile)
+                                            </p>
+                                        </div>
+                                        {rule.dealPublishMode === 'LOWEST_PRICE' && (
+                                            <CheckCircle className="w-5 h-5 text-blue-400" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {/* Both */}
+                                <button
+                                    onClick={() => setRule({ ...rule, dealPublishMode: 'BOTH' })}
+                                    className={`w-full p-4 rounded-lg border transition-all text-left ${
+                                        rule.dealPublishMode === 'BOTH'
+                                            ? 'bg-purple-500/10 border-purple-500/40'
+                                            : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Zap className={`w-5 h-5 ${rule.dealPublishMode === 'BOTH' ? 'text-purple-400' : 'text-gray-500'}`} />
+                                        <div className="flex-1">
+                                            <p className={`font-medium ${rule.dealPublishMode === 'BOTH' ? 'text-white' : 'text-gray-300'}`}>
+                                                Entrambi
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                Pubblica sia sconti visibili che minimi storici
+                                            </p>
+                                        </div>
+                                        {rule.dealPublishMode === 'BOTH' && (
+                                            <CheckCircle className="w-5 h-5 text-purple-400" />
+                                        )}
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        {/* KEEPA CHART TOGGLE */}
+                        {/* ═══════════════════════════════════════════════════════════════ */}
+                        <div className="p-4 bg-afflyt-glass-white rounded-lg">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                    <BarChart3 className="w-5 h-5 text-orange-400" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-white">Grafico Storico Prezzi</p>
+                                    <p className="text-xs text-gray-400">
+                                        Includi il grafico Keepa per mostrare l'andamento
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setRule({ ...rule, includeKeepaChart: !rule.includeKeepaChart })}
+                                    className={`w-12 h-6 rounded-full transition-all ${
+                                        rule.includeKeepaChart ? 'bg-orange-500' : 'bg-gray-600'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${
+                                        rule.includeKeepaChart ? 'translate-x-6' : 'translate-x-0.5'
+                                    }`} />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 );
 
@@ -505,6 +631,23 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                 <span className="text-purple-400">
                                     {schedulePresets.find(p => p.id === rule.schedulePreset)?.emoji}{' '}
                                     {schedulePresets.find(p => p.id === rule.schedulePreset)?.label}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Tipo Offerte</span>
+                                <span className={
+                                    rule.dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-green-400' :
+                                    rule.dealPublishMode === 'LOWEST_PRICE' ? 'text-blue-400' : 'text-purple-400'
+                                }>
+                                    {rule.dealPublishMode === 'DISCOUNTED_ONLY' && '🏷️ Solo Sconti'}
+                                    {rule.dealPublishMode === 'LOWEST_PRICE' && '📉 Solo Minimi'}
+                                    {rule.dealPublishMode === 'BOTH' && '⚡ Entrambi'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Grafico Keepa</span>
+                                <span className={rule.includeKeepaChart ? 'text-orange-400' : 'text-gray-500'}>
+                                    {rule.includeKeepaChart ? '📊 Incluso' : 'Non incluso'}
                                 </span>
                             </div>
                         </GlassCard>

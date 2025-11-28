@@ -137,6 +137,12 @@ enum ActionType {
   WEBHOOK
 }
 
+enum DealPublishMode {
+  DISCOUNTED_ONLY    // Solo prodotti con prezzo barrato visibile su Amazon (listPrice > currentPrice)
+  LOWEST_PRICE       // Solo prodotti al prezzo più basso storico (anche senza sconto visibile)
+  BOTH               // Entrambi i tipi di deal
+}
+
 // === USER & AUTHENTICATION ===
 
 model User {
@@ -562,6 +568,15 @@ model AutomationRule {
   /// A/B Split test ID (optional)
   splitId String?
   split   AutomationSplit? @relation(fields: [splitId], references: [id], onDelete: SetNull)
+
+  /// Tipo di deal da pubblicare
+  /// DISCOUNTED_ONLY = solo con prezzo barrato visibile su Amazon
+  /// LOWEST_PRICE = solo al minimo storico (anche senza sconto visibile)
+  /// BOTH = entrambi
+  dealPublishMode  DealPublishMode @default(DISCOUNTED_ONLY)
+
+  /// Includere il grafico storico prezzi Keepa nel messaggio
+  includeKeepaChart  Boolean @default(false)
 
   // ═══════════════════════════════════════════════════════════════
   // SCHEDULING CONFIG

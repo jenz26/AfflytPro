@@ -85,6 +85,11 @@ export class TelegramBotService {
       reviewCount: number;
       imageUrl?: string;
       affiliateLink: string;
+      // New fields for deal type
+      dealType?: 'discounted' | 'lowest_price';
+      hasVisibleDiscount?: boolean;
+      isLowestEver?: boolean;
+      includeKeepaChart?: boolean;
     },
     userId?: string,
     amazonTag?: string
@@ -128,18 +133,46 @@ export class TelegramBotService {
         }
       }
 
-      // 2. Format message with short link
+      // 2. Format message based on deal type
       const discountPercent = Math.round(deal.discount * 100);
       const savings = (deal.originalPrice - deal.price).toFixed(2);
 
+      // Different header based on deal type
+      let header = '🔥 *HOT DEAL ALERT!*';
+      let priceSection = '';
+
+      if (deal.dealType === 'lowest_price' && !deal.hasVisibleDiscount) {
+        // Lowest price deal without visible discount on Amazon
+        header = '📉 *PREZZO MINIMO STORICO!*';
+        priceSection = `💰 *Prezzo:* €${deal.price}
+📊 *Al minimo storico* - Non troverai di meglio!`;
+      } else {
+        // Regular discounted deal
+        priceSection = `💰 *Prezzo:* €${deal.price} ~€${deal.originalPrice}~
+💸 *Risparmi:* €${savings} (-${discountPercent}%)`;
+      }
+
+      // Add lowest price badge if applicable
+      const lowestBadge = deal.isLowestEver && deal.hasVisibleDiscount
+        ? '\n🏆 *Prezzo più basso di sempre!*'
+        : '';
+
+      // Rating section (only if rating > 0)
+      const ratingSection = deal.rating > 0
+        ? `\n⭐ *Rating:* ${deal.rating}/5 (${deal.reviewCount.toLocaleString()} recensioni)`
+        : '';
+
+      // Keepa chart URL (free API, domain 8 = Italy)
+      const keepaChartUrl = deal.includeKeepaChart
+        ? `https://graph.keepa.com/pricehistory.png?asin=${deal.asin}&domain=8&salesrank=0&bb=1&range=180`
+        : null;
+
       const message = `
-🔥 *HOT DEAL ALERT!*
+${header}
 
 ${deal.title}
 
-💰 *Prezzo:* €${deal.price} ~€${deal.originalPrice}~
-💸 *Risparmi:* €${savings} (-${discountPercent}%)
-⭐ *Rating:* ${deal.rating}/5 (${deal.reviewCount} recensioni)
+${priceSection}${lowestBadge}${ratingSection}
 
 👉 [Vedi su Amazon](${shortUrl})
 
@@ -171,6 +204,19 @@ _#Ad | Deal trovato da Afflyt Pro 🤖_
           parse_mode: 'Markdown',
           ...(keyboard && { reply_markup: keyboard })
         });
+      }
+
+      // 5. Send Keepa price history chart if enabled
+      if (keepaChartUrl) {
+        try {
+          await bot.telegram.sendPhoto(channelId, keepaChartUrl, {
+            caption: `📈 _Storico prezzi ultimi 180 giorni (${deal.asin})_`,
+            parse_mode: 'Markdown'
+          });
+        } catch (chartError) {
+          // Don't fail the whole message if chart fails
+          console.warn(`Failed to send Keepa chart for ${deal.asin}:`, chartError);
+        }
       }
 
       return { success: true, shortUrl };

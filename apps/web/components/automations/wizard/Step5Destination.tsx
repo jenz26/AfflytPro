@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Send, Radio, Clock, Zap, Plus, AlertCircle } from 'lucide-react';
+import { Send, Radio, Clock, Zap, Plus, AlertCircle, Tag, TrendingDown, BarChart3 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
@@ -16,14 +16,29 @@ interface Channel {
     status: 'CONNECTED' | 'PENDING' | 'ERROR';
 }
 
+type DealPublishMode = 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
+
 interface Step5DestinationProps {
     channelId: string;
     userPlan: string;
     frequencyLabel: string;
+    dealPublishMode?: DealPublishMode;
+    includeKeepaChart?: boolean;
     onChange: (channelId: string) => void;
+    onDealModeChange?: (mode: DealPublishMode) => void;
+    onKeepaChartChange?: (include: boolean) => void;
 }
 
-export function Step5Destination({ channelId, userPlan, frequencyLabel, onChange }: Step5DestinationProps) {
+export function Step5Destination({
+    channelId,
+    userPlan,
+    frequencyLabel,
+    dealPublishMode = 'DISCOUNTED_ONLY',
+    includeKeepaChart = false,
+    onChange,
+    onDealModeChange,
+    onKeepaChartChange
+}: Step5DestinationProps) {
     const t = useTranslations('automations.wizard.step5');
     const [channels, setChannels] = useState<Channel[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -202,6 +217,132 @@ export function Step5Destination({ channelId, userPlan, frequencyLabel, onChange
                         </p>
                         <p className="text-xs text-gray-500">{t('maxResults.perRun')}</p>
                     </div>
+                </div>
+            </GlassCard>
+
+            {/* Deal Publish Mode */}
+            <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">
+                    Tipo di offerte da pubblicare
+                </label>
+                <div className="space-y-2">
+                    {/* Discounted Only */}
+                    <button
+                        onClick={() => onDealModeChange?.('DISCOUNTED_ONLY')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'DISCOUNTED_ONLY'
+                                ? 'bg-green-500/10 border-green-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-green-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'DISCOUNTED_ONLY' ? 'bg-green-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <Tag className={`w-5 h-5 ${dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-green-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-white' : 'text-gray-300'}`}>
+                                    Solo Sconti Visibili
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Pubblica solo offerte con prezzo barrato su Amazon (es. €29.99 → €19.99)
+                                </p>
+                            </div>
+                            {dealPublishMode === 'DISCOUNTED_ONLY' && (
+                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Lowest Price */}
+                    <button
+                        onClick={() => onDealModeChange?.('LOWEST_PRICE')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'LOWEST_PRICE'
+                                ? 'bg-blue-500/10 border-blue-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-blue-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'LOWEST_PRICE' ? 'bg-blue-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <TrendingDown className={`w-5 h-5 ${dealPublishMode === 'LOWEST_PRICE' ? 'text-blue-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'LOWEST_PRICE' ? 'text-white' : 'text-gray-300'}`}>
+                                    Solo Minimi Storici
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Pubblica solo quando il prezzo è al minimo storico (anche senza sconto visibile)
+                                </p>
+                            </div>
+                            {dealPublishMode === 'LOWEST_PRICE' && (
+                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Both */}
+                    <button
+                        onClick={() => onDealModeChange?.('BOTH')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'BOTH'
+                                ? 'bg-purple-500/10 border-purple-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'BOTH' ? 'bg-purple-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <Zap className={`w-5 h-5 ${dealPublishMode === 'BOTH' ? 'text-purple-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'BOTH' ? 'text-white' : 'text-gray-300'}`}>
+                                    Entrambi
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Pubblica sia sconti visibili che minimi storici
+                                </p>
+                            </div>
+                            {dealPublishMode === 'BOTH' && (
+                                <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            {/* Keepa Chart Toggle */}
+            <GlassCard className="p-4 bg-afflyt-dark-100/50">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                        <BarChart3 className="w-5 h-5 text-orange-400" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-white">Grafico Storico Prezzi</p>
+                        <p className="text-xs text-gray-400">
+                            Includi il grafico Keepa per mostrare l'andamento dei prezzi
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => onKeepaChartChange?.(!includeKeepaChart)}
+                        className={`w-12 h-6 rounded-full transition-all ${
+                            includeKeepaChart ? 'bg-orange-500' : 'bg-gray-600'
+                        }`}
+                    >
+                        <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${
+                            includeKeepaChart ? 'translate-x-6' : 'translate-x-0.5'
+                        }`} />
+                    </button>
                 </div>
             </GlassCard>
         </div>

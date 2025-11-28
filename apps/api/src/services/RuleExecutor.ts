@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, AutomationRule } from '@prisma/client';
+import { PrismaClient, Prisma, AutomationRule, DealPublishMode } from '@prisma/client';
 import { ScoringEngine } from './ScoringEngine';
 import { MessageFormatter } from './MessageFormatter';
 import { TelegramBotService } from './TelegramBotService';
@@ -14,21 +14,45 @@ const securityService = new SecurityService();
 const keepaEngine = new KeepaEngine();
 
 // ═══════════════════════════════════════════════════════════════
+// DEAL TYPE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+
+interface VerifiedDeal {
+    asin: string;
+    title: string;
+    currentPrice: number;
+    originalPrice: number;
+    discount: number;
+    rating: number;
+    reviewCount: number;
+    imageUrl?: string;
+    score: number;
+    verified: boolean;
+    dealType: 'discounted' | 'lowest_price';  // Tipo di deal
+    hasVisibleDiscount: boolean;              // Ha il prezzo barrato su Amazon
+    isLowestEver: boolean;                    // È al minimo storico
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PRODUCT VERIFICATION WITH KEEPA PRODUCT API
 // ═══════════════════════════════════════════════════════════════
 
 /**
  * Verify deals using Keepa Product API to get accurate pricing.
- * Returns only deals that are verified and still have a real discount.
+ * Filters based on dealPublishMode:
+ * - DISCOUNTED_ONLY: only deals with visible strikethrough price on Amazon
+ * - LOWEST_PRICE: only deals at historical lowest (even without visible discount)
+ * - BOTH: include both types
  *
  * Cost: 1 token per ASIN
  */
 async function verifyDealsWithProductAPI(
     deals: any[],
     userId: string,
+    publishMode: DealPublishMode = 'DISCOUNTED_ONLY',
     minDiscountPercent: number = 10
-): Promise<any[]> {
-    const verifiedDeals: any[] = [];
+): Promise<VerifiedDeal[]> {
+    const verifiedDeals: VerifiedDeal[] = [];
 
     for (const deal of deals) {
         try {
@@ -40,51 +64,76 @@ async function verifyDealsWithProductAPI(
             const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
             const needsRefresh = !product?.lastPriceCheckAt ||
                                  product.lastPriceCheckAt < twoHoursAgo ||
-                                 !product.rating; // Also refresh if no rating (Deal API didn't have it)
+                                 !product.rating;
 
+            let freshData: any = product;
             if (needsRefresh) {
                 // Refresh with Product API (1 token)
-                const freshData = await keepaEngine.checkAndRefresh(deal.asin, userId);
+                freshData = await keepaEngine.checkAndRefresh(deal.asin, userId);
+            }
 
-                if (freshData) {
-                    // Calculate actual discount
-                    const actualDiscount = freshData.originalPrice > freshData.currentPrice
-                        ? Math.round(((freshData.originalPrice - freshData.currentPrice) / freshData.originalPrice) * 100)
-                        : 0;
+            if (!freshData) continue;
 
-                    // Only include if still has a meaningful discount
-                    if (actualDiscount >= minDiscountPercent) {
-                        verifiedDeals.push({
-                            ...deal,
-                            currentPrice: freshData.currentPrice,
-                            originalPrice: freshData.originalPrice,
-                            discount: actualDiscount,
-                            rating: freshData.rating || deal.rating,
-                            reviewCount: freshData.reviewCount || deal.reviewCount,
-                            verified: true
-                        });
-                    }
-                }
-            } else {
-                // Product data is fresh enough, use cached
-                const actualDiscount = product.originalPrice > product.currentPrice
-                    ? Math.round(((product.originalPrice - product.currentPrice) / product.originalPrice) * 100)
-                    : 0;
+            // Calculate metrics
+            const currentPrice = freshData.currentPrice || 0;
+            const originalPrice = freshData.originalPrice || currentPrice;
+            const listPrice = originalPrice; // originalPrice is the listPrice from Keepa
 
-                if (actualDiscount >= minDiscountPercent) {
-                    verifiedDeals.push({
-                        ...deal,
-                        currentPrice: product.currentPrice,
-                        originalPrice: product.originalPrice,
-                        discount: actualDiscount,
-                        rating: product.rating || deal.rating,
-                        reviewCount: product.reviewCount || deal.reviewCount,
-                        verified: true
-                    });
-                }
+            // Has visible discount on Amazon = listPrice > currentPrice
+            const hasVisibleDiscount = listPrice > currentPrice && listPrice > 0;
+            const discountPercent = hasVisibleDiscount
+                ? Math.round(((listPrice - currentPrice) / listPrice) * 100)
+                : 0;
+
+            // Check if at lowest price ever
+            // We consider it "lowest" if the deal's deltaPercent indicates a significant drop
+            // from the 90-day average (deal.discount from Deal API represents this)
+            const isLowestEver = deal.discount >= 15 || deal.dealType === 'price_drop';
+
+            // Determine deal type
+            let dealType: 'discounted' | 'lowest_price' = 'lowest_price';
+            if (hasVisibleDiscount && discountPercent >= minDiscountPercent) {
+                dealType = 'discounted';
+            }
+
+            // Filter based on publishMode
+            let includeThisDeal = false;
+
+            switch (publishMode) {
+                case 'DISCOUNTED_ONLY':
+                    // Only include if has visible discount on Amazon
+                    includeThisDeal = hasVisibleDiscount && discountPercent >= minDiscountPercent;
+                    break;
+
+                case 'LOWEST_PRICE':
+                    // Only include if at lowest price (even without visible discount)
+                    includeThisDeal = isLowestEver && !hasVisibleDiscount;
+                    break;
+
+                case 'BOTH':
+                    // Include either discounted or lowest price deals
+                    includeThisDeal = (hasVisibleDiscount && discountPercent >= minDiscountPercent) || isLowestEver;
+                    break;
+            }
+
+            if (includeThisDeal) {
+                verifiedDeals.push({
+                    asin: deal.asin,
+                    title: deal.title || freshData.title,
+                    currentPrice,
+                    originalPrice: hasVisibleDiscount ? listPrice : currentPrice,
+                    discount: discountPercent,
+                    rating: freshData.rating || deal.rating || 0,
+                    reviewCount: freshData.reviewCount || deal.reviewCount || 0,
+                    imageUrl: freshData.imageUrl || deal.imageUrl,
+                    score: deal.score || 0,
+                    verified: true,
+                    dealType,
+                    hasVisibleDiscount,
+                    isLowestEver
+                });
             }
         } catch (error) {
-            // If verification fails, skip this deal (don't publish unverified)
             console.warn(`Failed to verify deal ${deal.asin}:`, error);
         }
     }
@@ -540,11 +589,12 @@ export class RuleExecutor {
                 .slice(0, dealsLimit * 2); // Get 2x to have fallbacks after verification
 
             // STEP 5.5: Verify deals with Product API for accurate pricing
-            // This ensures we only publish deals with real, verified discounts
+            // Filter based on dealPublishMode (DISCOUNTED_ONLY, LOWEST_PRICE, or BOTH)
             const verifiedDeals = await verifyDealsWithProductAPI(
                 candidateDeals,
                 rule.userId,
-                10 // Minimum 10% verified discount
+                rule.dealPublishMode,
+                rule.minDiscount || 10 // Minimum discount percentage
             );
 
             // Take the final number of verified deals
@@ -596,10 +646,15 @@ export class RuleExecutor {
                             rating: deal.rating || 0,
                             reviewCount: deal.reviewCount || 0,
                             imageUrl: deal.imageUrl || undefined,
-                            affiliateLink
+                            affiliateLink,
+                            // New fields for deal type
+                            dealType: deal.dealType,
+                            hasVisibleDiscount: deal.hasVisibleDiscount,
+                            isLowestEver: deal.isLowestEver,
+                            includeKeepaChart: rule.includeKeepaChart
                         },
-                        rule.userId,       // Pass userId for tracking
-                        userAmazonTag      // Pass amazonTag for tracking
+                        rule.userId,
+                        userAmazonTag
                     );
 
                     if (result.success) {
