@@ -170,18 +170,26 @@ export class KeepaPopulateService {
             return null; // Skip if no valid price
         }
 
-        // Get discount percent - deltaPercent is 2D array: deltaPercent[priceType][timeRange]
+        // Get discount percent - deltaPercent is 2D array: deltaPercent[dateRange][priceType]
+        // dateRange: 0=day (24h), 1=week (7d), 2=month (31d), 3=90days
         // priceType: 0=Amazon, 1=New, 2=Used, etc.
-        // timeRange: 0=1day, 1=7days, 2=30days, 3=90days
-        // We want the 30-day or 90-day comparison for Amazon price (index 0)
+        // We want the 30-day (index 2) or 90-day (index 3) comparison for Amazon price (priceType 0)
         let discountPercent = 0;
         if (deal.deltaPercent && Array.isArray(deal.deltaPercent)) {
-            // Try Amazon price type first (index 0), then New (index 1)
-            const amazonDeltas = deal.deltaPercent[0];
-            const newDeltas = deal.deltaPercent[1];
+            // deltaPercent[dateRange][priceType]
+            // Try 30-day range first (index 2), then 90-day (index 3), then week (1), then day (0)
+            const monthData = deal.deltaPercent[2];   // 30 days
+            const quarterData = deal.deltaPercent[3]; // 90 days
+            const weekData = deal.deltaPercent[1];    // 7 days
+            const dayData = deal.deltaPercent[0];     // 24 hours
 
-            // Get 30-day delta (index 2) or 90-day (index 3)
-            const deltaValue = amazonDeltas?.[2] ?? amazonDeltas?.[3] ?? newDeltas?.[2] ?? newDeltas?.[3] ?? 0;
+            // For each date range, try Amazon price (0), then New price (1)
+            const deltaValue =
+                monthData?.[0] ?? monthData?.[1] ??     // 30-day: Amazon or New
+                quarterData?.[0] ?? quarterData?.[1] ?? // 90-day: Amazon or New
+                weekData?.[0] ?? weekData?.[1] ??       // 7-day: Amazon or New
+                dayData?.[0] ?? dayData?.[1] ??         // 24h: Amazon or New
+                0;
 
             // deltaPercent is negative for price drops (we want positive discount)
             if (typeof deltaValue === 'number' && deltaValue < 0) {
@@ -189,12 +197,36 @@ export class KeepaPopulateService {
             }
         }
 
+        // Also try to get original price from avg (average prices)
+        // avg[dateRange][priceType] - use 30-day or 90-day average as "original" price
+        let originalPriceFromAvg: number | null = null;
+        if (deal.avg && Array.isArray(deal.avg)) {
+            const monthAvg = deal.avg[2];   // 30-day average
+            const quarterAvg = deal.avg[3]; // 90-day average
+
+            const avgValue =
+                monthAvg?.[0] ?? monthAvg?.[1] ??       // 30-day: Amazon or New
+                quarterAvg?.[0] ?? quarterAvg?.[1] ??   // 90-day: Amazon or New
+                null;
+
+            if (typeof avgValue === 'number' && avgValue > 0) {
+                originalPriceFromAvg = avgValue;
+            }
+        }
+
         // Clamp discount to valid range
         discountPercent = Math.max(0, Math.min(99, Math.round(discountPercent)));
 
-        // Calculate original price from current price and discount
+        // Calculate original price - prefer avg data, fallback to calculation from discount
         let originalPriceCents = currentPriceCents;
-        if (discountPercent > 0) {
+        if (originalPriceFromAvg && originalPriceFromAvg > currentPriceCents) {
+            // Use average price as original (more accurate)
+            originalPriceCents = originalPriceFromAvg;
+            // Recalculate discount from actual prices
+            discountPercent = Math.round(((originalPriceCents - currentPriceCents) / originalPriceCents) * 100);
+            discountPercent = Math.max(0, Math.min(99, discountPercent));
+        } else if (discountPercent > 0) {
+            // Fallback: calculate original from discount percentage
             originalPriceCents = Math.round(currentPriceCents / (1 - discountPercent / 100));
         }
 
