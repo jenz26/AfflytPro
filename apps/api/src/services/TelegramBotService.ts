@@ -3,6 +3,7 @@ import { Telegraf } from 'telegraf';
 // Internal API configuration
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'internal-dev-key';
 const API_BASE = process.env.API_BASE_INTERNAL || `http://localhost:${process.env.PORT || 3001}`;
+const API_BASE_PUBLIC = process.env.API_BASE_PUBLIC || 'https://api.afflyt.io';
 const APP_URL = process.env.APP_URL || 'https://afflyt.io';
 
 /**
@@ -176,9 +177,9 @@ export class TelegramBotService {
         ? `\n⭐ *Rating:* ${escapeMarkdownV2(deal.rating.toString())}/5 \\(${escapeMarkdownV2(deal.reviewCount.toLocaleString())} recensioni\\)`
         : '';
 
-      // Keepa chart URL (free API, domain 8 = Italy)
+      // Keepa chart URL (via our proxy to protect API key)
       const keepaChartUrl = deal.includeKeepaChart
-        ? `https://graph.keepa.com/pricehistory.png?asin=${deal.asin}&domain=8&salesrank=0&bb=1&range=180`
+        ? `${API_BASE_PUBLIC}/keepa/graph/${deal.asin}?domain=it&range=180&bb=1&salesrank=0`
         : null;
 
       const message = `
