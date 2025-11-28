@@ -27,10 +27,7 @@ export default function RedirectPage() {
         const trackClick = async () => {
             try {
                 const response = await fetch(`${API_BASE}/track/r/${code}/clickout`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    method: 'POST'
                 });
 
                 if (!response.ok) {
