@@ -252,6 +252,15 @@ export class KeepaWorker {
     const scored = this.scoreDeals(modeFiltered);
     const scoredFiltered = scored.filter(d => d.score >= rule.minScore);
 
+    // Diagnostic logging
+    console.log(`[KeepaWorker] Rule ${rule.ruleId} filter pipeline: ${deals.length} -> ${filtered.length} (filters) -> ${modeFiltered.length} (mode: ${rule.dealPublishMode}) -> ${scoredFiltered.length} (minScore: ${rule.minScore})`);
+
+    // Log top 3 scores if we have scored deals but none passed minScore
+    if (scored.length > 0 && scoredFiltered.length === 0) {
+      const topScores = scored.slice(0, 3).map(d => `${d.asin}: ${d.score} (disc:${d.discountPercent}%)`);
+      console.log(`[KeepaWorker] Top scores: ${topScores.join(', ')}`);
+    }
+
     // 4. Limit to dealsPerRun
     const toPublish = scoredFiltered.slice(0, rule.dealsPerRun);
 
