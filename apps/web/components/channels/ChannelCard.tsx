@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Send, MessageSquare, Settings, Trash2, MoreVertical, Copy } from 'lucide-react';
+import { Send, MessageSquare, Settings, Trash2, MoreVertical, Copy, Tag } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 export interface ChannelStats {
@@ -17,6 +17,7 @@ export interface Channel {
     platform: 'TELEGRAM' | 'DISCORD';
     status: 'CONNECTED' | 'PENDING' | 'ERROR';
     channelId: string;
+    amazonTag?: string | null;
     stats?: ChannelStats;
     credential?: {
         id: string;
@@ -63,6 +64,12 @@ export function ChannelCard({ channel, onEdit, onDelete }: ChannelCardProps) {
                     <div>
                         <h4 className="text-white font-bold text-lg">{channel.name}</h4>
                         <p className="text-gray-500 text-sm font-mono">{channel.channelId}</p>
+                        {channel.amazonTag && (
+                            <p className="text-xs text-afflyt-cyan-400 mt-1 flex items-center gap-1">
+                                <Tag className="w-3 h-3" />
+                                {channel.amazonTag}
+                            </p>
+                        )}
                     </div>
                 </div>
 

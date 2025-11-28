@@ -1623,6 +1623,10 @@
       "platformLabel": "Platform",
       "nameLabel": "Name",
       "channelIdLabel": "Channel ID",
+      "amazonTag": "Amazon Affiliate Tag (Optional)",
+      "amazonTagPlaceholder": "e.g. mychannel-21",
+      "amazonTagHelp": "The Amazon affiliate tag specific to this channel. If left empty, your account's default tag will be used.",
+      "amazonTagLabel": "Amazon Tag",
       "saveAndContinue": "Save & Continue",
       "confirmAndConnect": "Confirm & Connect",
       "channelCreateError": "Error creating channel"
@@ -1638,6 +1642,9 @@
       "aboutTo": "You are about to delete:",
       "warning": "This action cannot be undone. All automations linked to this channel will be deactivated.",
       "confirmButton": "Yes, Delete"
+    },
+    "edit": {
+      "title": "Edit Channel"
     }
   },
   "usageDashboard": {

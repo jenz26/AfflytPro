@@ -7,7 +7,13 @@ const createChannelSchema = z.object({
     name: z.string().min(1, 'Name is required').max(100),
     platform: z.enum(['TELEGRAM', 'DISCORD']),
     channelId: z.string().min(1, 'Channel ID is required'),
-    credentialId: z.string().uuid().optional()
+    credentialId: z.string().uuid().optional(),
+    amazonTag: z.string().max(50).optional()
+});
+
+const updateChannelSchema = z.object({
+    name: z.string().min(1).max(100).optional(),
+    amazonTag: z.string().max(50).optional().nullable()
 });
 
 const idParamSchema = z.object({
@@ -19,11 +25,11 @@ export async function channelRoutes(fastify: FastifyInstance) {
     fastify.addHook('onRequest', fastify.authenticate);
 
     // Create Channel
-    fastify.post<{ Body: { name: string; platform: string; channelId: string; credentialId?: string } }>('/', async (request, reply) => {
+    fastify.post<{ Body: { name: string; platform: string; channelId: string; credentialId?: string; amazonTag?: string } }>('/', async (request, reply) => {
         const userId = request.user.id;
 
         try {
-            const { name, platform, channelId, credentialId } = createChannelSchema.parse(request.body);
+            const { name, platform, channelId, credentialId, amazonTag } = createChannelSchema.parse(request.body);
             // Verify credential ownership if provided
             if (credentialId) {
                 const credential = await prisma.credential.findUnique({
@@ -41,8 +47,10 @@ export async function channelRoutes(fastify: FastifyInstance) {
                     platform: platform as ChannelPlatform,
                     channelId,
                     credentialId,
+                    // amazonTag will be available after migration
+                    ...(amazonTag && { amazonTag }),
                     status: 'CONNECTED', // Assuming connected if created via wizard
-                },
+                } as any,
             });
 
             return channel;
@@ -77,6 +85,40 @@ export async function channelRoutes(fastify: FastifyInstance) {
         });
 
         return { channels };
+    });
+
+    // Update Channel
+    fastify.put<{ Params: { id: string }; Body: { name?: string; amazonTag?: string | null } }>('/:id', async (request, reply) => {
+        const userId = request.user.id;
+
+        try {
+            const { id } = idParamSchema.parse(request.params);
+            const updates = updateChannelSchema.parse(request.body);
+
+            const channel = await prisma.channel.findUnique({
+                where: { id },
+            });
+
+            if (!channel || channel.userId !== userId) {
+                return reply.code(404).send({ message: 'Channel not found' });
+            }
+
+            const updatedChannel = await prisma.channel.update({
+                where: { id },
+                data: updates as any,
+            });
+
+            return updatedChannel;
+        } catch (error: any) {
+            if (error instanceof z.ZodError) {
+                return reply.code(400).send({
+                    message: 'Validation error',
+                    errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
+                });
+            }
+            request.log.error(error);
+            return reply.code(500).send({ message: 'Failed to update channel' });
+        }
     });
 
     // Delete Channel

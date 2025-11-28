@@ -20,8 +20,13 @@ import internalKeepaRoutes from './routes/internal-keepa';
 import keepaPublicRoutes from './routes/keepa-public';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
 import { startKeepaPopulateScheduler } from './jobs/keepa-populate-scheduler';
-import { KeepaWorker } from './workers/keepaWorker';
-import { AutomationQueueScheduler } from './services/keepa/AutomationQueueScheduler';
+// Keepa Queue System v2
+import { KeepaWorker } from './services/keepa/KeepaWorker';
+import { AutomationScheduler } from './services/keepa/AutomationScheduler';
+import { KeepaPrefetch } from './services/keepa/KeepaPrefetch';
+import { KeepaTokenManager } from './services/keepa/KeepaTokenManager';
+import { DEFAULT_CONFIG } from './types/keepa';
+import { getRedis } from './lib/redis';
 import prisma from './lib/prisma';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
@@ -169,33 +174,65 @@ const start = async () => {
         await app.listen({ port, host: '0.0.0.0' });
         console.log(`Server listening on http://localhost:${port}`);
 
-        // Start background automation scheduler
-        startAutomationScheduler();
+        // NOTE: Legacy automation-scheduler disabled in favor of Keepa Queue System v2
+        // The new AutomationScheduler in services/keepa/ handles AutomationRule execution
+        // startAutomationScheduler();
 
-        // Start Keepa populate scheduler (fetches deals every 6 hours)
-        startKeepaPopulateScheduler();
+        // NOTE: Keepa populate scheduler disabled in favor of Keepa Queue System v2
+        // The new system uses AutomationScheduler + KeepaWorker for smarter caching
+        // startKeepaPopulateScheduler();
 
-        // ==================== REDIS-BASED KEEPA QUEUE SYSTEM ====================
-        // Start only if REDIS_URL is configured
-        if (process.env.REDIS_URL) {
-            console.log('[Keepa Queue] Redis URL detected, starting queue system...');
+        // ==================== KEEPA QUEUE SYSTEM V2 ====================
+        // Start only if REDIS_URL and KEEPA_API_KEY are configured
+        if (process.env.REDIS_URL && process.env.KEEPA_API_KEY) {
+            console.log('[Keepa v2] Starting queue system...');
 
-            // Start the Keepa worker (processes queue jobs)
-            const keepaWorker = new KeepaWorker(prisma);
+            const redis = getRedis();
+            const config = DEFAULT_CONFIG;
+            const keepaApiKey = process.env.KEEPA_API_KEY;
+
+            // Initialize token manager
+            const tokenManager = new KeepaTokenManager(redis, config, keepaApiKey);
+
+            // Start the Keepa worker (processes queue jobs with multi-priceType + BuyBox verification)
+            const keepaWorker = new KeepaWorker(redis, prisma, config, keepaApiKey);
             keepaWorker.start();
 
-            // Start the automation queue scheduler (checks due automations every minute)
-            const automationQueueScheduler = new AutomationQueueScheduler(prisma);
-            automationQueueScheduler.start();
+            // Start the automation scheduler (checks AutomationRules every minute)
+            const automationScheduler = new AutomationScheduler(prisma, redis, config);
+            automationScheduler.start();
+
+            // Initialize prefetch (will be called by worker during idle)
+            const keepaPrefetch = new KeepaPrefetch(redis, prisma, config, tokenManager);
+
+            // Periodic prefetch check (every 30 seconds when idle)
+            const prefetchInterval = setInterval(async () => {
+                try {
+                    await keepaPrefetch.runIfIdle();
+                } catch (error) {
+                    console.error('[Prefetch] Error:', error);
+                }
+            }, 30000);
 
             // Graceful shutdown
-            process.on('SIGTERM', () => {
-                console.log('[Keepa Queue] Shutting down...');
+            const shutdown = () => {
+                console.log('[Keepa v2] Shutting down...');
                 keepaWorker.stop();
-                automationQueueScheduler.stop();
-            });
+                automationScheduler.stop();
+                clearInterval(prefetchInterval);
+            };
+
+            process.on('SIGTERM', shutdown);
+            process.on('SIGINT', shutdown);
+
+            console.log('[Keepa v2] Queue system started successfully');
         } else {
-            console.log('[Keepa Queue] REDIS_URL not configured, queue system disabled');
+            if (!process.env.REDIS_URL) {
+                console.log('[Keepa v2] REDIS_URL not configured, queue system disabled');
+            }
+            if (!process.env.KEEPA_API_KEY) {
+                console.log('[Keepa v2] KEEPA_API_KEY not configured, queue system disabled');
+            }
         }
     } catch (err) {
         app.log.error(err);

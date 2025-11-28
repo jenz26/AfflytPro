@@ -1490,6 +1490,10 @@
       "platformLabel": "Piattaforma",
       "nameLabel": "Nome",
       "channelIdLabel": "ID Canale",
+      "amazonTag": "Tag Amazon Affiliato (Opzionale)",
+      "amazonTagPlaceholder": "es. miocanale-21",
+      "amazonTagHelp": "Il tag di affiliazione Amazon specifico per questo canale. Se lasciato vuoto, verrà usato il tag predefinito del tuo account.",
+      "amazonTagLabel": "Tag Amazon",
       "saveAndContinue": "Salva e Continua",
       "confirmAndConnect": "Conferma e Connetti",
       "channelCreateError": "Errore nella creazione del canale"
@@ -1505,6 +1509,9 @@
       "aboutTo": "Stai per eliminare:",
       "warning": "Questa azione non può essere annullata. Tutte le automazioni collegate a questo canale verranno disattivate.",
       "confirmButton": "Sì, Elimina"
+    },
+    "edit": {
+      "title": "Modifica Canale"
     }
   },
   "usageDashboard": {

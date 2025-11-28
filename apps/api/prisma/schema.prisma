@@ -276,6 +276,7 @@ model Channel {
   credentialId    String?
   credential      Credential?      @relation(fields: [credentialId], references: [id], onDelete: SetNull)
   status          ChannelStatus    @default(PENDING)
+  amazonTag       String?          // Tag Amazon specifico per questo canale (override user default)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   automationRules AutomationRule[]

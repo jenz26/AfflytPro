@@ -9,7 +9,9 @@ import {
     CheckCircle,
     AlertCircle,
     Loader2,
-    Zap
+    Zap,
+    X,
+    Tag
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -30,12 +32,16 @@ export default function ChannelsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [channelToDelete, setChannelToDelete] = useState<Channel | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [channelToEdit, setChannelToEdit] = useState<Channel | null>(null);
+    const [editAmazonTag, setEditAmazonTag] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
     const [newChannel, setNewChannel] = useState({
         platform: 'TELEGRAM',
         name: '',
         channelId: '',
         botToken: '',
-        credentialId: ''
+        credentialId: '',
+        amazonTag: ''
     });
 
     useEffect(() => {
@@ -117,7 +123,8 @@ export default function ChannelsPage() {
                     name: newChannel.name,
                     platform: newChannel.platform,
                     channelId: newChannel.channelId,
-                    credentialId: newChannel.credentialId
+                    credentialId: newChannel.credentialId,
+                    amazonTag: newChannel.amazonTag || undefined
                 })
             });
 
@@ -139,7 +146,7 @@ export default function ChannelsPage() {
         setIsAddingChannel(false);
         setSelectedPlatform(null);
         setSetupStep(1);
-        setNewChannel({ platform: 'TELEGRAM', name: '', channelId: '', botToken: '', credentialId: '' });
+        setNewChannel({ platform: 'TELEGRAM', name: '', channelId: '', botToken: '', credentialId: '', amazonTag: '' });
     };
 
     const handleDeleteClick = (channel: Channel) => {
@@ -162,6 +169,39 @@ export default function ChannelsPage() {
             console.error(error);
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleEditClick = (channel: Channel) => {
+        setChannelToEdit(channel);
+        setEditAmazonTag(channel.amazonTag || '');
+    };
+
+    const handleEditSave = async () => {
+        if (!channelToEdit) return;
+
+        setIsEditing(true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_BASE}/user/channels/${channelToEdit.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    amazonTag: editAmazonTag || null
+                })
+            });
+
+            if (res.ok) {
+                fetchChannels();
+                setChannelToEdit(null);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsEditing(false);
         }
     };
 
@@ -337,6 +377,19 @@ export default function ChannelsPage() {
                                         {t('wizard.addBotAsAdmin')}
                                     </p>
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-300 mb-2">{t('wizard.amazonTag')}</label>
+                                    <input
+                                        type="text"
+                                        value={newChannel.amazonTag}
+                                        onChange={(e) => setNewChannel({ ...newChannel, amazonTag: e.target.value })}
+                                        placeholder={t('wizard.amazonTagPlaceholder')}
+                                        className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none transition-colors"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        {t('wizard.amazonTagHelp')}
+                                    </p>
+                                </div>
                                 <div className="flex justify-end gap-3">
                                     <CyberButton variant="ghost" onClick={() => setSetupStep(1)}>{tCommon('back')}</CyberButton>
                                     <CyberButton variant="primary" onClick={() => setSetupStep(3)} disabled={!newChannel.name || !newChannel.channelId}>
@@ -366,6 +419,12 @@ export default function ChannelsPage() {
                                         <div className="text-white font-medium">{newChannel.name}</div>
                                         <div className="text-right text-gray-500">{t('wizard.channelIdLabel')}:</div>
                                         <div className="text-afflyt-cyan-400 font-mono">{newChannel.channelId}</div>
+                                        {newChannel.amazonTag && (
+                                            <>
+                                                <div className="text-right text-gray-500">{t('wizard.amazonTagLabel')}:</div>
+                                                <div className="text-afflyt-cyan-400 font-mono">{newChannel.amazonTag}</div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3">
@@ -408,6 +467,7 @@ export default function ChannelsPage() {
                                 <ChannelCard
                                     key={channel.id}
                                     channel={channel}
+                                    onEdit={() => handleEditClick(channel)}
                                     onDelete={() => handleDeleteClick(channel)}
                                 />
                             ))}
@@ -441,6 +501,58 @@ export default function ChannelsPage() {
                 variant="danger"
                 isLoading={isDeleting}
             />
+
+            {/* Edit Channel Modal */}
+            {channelToEdit && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <GlassCard className="w-full max-w-md mx-4 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-afflyt-cyan-500/20 rounded-lg flex items-center justify-center">
+                                    <Tag className="w-5 h-5 text-afflyt-cyan-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-white">{t('edit.title')}</h3>
+                                    <p className="text-sm text-gray-500">{channelToEdit.name}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setChannelToEdit(null)}
+                                className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors text-gray-400 hover:text-white"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    {t('wizard.amazonTag')}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editAmazonTag}
+                                    onChange={(e) => setEditAmazonTag(e.target.value)}
+                                    placeholder={t('wizard.amazonTagPlaceholder')}
+                                    className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none transition-colors"
+                                />
+                                <p className="text-xs text-gray-500 mt-2">
+                                    {t('wizard.amazonTagHelp')}
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <CyberButton variant="ghost" onClick={() => setChannelToEdit(null)}>
+                                    {tCommon('cancel')}
+                                </CyberButton>
+                                <CyberButton variant="primary" onClick={handleEditSave} disabled={isEditing}>
+                                    {isEditing ? <Loader2 className="w-4 h-4 animate-spin" /> : tCommon('save')}
+                                </CyberButton>
+                            </div>
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
         </div>
     );
 }

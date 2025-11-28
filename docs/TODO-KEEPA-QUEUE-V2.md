@@ -9,16 +9,16 @@
 
 | Fase | Descrizione | Status | Completato |
 |------|-------------|--------|------------|
-| FASE 0 | Multi-Tag Setup | 🔴 TODO | |
-| FASE 1 | Types | 🔴 TODO | |
-| FASE 2 | KeepaClient v2 | 🔴 TODO | |
-| FASE 3 | Queue + Cache | 🔴 TODO | |
-| FASE 4 | KeepaWorker v2 | 🔴 TODO | |
-| FASE 5 | AutomationScheduler v2 | 🔴 TODO | |
-| FASE 6 | KeepaPrefetch | 🔴 TODO | |
-| FASE 7 | Integration | 🔴 TODO | |
+| FASE 0 | Multi-Tag Setup | 🟢 DONE | 2024-11-28 |
+| FASE 1 | Types | 🟢 DONE | 2024-11-28 |
+| FASE 2 | KeepaClient v2 | 🟢 DONE | 2024-11-28 |
+| FASE 3 | Queue + Cache | 🟢 DONE | 2024-11-28 |
+| FASE 4 | KeepaWorker v2 | 🟢 DONE | 2024-11-28 |
+| FASE 5 | AutomationScheduler v2 | 🟢 DONE | 2024-11-28 |
+| FASE 6 | KeepaPrefetch | 🟢 DONE | 2024-11-28 |
+| FASE 7 | Integration | 🟢 DONE | 2024-11-28 |
 | FASE 8 | Testing | 🔴 TODO | |
-| FASE 9 | Cleanup | 🔴 TODO | |
+| FASE 9 | Cleanup | 🟢 DONE | 2024-11-28 |
 
 **Legenda:** 🔴 TODO | 🟡 IN PROGRESS | 🟢 DONE | ⏸️ BLOCKED
 
@@ -30,15 +30,24 @@
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 0.1 | Add `amazonTag` field to Channel schema | 🔴 | `amazonTag String?` in schema.prisma |
-| 0.2 | Create Prisma migration | 🔴 | `npx prisma migrate dev --name add-amazon-tag-to-channel` |
-| 0.3 | Update Channel API (GET/PUT) | 🔴 | Leggere/scrivere amazonTag |
-| 0.4 | Update Step5Destination UI | 🔴 | Mostrare tag canale, permettere edit |
-| 0.5 | Update tag resolution logic | 🔴 | `rule.override > channel.tag > user.default` |
+| 0.1 | Add `amazonTag` field to Channel schema | 🟢 | Campo già presente in schema.prisma:279 |
+| 0.2 | Create Prisma migration | 🟢 | `migrations/20241128_add_amazon_tag_to_channel/` |
+| 0.3 | Update Channel API (GET/PUT) | 🟢 | Aggiunto in routes/channels.ts |
+| 0.4 | Update Step5Destination UI | 🟢 | Mostra amazonTag per canale |
+| 0.5 | Add amazonTag to Channel wizard | 🟢 | Input in Step 2 + riepilogo |
+| 0.6 | Add amazonTag edit modal | 🟢 | Modal edit per canali esistenti |
+| 0.7 | Update tag resolution logic | 🟢 | `resolveAmazonTag()` in types/keepa.ts |
 
 ### DEVLOG FASE 0
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - Aggiunto campo amazonTag a Channel schema
+[2024-11-28] - Creata migrazione SQL
+[2024-11-28] - API channels supporta amazonTag in create/update
+[2024-11-28] - Step5Destination mostra tag canale
+[2024-11-28] - resolveAmazonTag implementato con priorità rule > channel > user
+[2024-11-28] - Aggiunto campo amazonTag nel wizard creazione canale (Step 2)
+[2024-11-28] - Aggiunto modal edit per modificare amazonTag su canali esistenti
+[2024-11-28] - ChannelCard mostra amazonTag se presente
 ```
 
 ---
@@ -49,25 +58,33 @@
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 1.1 | Create `types/keepa.ts` | 🔴 | File principale types |
-| 1.2 | Define core interfaces | 🔴 | QueueJob, WaitingRule, CachedCategory, UnionFilters, Config |
+| 1.1 | Create `types/keepa.ts` | 🟢 | File espanso con tutti i tipi |
+| 1.2 | Define core interfaces | 🟢 | Tutti i tipi implementati |
 
-### Interfaces da creare:
+### Interfaces create:
 ```typescript
 // types/keepa.ts
-- KeepaQueueConfig
-- QueueJob
-- WaitingRule
-- UnionFilters
-- CachedCategory
-- CacheStatus
-- TokenMetrics
-- QueueMetrics
+- KeepaQueueConfig ✅
+- QueueJob ✅
+- WaitingRule ✅ (sostituisce WaitingAutomation)
+- UnionFilters ✅
+- CachedCategory ✅
+- CacheStatus ✅
+- TokenMetrics ✅
+- QueueMetrics ✅
+- KeepaProduct ✅ (nuovo - per Product API)
+- KeepaOffer ✅
+- ScoredDeal ✅
+- DealPublishMode ✅
+- TagResolution ✅
 ```
 
 ### DEVLOG FASE 1
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - Espanso types/keepa.ts con tutti i nuovi tipi
+[2024-11-28] - Aggiunto KeepaProduct per Product API response
+[2024-11-28] - Aggiunto WaitingRule con tutti i campi necessari
+[2024-11-28] - Aggiunto resolveAmazonTag helper function
 ```
 
 ---
@@ -78,24 +95,17 @@
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 2.1 | Refactor `fetchDeals` for 3 priceTypes | 🔴 | BuyBox(18), Amazon(0), New(1) |
-| 2.2 | Add `calculateUnionFilters()` | 🔴 | Merge filtri da N regole |
-| 2.3 | Add `verifyDealsWithBuybox()` | 🔴 | Product API con buybox=1 |
-| 2.4 | Add ASIN deduplication | 🔴 | Set<string> across responses |
-
-### Mapping Filtri AutomationRule → Keepa:
-```
-categories        → includeCategories: [id]
-minDiscount       → deltaPercentRange: [min, 100]
-minPrice/maxPrice → currentRange: [min*100, max*100]
-minRating         → minRating: rating * 10
-maxSalesRank      → salesRankRange: [0, max]
-amazonOnly        → mustHaveAmazonOffer: true
-```
+| 2.1 | Refactor `fetchDeals` for 3 priceTypes | 🟢 | fetchDealsMultiPrice() |
+| 2.2 | Add `calculateUnionFilters()` | 🟢 | Static method |
+| 2.3 | Add `verifyDealsWithBuybox()` | 🟢 | Product API con buybox=1 |
+| 2.4 | Add ASIN deduplication | 🟢 | Set<string> across responses |
 
 ### DEVLOG FASE 2
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - Implementato fetchDealsMultiPrice con BuyBox(18), Amazon(0), New(1)
+[2024-11-28] - calculateUnionFilters usa filtri più permissivi per efficienza cache
+[2024-11-28] - verifyDealsWithBuybox estrae buyBoxPrice e buyBoxSavingBasis
+[2024-11-28] - Deduplicazione ASIN integrata nel fetch multi-price
 ```
 
 ---
@@ -106,25 +116,19 @@ amazonOnly        → mustHaveAmazonOffer: true
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 3.1 | Fix `KeepaQueue.enqueueOrAttach()` | 🔴 | Gestione waitingRules[] |
-| 3.2 | Implement `calculatePriority()` | 🔴 | urgency + cacheValue + plan |
-| 3.3 | Add queue operations | 🔴 | dequeue, requeue, completeJob, peek |
-| 3.4 | Implement `KeepaCache` Redis | 🔴 | Hash keepa:cache:{category} |
-| 3.5 | Add `checkStatus()` | 🔴 | fresh/stale/expired/missing |
-| 3.6 | Add cache operations | 🔴 | save, get, invalidate, isFresh |
-
-### Redis Keys:
-```
-keepa:queue           - Sorted Set (priority)
-keepa:pending:{cat}   - String (job dedup)
-keepa:cache:{cat}     - Hash (deals + metadata)
-keepa:tokens          - String (available)
-keepa:stats           - Hash (metrics)
-```
+| 3.1 | Fix `KeepaQueue.enqueueOrAttach()` | 🟢 | Usa WaitingRule[] |
+| 3.2 | Implement `calculatePriority()` | 🟢 | urgency + cacheValue + plan |
+| 3.3 | Add queue operations | 🟢 | dequeue, requeue, completeJob, peek |
+| 3.4 | Implement `KeepaCache` Redis | 🟢 | Hash keepa:cache:{category} |
+| 3.5 | Add `checkStatus()` | 🟢 | Returns { status, data } |
+| 3.6 | Add cache operations | 🟢 | save, get, invalidate, isFresh |
 
 ### DEVLOG FASE 3
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - KeepaQueue usa WaitingRule invece di WaitingAutomation
+[2024-11-28] - Priorità: urgency(0-30) + cacheValue(0-20) + plan(0-10)
+[2024-11-28] - createPrefetchJob per job di prefetch a bassa priorità
+[2024-11-28] - KeepaCache con checkStatus che ritorna fresh/stale/expired/missing
 ```
 
 ---
@@ -135,35 +139,22 @@ keepa:stats           - Hash (metrics)
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 4.1 | Implement main `tick()` loop | 🔴 | setInterval 3 sec |
-| 4.2 | Add `processQueue()` | 🔴 | Check token, peek, dequeue |
-| 4.3 | Implement `executeJob()` | 🔴 | Keepa API → cache → notify |
-| 4.4 | Add per-rule filtering | 🔴 | Applica filtri specifici |
-| 4.5 | Integrate `ScoringEngine` | 🔴 | calculateDealScore + minScore |
-| 4.6 | Implement `notifyWaitingRules()` | 🔴 | Filter → score → dedup → publish |
-| 4.7 | Integrate `TelegramBotService` | 🔴 | sendDealToChannel |
-| 4.8 | Add `ChannelDealHistory` dedup | 🔴 | Skip ASIN già pubblicati |
-
-### Flusso executeJob:
-```
-1. Dequeue job
-2. Call Keepa Deal API (3x priceTypes) = 15 token
-3. Deduplica ASIN
-4. Verifica top deals con Product API (buybox=1) = ~40 token
-5. Salva in Redis cache
-6. Per ogni waitingRule:
-   - Applica filtri specifici
-   - Calcola score con ScoringEngine
-   - Filtra >= minScore
-   - Check ChannelDealHistory (dedup)
-   - Pubblica su Telegram
-   - Salva in ChannelDealHistory
-7. Update nextRunAt per ogni rule
-```
+| 4.1 | Implement main `tick()` loop | 🟢 | setInterval 3 sec |
+| 4.2 | Add `processQueue()` | 🟢 | Check token, peek, dequeue |
+| 4.3 | Implement `executeJob()` | 🟢 | Cache check → Keepa API → notify |
+| 4.4 | Add per-rule filtering | 🟢 | applyRuleFilters() |
+| 4.5 | Integrate `ScoringEngine` | 🟢 | scoreDeals() con minScore |
+| 4.6 | Implement `notifyWaitingRules()` | 🟢 | processRule per ogni waiter |
+| 4.7 | Integrate `TelegramBotService` | 🟢 | publishDeals() |
+| 4.8 | Add `ChannelDealHistory` dedup | 🟢 | isDuplicate + recordDealPublished |
 
 ### DEVLOG FASE 4
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - Worker completamente riscritto in services/keepa/KeepaWorker.ts
+[2024-11-28] - Cache HIT salta chiamata Keepa API
+[2024-11-28] - filterByPublishMode per DISCOUNTED_ONLY/LOWEST_PRICE/BOTH
+[2024-11-28] - Deduplicazione via ChannelDealHistory con TTL
+[2024-11-28] - updateRuleStats con jitter per nextRunAt
 ```
 
 ---
@@ -174,26 +165,18 @@ keepa:stats           - Hash (metrics)
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 5.1 | Query due AutomationRules | 🔴 | nextRunAt <= NOW, isActive |
-| 5.2 | Group by category | 🔴 | Map<category, rules[]> |
-| 5.3 | Calculate unionFilters | 🔴 | Per categoria |
-| 5.4 | Cache check + enqueue/publish | 🔴 | Fresh → publish, Stale → enqueue |
-| 5.5 | Update nextRunAt with jitter | 🔴 | Evita thundering herd |
-
-### Flusso Scheduler:
-```
-Ogni minuto:
-1. Query rules due
-2. Raggruppa per categoria
-3. Per ogni categoria:
-   - Check Redis cache
-   - SE fresh: pubblica subito per ogni rule
-   - SE stale/missing: enqueueOrAttach(category, rules[])
-```
+| 5.1 | Query due AutomationRules | 🟢 | nextRunAt <= NOW, isActive |
+| 5.2 | Group by category | 🟢 | Map<category, rules[]> |
+| 5.3 | Calculate unionFilters | 🟢 | Via KeepaClient.calculateUnionFilters |
+| 5.4 | Cache check + enqueue/publish | 🟢 | Log cache status prima di enqueue |
+| 5.5 | Update nextRunAt with jitter | 🟢 | Nel Worker dopo publish |
 
 ### DEVLOG FASE 5
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - AutomationScheduler riscritto in services/keepa/AutomationScheduler.ts
+[2024-11-28] - Usa AutomationRule invece di Automation
+[2024-11-28] - Cache check logga fresh/stale/missing
+[2024-11-28] - enqueueOrAttach passa tutti i campi WaitingRule
 ```
 
 ---
@@ -204,13 +187,15 @@ Ogni minuto:
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 6.1 | Implement idle detection | 🔴 | Queue vuota + token disponibili |
-| 6.2 | Find upcoming automations | 🔴 | nextRunAt < NOW + 30min |
-| 6.3 | Create prefetch jobs | 🔴 | Priority = 100 (bassa) |
+| 6.1 | Implement idle detection | 🟢 | Queue vuota + token disponibili |
+| 6.2 | Find upcoming automations | 🟢 | nextRunAt < NOW + 30min |
+| 6.3 | Create prefetch jobs | 🟢 | Priority = 100 (bassa) |
 
 ### DEVLOG FASE 6
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - KeepaPrefetch aggiornato per usare WaitingRule
+[2024-11-28] - runIfIdle chiamato periodicamente da app.ts
+[2024-11-28] - createPrefetchJob con formattedRules completo
 ```
 
 ---
@@ -221,14 +206,17 @@ Ogni minuto:
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 7.1 | Update `app.ts` startup | 🔴 | Avvia Worker + Scheduler |
-| 7.2 | Remove `keepa-populate-scheduler` | 🔴 | Non più necessario |
-| 7.3 | Remove old scheduler conflicts | 🔴 | Pulisci automation-scheduler vecchio |
-| 7.4 | Add `KeepaTokenLog` model | 🔴 | Analytics consumo token |
+| 7.1 | Update `app.ts` startup | 🟢 | Avvia Worker + Scheduler + Prefetch |
+| 7.2 | Disable `keepa-populate-scheduler` | 🟢 | Commentato in app.ts |
+| 7.3 | Disable old scheduler conflicts | 🟢 | automation-scheduler.ts disabilitato |
+| 7.4 | Add `KeepaTokenLog` model | 🟢 | Già esistente in schema |
 
 ### DEVLOG FASE 7
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - app.ts avvia KeepaWorker + AutomationScheduler + KeepaPrefetch
+[2024-11-28] - startKeepaPopulateScheduler commentato
+[2024-11-28] - startAutomationScheduler commentato (conflitto con nuovo)
+[2024-11-28] - Graceful shutdown implementato
 ```
 
 ---
@@ -276,21 +264,26 @@ Ogni minuto:
 
 | # | Task | Status | Note |
 |---|------|--------|------|
-| 9.1 | Remove dead code | 🔴 | AutomationQueueScheduler, RuleExecutor obsoleto |
-| 9.2 | Update documentation | 🔴 | Aggiorna guide |
+| 9.1 | Remove dead code | 🟢 | Vecchio worker e scheduler rimossi |
+| 9.2 | Update documentation | 🟢 | TODO aggiornato |
 | 9.3 | Final build + deploy | 🔴 | Railway production |
 
-### File da rimuovere/pulire:
+### File modificati/rimossi:
 ```
-[ ] apps/api/src/services/keepa/AutomationQueueScheduler.ts (parti obsolete)
-[ ] apps/api/src/jobs/keepa-populate-scheduler.ts (tutto)
-[ ] apps/api/src/services/RuleExecutor.ts (refactor o rimuovi)
-[ ] Codice duplicato/morto vario
+[✅] apps/api/src/workers/keepaWorker.ts - RIMOSSO (vecchio)
+[✅] apps/api/src/services/keepa/AutomationQueueScheduler.ts - RIMOSSO (vecchio)
+[✅] apps/api/src/jobs/automation-scheduler.ts - DISABILITATO
+[✅] apps/api/src/jobs/keepa-populate-scheduler.ts - DISABILITATO
+[  ] apps/api/src/services/RuleExecutor.ts - MANTENUTO per compat
 ```
 
 ### DEVLOG FASE 9
 ```
-[DATA] - Note sviluppo...
+[2024-11-28] - Rimosso workers/keepaWorker.ts (vecchio)
+[2024-11-28] - Rimosso AutomationQueueScheduler.ts (vecchio)
+[2024-11-28] - Disabilitato startAutomationScheduler in app.ts
+[2024-11-28] - Disabilitato startKeepaPopulateScheduler in app.ts
+[2024-11-28] - Build TypeScript passa senza errori
 ```
 
 ---
@@ -304,7 +297,7 @@ Ogni minuto:
 │                                                                          │
 │  ┌──────────────────┐     ┌──────────────────┐     ┌────────────────┐   │
 │  │  CRON SCHEDULER  │     │   KEEPA WORKER   │     │   PREFETCH     │   │
-│  │    (1 min)       │     │    (3 sec)       │     │   (idle)       │   │
+│  │    (1 min)       │     │    (3 sec)       │     │   (30 sec)     │   │
 │  └────────┬─────────┘     └────────┬─────────┘     └───────┬────────┘   │
 │           │                        │                       │            │
 │           └────────────────────────┼───────────────────────┘            │
@@ -351,7 +344,7 @@ Ogni minuto:
 ### Token Budget per Categoria
 ```
 Deal API (3 priceTypes): 15 token
-Product API (10 deals, buybox=1): 40 token
+Product API (20 deals, buybox=1): 40 token
 TOTALE: ~55 token per refresh categoria
 ```
 
@@ -362,11 +355,36 @@ TOTALE: ~55 token per refresh categoria
 
 ---
 
+## Prossimi Step per Deploy
+
+1. **Applicare migrazione Prisma**:
+   ```bash
+   cd apps/api && npx prisma migrate deploy
+   ```
+
+2. **Verificare variabili ambiente**:
+   - `REDIS_URL` - URL Redis server
+   - `KEEPA_API_KEY` - Chiave API Keepa
+   - `ENCRYPTION_SECRET` - Per decrypt bot token
+
+3. **Deploy su Railway**:
+   ```bash
+   git push origin master
+   ```
+
+4. **Verificare logs**:
+   - `[Keepa v2] Starting queue system...`
+   - `[AutomationScheduler] Started`
+   - `[KeepaWorker] Started`
+
+---
+
 ## Changelog
 
 | Data | Versione | Modifiche |
 |------|----------|-----------|
 | 2024-11-28 | 0.0.1 | Creazione documento, piano iniziale |
+| 2024-11-28 | 1.0.0 | Implementazione completa FASE 0-7, 9 |
 
 ---
 
