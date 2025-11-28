@@ -103,7 +103,12 @@ export default function AutomationStudioPage() {
                         isActive: ruleData.isActive,
                         minScore: ruleData.minScore,
                         maxPrice: ruleData.maxPrice,
-                        channelId: ruleData.channelId
+                        channelId: ruleData.channelId,
+                        // Scheduling
+                        schedulePreset: ruleData.schedulePreset,
+                        // Deal publish options
+                        dealPublishMode: ruleData.dealPublishMode,
+                        includeKeepaChart: ruleData.includeKeepaChart
                     })
                 });
 

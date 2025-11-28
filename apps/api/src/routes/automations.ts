@@ -559,7 +559,15 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
         try {
             const { id } = idParamSchema.parse(request.params);
+
+            // Debug logging
+            console.log('[PUT /rules/:id] Raw body:', JSON.stringify(request.body, null, 2));
+
             const updateData = updateRuleSchema.parse(request.body);
+
+            console.log('[PUT /rules/:id] Parsed updateData:', JSON.stringify(updateData, null, 2));
+            console.log('[PUT /rules/:id] dealPublishMode:', updateData.dealPublishMode);
+            console.log('[PUT /rules/:id] includeKeepaChart:', updateData.includeKeepaChart);
 
             // Verify ownership
             const existing = await prisma.automationRule.findFirst({
