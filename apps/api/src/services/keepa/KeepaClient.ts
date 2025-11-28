@@ -504,6 +504,11 @@ export class KeepaClient {
     // This will be refined by Product API verification if available
     const hasVisibleDiscount = discountPercent >= 5; // Min 5% to consider as discounted
 
+    // Debug log for first few deals
+    if (raw.asin && Math.random() < 0.02) {
+      console.log(`[KeepaClient] Sample deal ${raw.asin}: disc=${discountPercent}%, hasVisible=${hasVisibleDiscount}, delta=${JSON.stringify(raw.deltaPercent?.[18]?.slice(0,4))}`);
+    }
+
     return {
       asin: raw.asin,
       title: raw.title || `Product ${raw.asin}`,
