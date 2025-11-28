@@ -9,7 +9,7 @@ import type {
 import { KeepaQueue } from './KeepaQueue';
 import { KeepaCache } from './KeepaCache';
 import { KeepaTokenManager } from './KeepaTokenManager';
-import { AMAZON_IT_CATEGORIES } from '../../data/amazon-categories';
+import { AMAZON_IT_CATEGORIES, getCategoryByName } from '../../data/amazon-categories';
 
 type RuleWithRelations = AutomationRule & {
   user: Pick<User, 'id' | 'plan'>;
@@ -144,8 +144,15 @@ export class KeepaPrefetch {
    */
   private groupByCategory(rules: RuleWithRelations[]): Record<string, RuleWithRelations[]> {
     return rules.reduce((acc, rule) => {
-      const categoryId = rule.categories?.[0];
+      const categoryValue = rule.categories?.[0];
+      if (!categoryValue) {
+        return acc;
+      }
+
+      // Resolve category ID from name or numeric string
+      const categoryId = this.resolveCategoryId(categoryValue);
       if (!categoryId) {
+        console.warn(`[Prefetch] Rule ${rule.id} has invalid category "${categoryValue}", skipping`);
         return acc;
       }
 
@@ -156,6 +163,30 @@ export class KeepaPrefetch {
       acc[key].push(rule);
       return acc;
     }, {} as Record<string, RuleWithRelations[]>);
+  }
+
+  /**
+   * Resolve a category value to its numeric ID
+   * Handles both category names (e.g., "Electronics") and numeric IDs
+   */
+  private resolveCategoryId(categoryValue: string): number | null {
+    // First, try to parse as a number (already an ID)
+    const asNumber = parseInt(categoryValue, 10);
+    if (!isNaN(asNumber) && asNumber > 0) {
+      // Verify it's a valid category ID
+      const exists = AMAZON_IT_CATEGORIES.some(c => c.id === asNumber);
+      if (exists) {
+        return asNumber;
+      }
+    }
+
+    // Otherwise, look up by name (supports both Italian and English names)
+    const category = getCategoryByName(categoryValue);
+    if (category) {
+      return category.id;
+    }
+
+    return null;
   }
 
   /**
