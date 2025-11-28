@@ -38,14 +38,25 @@ interface KeepaRawDeal {
     categories: number[];
     rootCat: number;
     current: number[];      // Current prices by type [Amazon, New, Used, etc]
-    avg: number[][];        // Average prices [priceType][timeRange]
-    delta: number[][];      // Price drops [priceType][timeRange]
-    deltaPercent: number[][]; // Discount percentages [priceType][timeRange]
+    avg: number[][];        // Average prices [dateRange][priceType]
+    delta: number[][];      // Price drops [dateRange][priceType]
+    deltaPercent: number[][]; // Discount percentages [dateRange][priceType]
     minRating: number;      // Minimum rating filter (0-50 scale, not 0-500!)
     creationDate: number;   // Keepa time minutes
     lastUpdate: number;
     currentSince: number[]; // When current price started
+    lightningEnd: number;   // When lightning deal ends (Keepa time), 0 if not lightning
+    warehouseCondition: number; // 0=none, 2=LikeNew, 3=VeryGood, 4=Good, 5=Acceptable
     // Note: salesRank, reviewCount, isAmazon, isPrime are NOT in Deal object
+}
+
+// Deal type classification
+type DealType = 'lightning' | 'price_drop' | 'deal' | 'warehouse' | null;
+
+// Keepa time conversion: (keepaTime + 21564000) * 60000 = Unix milliseconds
+function keepaTimeToDate(keepaTime: number): Date | null {
+    if (!keepaTime || keepaTime <= 0) return null;
+    return new Date((keepaTime + 21564000) * 60000);
 }
 
 export class KeepaPopulateService {
@@ -249,6 +260,64 @@ export class KeepaPopulateService {
         // These fields would require a separate Product API call (costs more tokens)
         // For now we save what we have from the Deal endpoint
 
+        // === DEAL TYPE CLASSIFICATION ===
+        let dealType: DealType = null;
+        let lightningEndAt: Date | null = null;
+        let dealConfidence = 0;
+
+        // 1. Check if it's a Lightning Deal (highest confidence)
+        if (deal.lightningEnd && deal.lightningEnd > 0) {
+            dealType = 'lightning';
+            lightningEndAt = keepaTimeToDate(deal.lightningEnd);
+            dealConfidence = 95; // Lightning deals are definitely temporary
+        }
+        // 2. Check if it's a Warehouse Deal
+        else if (deal.warehouseCondition && deal.warehouseCondition >= 2) {
+            dealType = 'warehouse';
+            dealConfidence = 80;
+        }
+        // 3. Analyze price patterns to distinguish real deals from permanent price changes
+        else if (discountPercent > 0) {
+            // Get day vs month delta to detect temporary vs permanent
+            const dayDelta = deal.deltaPercent?.[0]?.[0] ?? deal.deltaPercent?.[0]?.[1] ?? 0;
+            const monthDelta = deal.deltaPercent?.[2]?.[0] ?? deal.deltaPercent?.[2]?.[1] ?? 0;
+
+            // Calculate how "fresh" the discount is
+            // If day delta is much higher than month delta, it's a recent drop (likely a deal)
+            // If they're similar, it's been at this price for a while (permanent change)
+            const dayDeltaAbs = Math.abs(dayDelta);
+            const monthDeltaAbs = Math.abs(monthDelta);
+
+            if (dayDeltaAbs > 0 && monthDeltaAbs > 0) {
+                const freshnessRatio = dayDeltaAbs / monthDeltaAbs;
+
+                if (freshnessRatio > 1.5) {
+                    // Recent significant drop - likely a real deal
+                    dealType = 'price_drop';
+                    dealConfidence = Math.min(90, Math.round(50 + (freshnessRatio * 10)));
+                } else if (discountPercent >= 20) {
+                    // Significant discount but stable - could still be a deal
+                    dealType = 'deal';
+                    dealConfidence = Math.min(70, Math.round(30 + discountPercent));
+                } else {
+                    // Small discount, stable price - probably just normal pricing
+                    dealType = null;
+                    dealConfidence = 0;
+                }
+            } else if (dayDeltaAbs > 10) {
+                // Recent drop detected
+                dealType = 'price_drop';
+                dealConfidence = Math.min(80, Math.round(40 + dayDeltaAbs));
+            } else if (discountPercent >= 15 && originalPriceFromAvg) {
+                // Good discount vs historical average
+                dealType = 'deal';
+                dealConfidence = Math.min(70, Math.round(20 + discountPercent));
+            }
+        }
+
+        // Clamp confidence
+        dealConfidence = Math.max(0, Math.min(100, dealConfidence));
+
         // Upsert to database
         const product = await prisma.product.upsert({
             where: { asin: deal.asin },
@@ -261,6 +330,9 @@ export class KeepaPopulateService {
                 // salesRank, reviewCount, rating, isAmazonSeller, isPrime not updated
                 category: categoryName,
                 imageUrl,
+                dealType,
+                lightningEndAt,
+                dealConfidence,
                 lastPriceCheckAt: new Date(),
                 keepaDataTTL: 1440, // 24 hours in minutes
                 updatedAt: new Date()
@@ -279,6 +351,9 @@ export class KeepaPopulateService {
                 imageUrl,
                 isAmazonSeller: false,
                 isPrime: false,
+                dealType,
+                lightningEndAt,
+                dealConfidence,
                 lastPriceCheckAt: new Date(),
                 keepaDataTTL: 1440
             }

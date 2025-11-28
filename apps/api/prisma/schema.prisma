@@ -367,6 +367,21 @@ model Product {
   /// Number of total new offers
   newOfferCount   Int?
 
+  /// Deal type classification
+  /// - "lightning" = Lightning Deal (temporary, high confidence)
+  /// - "price_drop" = Significant price drop vs historical average
+  /// - "deal" = General deal (discount detected but not classified)
+  /// - "warehouse" = Amazon Warehouse deal
+  /// - null = Not classified or no deal
+  dealType        String?
+
+  /// When the lightning deal ends (null if not a lightning deal)
+  lightningEndAt  DateTime?
+
+  /// Confidence score for the deal (0-100)
+  /// Higher = more likely to be a real temporary discount vs permanent price change
+  dealConfidence  Int?
+
   @@index([asin])
   @@index([category])
   @@index([salesRank])
@@ -379,6 +394,8 @@ model Product {
   @@index([listedAt])
   @@index([discount])
   @@index([rating])
+  @@index([dealType])
+  @@index([dealConfidence])
 }
 
 model AffiliateLink {
