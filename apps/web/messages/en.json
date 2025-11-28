@@ -547,6 +547,7 @@
       "paused": "Paused"
     },
     "testSuccess": "Execution completed!\n\nDeals Processed: {processed}\nDeals Published: {published}\nTime: {time}ms",
+    "testQueued": "Mission \"{name}\" queued!\n\nThe automation has been added to the processing queue. Deals will appear in a few minutes.",
     "testError": "Error during execution",
     "duplicateSuffix": " (Copy)",
     "deleteModal": {

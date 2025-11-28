@@ -547,6 +547,7 @@
       "paused": "In Pausa"
     },
     "testSuccess": "Esecuzione completata!\n\nDeals Processati: {processed}\nDeals Pubblicati: {published}\nTempo: {time}ms",
+    "testQueued": "Missione \"{name}\" in coda!\n\nL'automazione è stata aggiunta alla coda di elaborazione. I deal appariranno tra qualche minuto.",
     "testError": "Errore durante l'esecuzione",
     "duplicateSuffix": " (Copia)",
     "deleteModal": {

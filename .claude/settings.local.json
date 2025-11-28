@@ -9,7 +9,8 @@
       "Bash(git commit -m \"$(cat <<''EOF''\nfix(settings): replace hardcoded mock data with real API calls\n\n- Profile page now fetches user data from /auth/me instead of showing\n  hardcoded \"marco@contindigital.it\"\n- Settings hub page now displays real user info, channels count, and\n  credentials count from API\n- Added loading states and error handling to both pages\n- Dynamic avatar initials based on user name/email\n- Member since date now calculated from actual createdAt timestamp\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "WebFetch(domain:keepaapi.readthedocs.io)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

@@ -198,11 +198,12 @@ export default function AutomationStudioPage() {
             });
             const result = await response.json();
 
-            alert(t('testSuccess', {
-                processed: result.dealsProcessed,
-                published: result.dealsPublished,
-                time: result.executionTime
-            }));
+            if (result.success) {
+                // New v2 async system - job is queued
+                alert(t('testQueued', { name: result.ruleName }));
+            } else {
+                alert(t('testError'));
+            }
 
             fetchRules();
         } catch (error) {
