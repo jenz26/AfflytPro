@@ -629,8 +629,10 @@
       "step1": {
         "nameLabel": "Mission Name *",
         "namePlaceholder": "e.g. Hot Electronics Deals",
+        "nameHint": "Choose a descriptive name for your automation",
         "descriptionLabel": "Description (Optional)",
-        "descriptionPlaceholder": "Describe the goal of this automation..."
+        "descriptionPlaceholder": "Describe the goal of this automation...",
+        "descriptionHint": "Help yourself remember what this automation does"
       },
       "step2": {
         "categoriesLabel": "Select Target Categories *",

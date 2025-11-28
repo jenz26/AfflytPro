@@ -629,12 +629,18 @@
       "step1": {
         "nameLabel": "Nome Missione *",
         "namePlaceholder": "es. Hot Deals Elettronica",
+        "nameHint": "Scegli un nome descrittivo per la tua automazione",
         "descriptionLabel": "Descrizione (Opzionale)",
-        "descriptionPlaceholder": "Descrivi l'obiettivo di questa automazione..."
+        "descriptionPlaceholder": "Descrivi l'obiettivo di questa automazione...",
+        "descriptionHint": "Aiutati a ricordare cosa fa questa automazione"
       },
       "step2": {
+        "title": "Seleziona Categorie Target",
+        "subtitle": "Scegli quali categorie Amazon monitorare",
         "categoriesLabel": "Seleziona Categorie Target *",
-        "selectedCount": "{count} categorie selezionate"
+        "selectedCount": "{count} categorie selezionate",
+        "maxReached": "Massimo {max} categorie per il tuo piano",
+        "upgradeHint": "Passa a PRO per più categorie"
       },
       "step3": {
         "minScoreLabel": "Deal Score Minimo:",
@@ -645,6 +651,63 @@
           "moderate": "Bilancia quantità e qualità",
           "good": "Solo deal di buona qualità",
           "excellent": "Solo i migliori deal (pochi ma ottimi)"
+        },
+        "info": "I filtri ti aiutano a restringere i risultati. Tutti i filtri sono opzionali - più ne aggiungi, meno risultati (ma più mirati) otterrai.",
+        "clear": "Pulisci",
+        "proFilters": {
+          "title": "Filtri Avanzati",
+          "priceRange": {
+            "label": "Range di Prezzo",
+            "minPlaceholder": "Min €",
+            "maxPlaceholder": "Max €"
+          },
+          "minDiscount": {
+            "label": "Sconto Minimo",
+            "hint": "Mostra solo prodotti con almeno questo sconto"
+          },
+          "minRating": {
+            "label": "Valutazione Minima",
+            "hint": "Clicca le stelle per impostare la valutazione minima",
+            "selected": "Minimo {stars} stelle"
+          },
+          "minReviews": {
+            "label": "Recensioni Minime",
+            "hint": "Prodotti con almeno questo numero di recensioni"
+          },
+          "maxSalesRank": {
+            "label": "Sales Rank Massimo",
+            "hint": "Rank più basso = più popolare. Lascia vuoto per tutti."
+          }
+        },
+        "businessFilters": {
+          "title": "Filtri Premium",
+          "amazonOnly": {
+            "label": "Venduto da Amazon",
+            "hint": "Solo prodotti venduti direttamente da Amazon"
+          },
+          "fbaOnly": {
+            "label": "Solo FBA",
+            "hint": "Solo prodotti gestiti da Amazon"
+          },
+          "hasCoupon": {
+            "label": "Con Coupon",
+            "hint": "Solo prodotti con coupon attivi"
+          },
+          "primeOnly": {
+            "label": "Solo Prime",
+            "hint": "Solo offerte esclusive Prime"
+          },
+          "brand": {
+            "label": "Filtro Brand",
+            "includeLabel": "Includi brand (separati da virgola)",
+            "includePlaceholder": "Apple, Samsung, Sony",
+            "excludeLabel": "Escludi brand (separati da virgola)",
+            "excludePlaceholder": "Generico, Sconosciuto"
+          },
+          "listedAfter": {
+            "label": "Solo Prodotti Nuovi",
+            "hint": "Solo prodotti pubblicati dopo questa data"
+          }
         }
       },
       "step4": {
