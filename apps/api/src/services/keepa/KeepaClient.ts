@@ -462,17 +462,18 @@ export class KeepaClient {
     const currentPrice = currentPriceCents > 0 ? currentPriceCents / 100 : 0;
 
     // Get discount from deltaPercent
+    // Format: deltaPercent[dateRange][priceType] where:
+    // - dateRange: 0=day, 1=week, 2=month, 3=90days
+    // - priceType: 0=Amazon, 1=New, 18=BuyBox
     let discountPercent = 0;
     if (raw.deltaPercent && Array.isArray(raw.deltaPercent)) {
-      // Check BuyBox deltas first, then Amazon, then New
-      const buyBoxDeltas = raw.deltaPercent[PRICE_TYPE.BUY_BOX];
-      const amazonDeltas = raw.deltaPercent[PRICE_TYPE.AMAZON];
-      const newDeltas = raw.deltaPercent[PRICE_TYPE.NEW];
+      // Try 90-day range first (index 3), then month (index 2)
+      const range90 = raw.deltaPercent[3]; // 90 days
+      const rangeMonth = raw.deltaPercent[2]; // month
 
-      // Use 90-day delta (index 2) or 180-day (index 3)
-      const deltaValue = buyBoxDeltas?.[2] ?? buyBoxDeltas?.[3] ??
-                        amazonDeltas?.[2] ?? amazonDeltas?.[3] ??
-                        newDeltas?.[2] ?? newDeltas?.[3] ?? 0;
+      // Get BuyBox (18), Amazon (0), or New (1) delta from each range
+      const deltaValue = range90?.[PRICE_TYPE.BUY_BOX] ?? range90?.[PRICE_TYPE.AMAZON] ?? range90?.[PRICE_TYPE.NEW] ??
+                        rangeMonth?.[PRICE_TYPE.BUY_BOX] ?? rangeMonth?.[PRICE_TYPE.AMAZON] ?? rangeMonth?.[PRICE_TYPE.NEW] ?? 0;
 
       if (typeof deltaValue === 'number' && deltaValue < 0) {
         discountPercent = Math.abs(deltaValue);
@@ -505,8 +506,9 @@ export class KeepaClient {
     const hasVisibleDiscount = discountPercent >= 5; // Min 5% to consider as discounted
 
     // Debug log for first few deals
-    if (raw.asin && Math.random() < 0.02) {
-      console.log(`[KeepaClient] Sample deal ${raw.asin}: disc=${discountPercent}%, hasVisible=${hasVisibleDiscount}, delta=${JSON.stringify(raw.deltaPercent?.[18]?.slice(0,4))}`);
+    if (raw.asin && Math.random() < 0.05) {
+      const delta90 = raw.deltaPercent?.[3];
+      console.log(`[KeepaClient] Sample deal ${raw.asin}: disc=${discountPercent}%, hasVisible=${hasVisibleDiscount}, delta90=[${delta90?.[0]},${delta90?.[1]},${delta90?.[18]}]`);
     }
 
     return {
