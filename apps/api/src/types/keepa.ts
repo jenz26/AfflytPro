@@ -282,14 +282,14 @@ export interface KeepaQueueConfig {
 export const DEFAULT_CONFIG: KeepaQueueConfig = {
   TOKENS_PER_MINUTE: 20,
   DEAL_API_COST: 5,                // 5 tokens per 150 deals (per priceType)
-  PRODUCT_API_COST: 1,             // 1 token per ASIN (official Keepa docs)
+  PRODUCT_API_COST: 4,             // 1 base + 2 buybox + 1 rating = 4 tokens per ASIN
 
   // Optimized for 20 tokens/minute plan:
   // - Single priceType = 5 tokens
-  // - Verify 10 deals = 10 tokens
-  // - Total: ~15 tokens per job (fits in 20/min budget)
+  // - Verify 3 deals = 12 tokens (3 * 4 = 12)
+  // - Total: ~17 tokens per job (fits in 20/min budget)
   PRICE_TYPES: [18],               // BuyBox(18) only - most relevant for deals
-  VERIFY_TOP_N_DEALS: 10,          // Verify top 10 deals with Product API
+  VERIFY_TOP_N_DEALS: 3,           // Verify top 3 deals with Product API (4 tokens each)
 
   CACHE_TTL_MS: 60 * 60 * 1000,              // 1 ora
   CACHE_FRESH_THRESHOLD_MS: 30 * 60 * 1000,  // 30 min

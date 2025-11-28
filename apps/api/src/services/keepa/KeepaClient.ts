@@ -202,10 +202,10 @@ export class KeepaClient {
           key: this.apiKey,
           domain: KEEPA_DOMAIN_IT,
           asin: asins.join(','),
-          buybox: 1,        // Include BuyBox data!
+          buybox: 1,        // Include BuyBox data (2 tokens extra per product)
           stats: 180,       // Include stats for last 180 days
-          history: 0,       // Skip full price history to save tokens
-          offers: 0         // Skip offers to save tokens
+          history: 0,       // Skip full price history to reduce response size
+          rating: 1         // Include rating/reviews (up to 1 token extra per product)
         }
       });
 
@@ -504,12 +504,6 @@ export class KeepaClient {
     // Deal API provides discount data - if there's a discount, treat as visible discount
     // This will be refined by Product API verification if available
     const hasVisibleDiscount = discountPercent >= 5; // Min 5% to consider as discounted
-
-    // Debug log for first few deals
-    if (raw.asin && Math.random() < 0.05) {
-      const delta90 = raw.deltaPercent?.[3];
-      console.log(`[KeepaClient] Sample deal ${raw.asin}: disc=${discountPercent}%, hasVisible=${hasVisibleDiscount}, delta90=[${delta90?.[0]},${delta90?.[1]},${delta90?.[18]}]`);
-    }
 
     return {
       asin: raw.asin,

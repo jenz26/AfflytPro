@@ -1,18 +1,26 @@
 /**
  * ScoringEngine - Deal Score Calculation
- * 
- * Calculates a 0-100 score for products based on multiple weighted factors:
+ *
+ * Calculates a 0-100 score for products based on multiple weighted factors.
+ *
+ * When full data is available (Product API):
  * - Discount (40%)
  * - Sales Rank (25%)
  * - Rating (20%)
  * - Price Drop History (15%)
+ *
+ * When only Deal API data is available (no rating/salesRank):
+ * - Discount (70%)
+ * - Price Drop History (30%)
+ *
+ * This ensures deals can still achieve 0-100 scores even without rating data.
  */
 
 export interface ScoreComponents {
-    discountScore: number;    // 0-40
+    discountScore: number;    // 0-40 (or 0-70 when no rating data)
     salesRankScore: number;   // 0-25
     ratingScore: number;      // 0-20
-    priceDropScore: number;   // 0-15
+    priceDropScore: number;   // 0-15 (or 0-30 when no rating data)
 }
 
 export interface ProductScoreInput {
@@ -28,14 +36,43 @@ export interface ProductScoreInput {
 export class ScoringEngine {
     /**
      * Calculate the overall Deal Score (0-100)
+     *
+     * Uses adaptive weighting: if rating/salesRank are unavailable,
+     * redistributes their weight to discount and price drop scores.
      */
     calculateDealScore(product: ProductScoreInput): { score: number; components: ScoreComponents } {
-        const components: ScoreComponents = {
-            discountScore: this.calculateDiscountScore(product.discount),
-            salesRankScore: this.calculateSalesRankScore(product.salesRank, product.category),
-            ratingScore: this.calculateRatingScore(product.rating, product.reviewCount),
-            priceDropScore: this.calculatePriceDropScore(product.currentPrice, product.originalPrice)
-        };
+        const hasRatingData = product.rating !== undefined && product.rating !== null;
+        const hasSalesRankData = product.salesRank !== undefined && product.salesRank !== null;
+
+        // Calculate raw component scores
+        const rawDiscount = this.calculateDiscountScore(product.discount);
+        const rawSalesRank = hasSalesRankData ? this.calculateSalesRankScore(product.salesRank, product.category) : 0;
+        const rawRating = hasRatingData ? this.calculateRatingScore(product.rating, product.reviewCount) : 0;
+        const rawPriceDrop = this.calculatePriceDropScore(product.currentPrice, product.originalPrice);
+
+        let components: ScoreComponents;
+
+        if (!hasRatingData && !hasSalesRankData) {
+            // Deal API mode: only discount and price drop available
+            // Redistribute weights: discount 70%, price drop 30%
+            const discountNormalized = (rawDiscount / 40) * 70;
+            const priceDropNormalized = (rawPriceDrop / 15) * 30;
+
+            components = {
+                discountScore: discountNormalized,
+                salesRankScore: 0,
+                ratingScore: 0,
+                priceDropScore: priceDropNormalized
+            };
+        } else {
+            // Full data mode: use standard weights
+            components = {
+                discountScore: rawDiscount,
+                salesRankScore: rawSalesRank,
+                ratingScore: rawRating,
+                priceDropScore: rawPriceDrop
+            };
+        }
 
         const totalScore = Math.round(
             components.discountScore +
