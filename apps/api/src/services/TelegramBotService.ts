@@ -178,6 +178,7 @@ export class TelegramBotService {
         : '';
 
       // Keepa chart URL (via our proxy to protect API key)
+      console.log(`[Telegram] Deal ${deal.asin}: includeKeepaChart=${deal.includeKeepaChart}, API_BASE_PUBLIC=${API_BASE_PUBLIC}`);
       const keepaChartUrl = deal.includeKeepaChart
         ? `${API_BASE_PUBLIC}/keepa/graph/${deal.asin}?domain=it&range=180&bb=1&salesrank=0`
         : null;
