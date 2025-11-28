@@ -281,12 +281,24 @@ export function getCategoryById(id: number): AmazonCategory | undefined {
 
 /**
  * Get category by name (Italian or English, case-insensitive)
+ * Supports exact match and partial match (e.g., "Beauty" matches "Beauty & Personal Care")
  */
 export function getCategoryByName(name: string): AmazonCategory | undefined {
     const lowerName = name.toLowerCase();
-    return AMAZON_IT_CATEGORIES.find(
+
+    // First try exact match
+    const exactMatch = AMAZON_IT_CATEGORIES.find(
         cat => cat.name.toLowerCase() === lowerName ||
                cat.nameEN.toLowerCase() === lowerName
+    );
+    if (exactMatch) return exactMatch;
+
+    // Then try partial match (input is prefix or contained in category name)
+    return AMAZON_IT_CATEGORIES.find(
+        cat => cat.name.toLowerCase().startsWith(lowerName) ||
+               cat.nameEN.toLowerCase().startsWith(lowerName) ||
+               cat.name.toLowerCase().includes(lowerName) ||
+               cat.nameEN.toLowerCase().includes(lowerName)
     );
 }
 
