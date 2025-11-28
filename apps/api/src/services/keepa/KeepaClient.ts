@@ -500,6 +500,10 @@ export class KeepaClient {
       imageUrl = `https://m.media-amazon.com/images/I/${raw.image}`;
     }
 
+    // Deal API provides discount data - if there's a discount, treat as visible discount
+    // This will be refined by Product API verification if available
+    const hasVisibleDiscount = discountPercent >= 5; // Min 5% to consider as discounted
+
     return {
       asin: raw.asin,
       title: raw.title || `Product ${raw.asin}`,
@@ -516,7 +520,9 @@ export class KeepaClient {
       availabilityType: 'In stock',
       dealEndDate: null,
       fetchedAt: new Date(),
-      isVerified: false
+      isVerified: false,
+      hasVisibleDiscount,          // Set based on discount from Deal API
+      isHistoricalLow: undefined   // Will be set by Product API verification
     };
   }
 
