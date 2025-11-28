@@ -72,6 +72,10 @@ const createRuleSchema = z.object({
     channelId: z.string().uuid().optional().or(z.literal('')),
     splitId: z.string().uuid().optional().or(z.literal('')),
 
+    // Deal Publish Mode
+    dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).default('DISCOUNTED_ONLY'),
+    includeKeepaChart: z.boolean().default(false),
+
     // Triggers/Actions (optional - will use defaults if not provided)
     triggers: z.array(triggerActionSchema).optional(),
     actions: z.array(triggerActionSchema.extend({ order: z.number().int().nonnegative() })).optional(),
@@ -114,6 +118,10 @@ const updateRuleSchema = z.object({
     // Publishing
     channelId: z.string().uuid().optional().or(z.literal('')),
     splitId: z.string().uuid().optional().or(z.literal('')),
+
+    // Deal Publish Mode (NEW)
+    dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).optional(),
+    includeKeepaChart: z.boolean().optional(),
 });
 
 const idParamSchema = z.object({
@@ -458,6 +466,10 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     // Publishing
                     ...(parsed.channelId && parsed.channelId.trim() !== '' ? { channelId: parsed.channelId } : {}),
                     ...(parsed.splitId && parsed.splitId.trim() !== '' ? { splitId: parsed.splitId } : {}),
+
+                    // Deal Publish Mode
+                    dealPublishMode: parsed.dealPublishMode,
+                    includeKeepaChart: parsed.includeKeepaChart,
 
                     // Triggers and actions
                     triggers: {
