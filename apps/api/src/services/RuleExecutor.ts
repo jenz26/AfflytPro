@@ -6,10 +6,91 @@ import { ProductCacheService } from './ProductCacheService';
 import { SecurityService } from './SecurityService';
 import { needsKeepaRefresh, getPlanLimits } from '../config/planLimits';
 import { KeepaPopulateService } from './KeepaPopulateService';
+import { KeepaEngine } from './KeepaEngine';
 import { AMAZON_IT_CATEGORIES } from '../data/amazon-categories';
 
 const prisma = new PrismaClient();
 const securityService = new SecurityService();
+const keepaEngine = new KeepaEngine();
+
+// ═══════════════════════════════════════════════════════════════
+// PRODUCT VERIFICATION WITH KEEPA PRODUCT API
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Verify deals using Keepa Product API to get accurate pricing.
+ * Returns only deals that are verified and still have a real discount.
+ *
+ * Cost: 1 token per ASIN
+ */
+async function verifyDealsWithProductAPI(
+    deals: any[],
+    userId: string,
+    minDiscountPercent: number = 10
+): Promise<any[]> {
+    const verifiedDeals: any[] = [];
+
+    for (const deal of deals) {
+        try {
+            // Check if product data is fresh (< 2 hours old)
+            const product = await prisma.product.findUnique({
+                where: { asin: deal.asin }
+            });
+
+            const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+            const needsRefresh = !product?.lastPriceCheckAt ||
+                                 product.lastPriceCheckAt < twoHoursAgo ||
+                                 !product.rating; // Also refresh if no rating (Deal API didn't have it)
+
+            if (needsRefresh) {
+                // Refresh with Product API (1 token)
+                const freshData = await keepaEngine.checkAndRefresh(deal.asin, userId);
+
+                if (freshData) {
+                    // Calculate actual discount
+                    const actualDiscount = freshData.originalPrice > freshData.currentPrice
+                        ? Math.round(((freshData.originalPrice - freshData.currentPrice) / freshData.originalPrice) * 100)
+                        : 0;
+
+                    // Only include if still has a meaningful discount
+                    if (actualDiscount >= minDiscountPercent) {
+                        verifiedDeals.push({
+                            ...deal,
+                            currentPrice: freshData.currentPrice,
+                            originalPrice: freshData.originalPrice,
+                            discount: actualDiscount,
+                            rating: freshData.rating || deal.rating,
+                            reviewCount: freshData.reviewCount || deal.reviewCount,
+                            verified: true
+                        });
+                    }
+                }
+            } else {
+                // Product data is fresh enough, use cached
+                const actualDiscount = product.originalPrice > product.currentPrice
+                    ? Math.round(((product.originalPrice - product.currentPrice) / product.originalPrice) * 100)
+                    : 0;
+
+                if (actualDiscount >= minDiscountPercent) {
+                    verifiedDeals.push({
+                        ...deal,
+                        currentPrice: product.currentPrice,
+                        originalPrice: product.originalPrice,
+                        discount: actualDiscount,
+                        rating: product.rating || deal.rating,
+                        reviewCount: product.reviewCount || deal.reviewCount,
+                        verified: true
+                    });
+                }
+            }
+        } catch (error) {
+            // If verification fails, skip this deal (don't publish unverified)
+            console.warn(`Failed to verify deal ${deal.asin}:`, error);
+        }
+    }
+
+    return verifiedDeals;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // PLAN-BASED LIMITS FOR QUERY (fallback if dealsPerRun not set)
@@ -454,9 +535,30 @@ export class RuleExecutor {
                 }
             }
 
-            const dealsToPublish = deduplicatedDeals
+            const candidateDeals = deduplicatedDeals
                 .sort((a, b) => b.score - a.score)
-                .slice(0, dealsLimit);
+                .slice(0, dealsLimit * 2); // Get 2x to have fallbacks after verification
+
+            // STEP 5.5: Verify deals with Product API for accurate pricing
+            // This ensures we only publish deals with real, verified discounts
+            const verifiedDeals = await verifyDealsWithProductAPI(
+                candidateDeals,
+                rule.userId,
+                10 // Minimum 10% verified discount
+            );
+
+            // Take the final number of verified deals
+            const dealsToPublish = verifiedDeals.slice(0, dealsLimit);
+
+            if (dealsToPublish.length === 0) {
+                return {
+                    success: true,
+                    dealsProcessed,
+                    dealsPublished: 0,
+                    errors: ['No deals passed verification (prices may have changed)'],
+                    executionTime: Date.now() - startTime
+                };
+            }
 
             // Get Telegram bot token
             const telegramCredential = rule.user.credentials?.find((c: any) => c.provider === 'TELEGRAM_BOT');
