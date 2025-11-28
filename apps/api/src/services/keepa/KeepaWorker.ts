@@ -91,13 +91,16 @@ export class KeepaWorker {
 
       const estimatedCost = this.estimateJobCost(nextJob);
       if (tokensAvailable < estimatedCost) {
-        // Not enough tokens, wait - log only once per minute to avoid spam
-        const lastWarnKey = 'keepa:last_token_warn';
-        const lastWarn = await this.redis.get(lastWarnKey);
+        // Not enough tokens - sync with Keepa to get real token count
+        const lastSyncKey = 'keepa:last_token_sync';
+        const lastSync = await this.redis.get(lastSyncKey);
         const now = Date.now();
-        if (!lastWarn || now - parseInt(lastWarn, 10) > 60000) {
-          console.log(`[KeepaWorker] Waiting for tokens: have ${tokensAvailable}, need ${estimatedCost} for job ${nextJob.category}`);
-          await this.redis.set(lastWarnKey, now.toString(), 'EX', 120);
+
+        // Sync every 30 seconds when waiting for tokens
+        if (!lastSync || now - parseInt(lastSync, 10) > 30000) {
+          console.log(`[KeepaWorker] Syncing tokens with Keepa (have ${tokensAvailable}, need ${estimatedCost})`);
+          await this.tokenManager.syncFromKeepa();
+          await this.redis.set(lastSyncKey, now.toString(), 'EX', 60);
         }
         return;
       }
@@ -195,7 +198,8 @@ export class KeepaWorker {
       job.unionFilters
     );
 
-    await this.tokenManager.consume(dealResult.tokenCost, 'deal_search');
+    // Update token count from Keepa response (authoritative source)
+    await this.tokenManager.updateFromResponse(dealResult.tokensLeft, dealResult.refillIn);
     await this.logTokenUsage('deal_search', dealResult.tokenCost, job.category, [], job.id);
 
     if (dealResult.deals.length === 0) {
@@ -214,7 +218,10 @@ export class KeepaWorker {
       this.config.VERIFY_TOP_N_DEALS
     );
 
-    await this.tokenManager.consume(verifyResult.tokenCost, 'product_refresh');
+    // Update token count from Keepa response (authoritative source)
+    if (verifyResult.tokensLeft > 0) {
+      await this.tokenManager.updateFromResponse(verifyResult.tokensLeft, verifyResult.refillIn);
+    }
     const verifiedAsins = verifyResult.verifiedDeals.map(d => d.asin);
     await this.logTokenUsage('product_refresh', verifyResult.tokenCost, job.category, verifiedAsins, job.id);
 
