@@ -11,7 +11,9 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(curl:*)",
       "Bash(mkdir:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix(redis): connect and wait for Redis before starting Keepa workers\n\n- Add connectRedis() function that awaits Redis connection\n- Ensure Redis is ready before KeepaWorker and AutomationScheduler start\n- Fixes issue where workers started before Redis was connected (lazyConnect)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

@@ -26,7 +26,7 @@ import { AutomationScheduler, setSchedulerInstance } from './services/keepa';
 import { KeepaPrefetch } from './services/keepa/KeepaPrefetch';
 import { KeepaTokenManager } from './services/keepa/KeepaTokenManager';
 import { DEFAULT_CONFIG } from './types/keepa';
-import { getRedis } from './lib/redis';
+import { connectRedis } from './lib/redis';
 import prisma from './lib/prisma';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
@@ -187,7 +187,10 @@ const start = async () => {
         if (process.env.REDIS_URL && process.env.KEEPA_API_KEY) {
             console.log('[Keepa v2] Starting queue system...');
 
-            const redis = getRedis();
+            // Connect to Redis and wait for it to be ready BEFORE starting workers
+            const redis = await connectRedis();
+            console.log('[Keepa v2] Redis connected, starting workers...');
+
             const config = DEFAULT_CONFIG;
             const keepaApiKey = process.env.KEEPA_API_KEY;
 

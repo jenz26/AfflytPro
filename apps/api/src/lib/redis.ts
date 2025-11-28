@@ -38,6 +38,24 @@ export function getRedis(): Redis {
   return redis;
 }
 
+/**
+ * Connect to Redis and wait for it to be ready
+ * Call this before starting any services that depend on Redis
+ */
+export async function connectRedis(): Promise<Redis> {
+  const client = getRedis();
+
+  // If already connected, return immediately
+  if (client.status === 'ready') {
+    return client;
+  }
+
+  // Connect and wait for ready
+  await client.connect();
+
+  return client;
+}
+
 export async function closeRedis(): Promise<void> {
   if (redis) {
     await redis.quit();
