@@ -42,6 +42,11 @@ interface AutomationRule {
         revenue: number;
     };
     status?: 'idle' | 'running' | 'error';
+    // Scheduling
+    schedulePreset?: string;
+    // Deal publish options
+    dealPublishMode?: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
+    includeKeepaChart?: boolean;
 }
 
 export default function AutomationStudioPage() {

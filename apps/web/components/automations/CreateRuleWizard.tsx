@@ -37,6 +37,11 @@ interface WizardProps {
         maxPrice?: number;
         channelId?: string;
         isActive: boolean;
+        // Scheduling
+        schedulePreset?: string;
+        // Deal publish options
+        dealPublishMode?: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
+        includeKeepaChart?: boolean;
     } | null;
 }
 
@@ -60,11 +65,11 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         minScore: editingRule?.minScore || 70,
         maxPrice: editingRule?.maxPrice || undefined as number | undefined,
         channelId: editingRule?.channelId || '',
-        // Scheduling (NEW)
-        schedulePreset: 'relaxed' as string,
-        // Deal publish mode (NEW)
-        dealPublishMode: 'DISCOUNTED_ONLY' as 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH',
-        includeKeepaChart: false
+        // Scheduling
+        schedulePreset: editingRule?.schedulePreset || 'relaxed' as string,
+        // Deal publish mode
+        dealPublishMode: editingRule?.dealPublishMode || 'DISCOUNTED_ONLY' as 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH',
+        includeKeepaChart: editingRule?.includeKeepaChart ?? false
     });
 
     // Schedule presets data
