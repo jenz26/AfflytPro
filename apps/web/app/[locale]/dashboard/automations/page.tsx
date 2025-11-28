@@ -15,7 +15,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RuleCard } from '@/components/automations/RuleCard';
-import { CreateRuleWizard } from '@/components/automations/CreateRuleWizard';
+import { CreateMissionWizard } from '@/components/automations/CreateMissionWizard';
 import { EmptyState } from '@/components/automations/EmptyState';
 import { TemplateWizard } from '@/components/automations/TemplateWizard';
 import { AutomationTemplate } from '@/components/automations/TemplateCard';
@@ -463,8 +463,23 @@ export default function AutomationStudioPage() {
 
             {/* Create/Edit Wizard Modal */}
             {showWizard && (
-                <CreateRuleWizard
-                    editingRule={editingRule}
+                <CreateMissionWizard
+                    editingMission={editingRule ? {
+                        id: editingRule.id,
+                        name: editingRule.name,
+                        description: editingRule.description || '',
+                        categories: editingRule.categories,
+                        minScore: editingRule.minScore,
+                        maxPrice: editingRule.maxPrice,
+                        channelId: editingRule.channelId || '',
+                        isActive: editingRule.isActive,
+                        amazonOnly: false,
+                        fbaOnly: false,
+                        hasCoupon: false,
+                        primeOnly: false,
+                        brandInclude: [],
+                        brandExclude: [],
+                    } : null}
                     onComplete={handleCreateRule}
                     onCancel={() => {
                         setShowWizard(false);

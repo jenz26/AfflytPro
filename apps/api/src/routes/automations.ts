@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { TriggerType, ActionType } from '@prisma/client';
-import { RuleExecutor } from '../services/RuleExecutor';
+import { getSchedulerInstance } from '../services/keepa';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { checkActiveAutomationLimit, checkMinScore } from '../middleware/planGuard';
@@ -705,17 +705,25 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
 
-            fastify.log.info({ ruleId: id, userId }, 'Manually executing automation rule');
+            // Get the v2 scheduler instance
+            const scheduler = getSchedulerInstance();
+            if (!scheduler) {
+                return reply.code(503).send({
+                    error: 'Service unavailable',
+                    message: 'Keepa Queue System v2 is not running. Check REDIS_URL and KEEPA_API_KEY configuration.'
+                });
+            }
 
-            // Execute rule
-            const result = await RuleExecutor.executeRule(id);
+            fastify.log.info({ ruleId: id, userId }, 'Manually executing automation rule via Keepa v2');
+
+            // Trigger rule via v2 scheduler (queues the job for processing)
+            await scheduler.triggerRule(id);
 
             return reply.send({
-                ...result,
+                success: true,
                 ruleName: rule.name,
-                message: result.success
-                    ? 'Automation rule executed successfully'
-                    : 'Automation rule execution failed'
+                message: 'Automation rule queued for execution',
+                note: 'The rule has been added to the Keepa queue and will be processed shortly. Check the deals in a few minutes.'
             });
         } catch (error: any) {
             if (error instanceof z.ZodError) {

@@ -22,7 +22,7 @@ import { startAutomationScheduler } from './jobs/automation-scheduler';
 import { startKeepaPopulateScheduler } from './jobs/keepa-populate-scheduler';
 // Keepa Queue System v2
 import { KeepaWorker } from './services/keepa/KeepaWorker';
-import { AutomationScheduler } from './services/keepa/AutomationScheduler';
+import { AutomationScheduler, setSchedulerInstance } from './services/keepa';
 import { KeepaPrefetch } from './services/keepa/KeepaPrefetch';
 import { KeepaTokenManager } from './services/keepa/KeepaTokenManager';
 import { DEFAULT_CONFIG } from './types/keepa';
@@ -201,6 +201,9 @@ const start = async () => {
             // Start the automation scheduler (checks AutomationRules every minute)
             const automationScheduler = new AutomationScheduler(prisma, redis, config);
             automationScheduler.start();
+
+            // Register scheduler instance globally for route access
+            setSchedulerInstance(automationScheduler);
 
             // Initialize prefetch (will be called by worker during idle)
             const keepaPrefetch = new KeepaPrefetch(redis, prisma, config, tokenManager);
