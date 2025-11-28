@@ -283,8 +283,10 @@ export class KeepaEngine {
                         domain: this.domainId, // Use numeric domain ID (8 for Italy)
                         asin,
                         stats: 30,   // Include 30-day stats (provides current prices, averages, etc.)
-                        rating: 1    // Include rating and review count history (1 token extra if fresh)
+                        rating: 1,   // Include rating and review count history (1 token extra if fresh)
+                        buybox: 1    // Include Buy Box data: buyBoxPrice, buyBoxSavingBasis, buyBoxSavingPercentage (2 tokens extra)
                         // Note: 'offers' parameter costs 6 tokens per page - skip for basic verification
+                        // Total cost: 1 (base) + 1 (rating) + 2 (buybox) = 4 tokens per product
                     }
                 });
             });
@@ -306,8 +308,10 @@ export class KeepaEngine {
     /**
      * Parse Keepa JSON response to our KeepaProduct format
      *
-     * Uses the stats object (from stats parameter) for current prices and averages.
-     * Falls back to csv array if stats not available.
+     * PRIORITY ORDER for prices (to match what Amazon shows):
+     * 1. Buy Box data (buyBoxPrice, buyBoxSavingBasis) - most accurate, what customer sees
+     * 2. stats.current[] array using Price Type indexing
+     * 3. csv array as last fallback
      *
      * Price Type indices for stats.current[]:
      * 0=AMAZON, 1=NEW, 3=SALES, 4=LISTPRICE, 16=RATING, 17=COUNT_REVIEWS, 18=BUY_BOX_SHIPPING
@@ -315,46 +319,63 @@ export class KeepaEngine {
     private parseKeepaResponse(keepaData: any): KeepaProduct {
         const stats = keepaData.stats;
 
-        // Extract current values from stats.current[] array using Price Type indexing
-        // Price is in cents (smallest currency unit), -1 means no offer available
         let currentPriceCents = -1;
-        let listPriceCents = -1;
+        let originalPriceCents = -1;
         let salesRank: number | undefined;
         let rating: number | undefined;
         let reviewCount: number | undefined;
 
-        if (stats && stats.current) {
-            // Try Amazon price first, then Buy Box, then New marketplace
-            currentPriceCents = stats.current[PRICE_TYPES.AMAZON];
-            if (currentPriceCents <= 0) {
-                currentPriceCents = stats.current[PRICE_TYPES.BUY_BOX_SHIPPING];
-            }
-            if (currentPriceCents <= 0) {
-                currentPriceCents = stats.current[PRICE_TYPES.NEW];
+        if (stats) {
+            // PRIORITY 1: Use Buy Box data if available (most accurate - what Amazon actually shows)
+            // buyBoxPrice and buyBoxSavingBasis are only available when buybox=1 parameter is used
+            if (stats.buyBoxPrice && stats.buyBoxPrice > 0) {
+                currentPriceCents = stats.buyBoxPrice;
+
+                // buyBoxSavingBasis is the strikethrough price shown on Amazon
+                if (stats.buyBoxSavingBasis && stats.buyBoxSavingBasis > 0) {
+                    originalPriceCents = stats.buyBoxSavingBasis;
+                }
+
+                console.log(`[Keepa] ${keepaData.asin}: Using BuyBox price ${currentPriceCents}c, strikethrough ${originalPriceCents}c`);
             }
 
-            // Get list price for original price
-            listPriceCents = stats.current[PRICE_TYPES.LISTPRICE];
+            // PRIORITY 2: Fall back to stats.current[] if no buybox data
+            if (currentPriceCents <= 0 && stats.current) {
+                // Try Amazon price first, then New marketplace
+                currentPriceCents = stats.current[PRICE_TYPES.AMAZON];
+                if (currentPriceCents <= 0) {
+                    currentPriceCents = stats.current[PRICE_TYPES.NEW];
+                }
 
-            // If no list price, use 30-day average as reference
-            if (listPriceCents <= 0 && stats.avg30) {
-                listPriceCents = stats.avg30[PRICE_TYPES.AMAZON] || stats.avg30[PRICE_TYPES.NEW];
+                // Get list price for original price
+                if (originalPriceCents <= 0) {
+                    originalPriceCents = stats.current[PRICE_TYPES.LISTPRICE];
+                }
+
+                console.log(`[Keepa] ${keepaData.asin}: Using stats.current price ${currentPriceCents}c, listprice ${originalPriceCents}c`);
+            }
+
+            // If no original price yet, use 30-day average as reference
+            if (originalPriceCents <= 0 && stats.avg30) {
+                originalPriceCents = stats.avg30[PRICE_TYPES.AMAZON] || stats.avg30[PRICE_TYPES.NEW];
             }
 
             // Get sales rank
-            const rankValue = stats.current[PRICE_TYPES.SALES];
-            salesRank = rankValue > 0 ? rankValue : undefined;
+            if (stats.current) {
+                const rankValue = stats.current[PRICE_TYPES.SALES];
+                salesRank = rankValue > 0 ? rankValue : undefined;
 
-            // Get rating (0-50 scale in Keepa, we convert to 0-5)
-            const ratingValue = stats.current[PRICE_TYPES.RATING];
-            rating = ratingValue > 0 ? ratingValue / 10 : undefined;
+                // Get rating (0-50 scale in Keepa, we convert to 0-5)
+                const ratingValue = stats.current[PRICE_TYPES.RATING];
+                rating = ratingValue > 0 ? ratingValue / 10 : undefined;
 
-            // Get review count
-            const reviewValue = stats.current[PRICE_TYPES.COUNT_REVIEWS];
-            reviewCount = reviewValue > 0 ? reviewValue : undefined;
+                // Get review count
+                const reviewValue = stats.current[PRICE_TYPES.COUNT_REVIEWS];
+                reviewCount = reviewValue > 0 ? reviewValue : undefined;
+            }
         }
 
-        // Fallback to csv array if stats not available
+        // PRIORITY 3: Fallback to csv array if stats not available
         if (currentPriceCents <= 0 && keepaData.csv) {
             const amazonPrices = keepaData.csv[PRICE_TYPES.AMAZON];
             const newPrices = keepaData.csv[PRICE_TYPES.NEW];
@@ -367,15 +388,19 @@ export class KeepaEngine {
                 currentPriceCents = newPrices[newPrices.length - 1];
             }
 
-            const listPrices = keepaData.csv[PRICE_TYPES.LISTPRICE];
-            if (listPrices && listPrices.length >= 2) {
-                listPriceCents = listPrices[listPrices.length - 1];
+            if (originalPriceCents <= 0) {
+                const listPrices = keepaData.csv[PRICE_TYPES.LISTPRICE];
+                if (listPrices && listPrices.length >= 2) {
+                    originalPriceCents = listPrices[listPrices.length - 1];
+                }
             }
+
+            console.log(`[Keepa] ${keepaData.asin}: Using csv fallback price ${currentPriceCents}c`);
         }
 
-        // If still no list price, use current price (no discount)
-        if (listPriceCents <= 0) {
-            listPriceCents = currentPriceCents;
+        // If still no original price, use current price (no discount shown)
+        if (originalPriceCents <= 0) {
+            originalPriceCents = currentPriceCents;
         }
 
         // Build image URL from images array
@@ -392,7 +417,7 @@ export class KeepaEngine {
             asin: keepaData.asin,
             title: keepaData.title || `Product ${keepaData.asin}`,
             currentPrice: currentPriceCents > 0 ? KeepaUtils.centsToEuros(currentPriceCents) : 0,
-            originalPrice: listPriceCents > 0 ? KeepaUtils.centsToEuros(listPriceCents) : 0,
+            originalPrice: originalPriceCents > 0 ? KeepaUtils.centsToEuros(originalPriceCents) : 0,
             salesRank,
             rating,
             reviewCount,
