@@ -15,6 +15,7 @@ import analyticsRoutes from './routes/analytics';
 import validationRoutes from './routes/validation';
 import dealsRoutes from './routes/deals';
 import templatesRoutes from './routes/templates';
+import internalLinkRoutes from './routes/internal-links';
 import { startAutomationScheduler } from './jobs/automation-scheduler';
 import { startKeepaPopulateScheduler } from './jobs/keepa-populate-scheduler';
 import { KeepaWorker } from './workers/keepaWorker';
@@ -100,6 +101,9 @@ app.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply
 app.register(trackingRoutes, { prefix: '/track' });
 app.register(analyticsRoutes, { prefix: '/analytics' });
 app.register(validationRoutes, { prefix: '/validate' });
+
+// Internal routes (protected by internal API key, not JWT)
+app.register(internalLinkRoutes, { prefix: '/internal' });
 
 // Protected routes
 app.register(authRoutes, { prefix: '/auth' });

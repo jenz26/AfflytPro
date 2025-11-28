@@ -1,5 +1,10 @@
 import { Telegraf } from 'telegraf';
 
+// Internal API configuration
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'internal-dev-key';
+const API_BASE = process.env.API_BASE_INTERNAL || `http://localhost:${process.env.PORT || 3001}`;
+const APP_URL = process.env.APP_URL || 'https://afflyt.io';
+
 export class TelegramBotService {
   /**
    * Validate bot token
@@ -80,28 +85,48 @@ export class TelegramBotService {
       reviewCount: number;
       imageUrl?: string;
       affiliateLink: string;
-    }
+    },
+    userId?: string,
+    amazonTag?: string
   ) {
     try {
       const bot = new Telegraf(token);
 
-      // 1. Create short link with tracking
-      const shortLinkResponse = await fetch(`${process.env.APP_URL || 'http://localhost:3000'}/api/links/shorten`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          asin: deal.asin,
-          amazonUrl: deal.affiliateLink,
-          title: deal.title,
-          imageUrl: deal.imageUrl,
-          currentPrice: deal.price,
-          originalPrice: deal.originalPrice,
-          source: 'telegram',
-          campaignId: `channel_${channelId}`,
-        }),
-      });
+      // 1. Create trackable short link via internal API
+      let shortUrl = deal.affiliateLink; // Fallback to direct link
 
-      const { shortUrl } = await shortLinkResponse.json();
+      if (userId && amazonTag) {
+        try {
+          const shortLinkResponse = await fetch(`${API_BASE}/internal/links/create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Internal-Key': INTERNAL_API_KEY
+            },
+            body: JSON.stringify({
+              asin: deal.asin,
+              amazonUrl: deal.affiliateLink,
+              amazonTag: amazonTag,
+              userId: userId,
+              title: deal.title,
+              imageUrl: deal.imageUrl,
+              currentPrice: deal.price,
+              originalPrice: deal.originalPrice,
+              source: 'telegram',
+              campaignId: `channel_${channelId}`,
+            }),
+          });
+
+          if (shortLinkResponse.ok) {
+            const linkData = await shortLinkResponse.json();
+            shortUrl = linkData.shortUrl;
+          } else {
+            console.warn('Failed to create short link, using direct Amazon link');
+          }
+        } catch (linkError) {
+          console.warn('Short link creation failed, using direct Amazon link:', linkError);
+        }
+      }
 
       // 2. Format message with short link
       const discountPercent = Math.round(deal.discount * 100);

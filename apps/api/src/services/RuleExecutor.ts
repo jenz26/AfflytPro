@@ -495,7 +495,9 @@ export class RuleExecutor {
                             reviewCount: deal.reviewCount || 0,
                             imageUrl: deal.imageUrl || undefined,
                             affiliateLink
-                        }
+                        },
+                        rule.userId,       // Pass userId for tracking
+                        userAmazonTag      // Pass amazonTag for tracking
                     );
 
                     if (result.success) {
