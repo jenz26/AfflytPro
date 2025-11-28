@@ -9,7 +9,8 @@
         "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
         "build": "tsc",
         "start": "node dist/app.js",
-        "seed:templates": "ts-node prisma/seed-templates.ts"
+        "seed:templates": "ts-node prisma/seed-templates.ts",
+        "keepa:populate": "ts-node src/scripts/repopulate-keepa.ts"
     },
     "dependencies": {
         "@fastify/cors": "^9.0.1",
