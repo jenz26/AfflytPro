@@ -196,46 +196,68 @@ export class KeepaClient {
 
     console.log(`[KeepaClient] Verifying ${asins.length} deals with Product API (buybox=1)`);
 
-    const response = await this.client.get('/product', {
-      params: {
-        key: this.apiKey,
-        domain: KEEPA_DOMAIN_IT,
-        asin: asins.join(','),
-        buybox: 1,        // Include BuyBox data!
-        stats: 180,       // Include stats for last 180 days
-        history: 0,       // Skip full price history to save tokens
-        offers: 0         // Skip offers to save tokens
+    try {
+      const response = await this.client.get('/product', {
+        params: {
+          key: this.apiKey,
+          domain: KEEPA_DOMAIN_IT,
+          asin: asins.join(','),
+          buybox: 1,        // Include BuyBox data!
+          stats: 180,       // Include stats for last 180 days
+          history: 0,       // Skip full price history to save tokens
+          offers: 0         // Skip offers to save tokens
+        }
+      });
+
+      const data = response.data as KeepaProductsResponse;
+      const products = data.products || [];
+      const tokenCost = asins.length * this.config.PRODUCT_API_COST;
+
+      console.log(`[KeepaClient] Received ${products.length} products, ${data.tokensLeft} tokens left`);
+
+      // Create a map of product data by ASIN
+      const productMap = new Map<string, KeepaProduct>();
+      for (const product of products) {
+        productMap.set(product.asin, product);
       }
-    });
 
-    const data = response.data as KeepaProductsResponse;
-    const products = data.products || [];
-    const tokenCost = asins.length * this.config.PRODUCT_API_COST;
+      // Merge verification data into deals
+      const verifiedDeals = toVerify.map(deal => {
+        const product = productMap.get(deal.asin);
+        if (!product) {
+          return deal;
+        }
 
-    console.log(`[KeepaClient] Received ${products.length} products, ${data.tokensLeft} tokens left`);
+        return this.enrichDealWithProductData(deal, product);
+      });
 
-    // Create a map of product data by ASIN
-    const productMap = new Map<string, KeepaProduct>();
-    for (const product of products) {
-      productMap.set(product.asin, product);
+      return {
+        verifiedDeals,
+        tokensLeft: data.tokensLeft,
+        refillIn: data.refillIn,
+        tokenCost
+      };
+    } catch (error: any) {
+      // Handle Keepa API errors gracefully
+      if (error.response?.data?.error) {
+        const keepaError = error.response.data.error;
+        console.error(`[KeepaClient] Keepa API error: ${keepaError.type} - ${keepaError.message}`);
+        if (keepaError.details) {
+          console.error(`[KeepaClient] Error details: ${keepaError.details}`);
+        }
+      } else {
+        console.error(`[KeepaClient] Product API error:`, error.message);
+      }
+
+      // Return unverified deals instead of failing completely
+      console.log(`[KeepaClient] Returning ${toVerify.length} unverified deals due to API error`);
+      return {
+        verifiedDeals: toVerify, // Return original deals without verification
+        tokensLeft: error.response?.data?.tokensLeft ?? 0,
+        refillIn: error.response?.data?.refillIn ?? 0,
+        tokenCost: 0 // No tokens consumed on error
+      };
     }
-
-    // Merge verification data into deals
-    const verifiedDeals = toVerify.map(deal => {
-      const product = productMap.get(deal.asin);
-      if (!product) {
-        return deal;
-      }
-
-      return this.enrichDealWithProductData(deal, product);
-    });
-
-    return {
-      verifiedDeals,
-      tokensLeft: data.tokensLeft,
-      refillIn: data.refillIn,
-      tokenCost
-    };
   }
 
   /**

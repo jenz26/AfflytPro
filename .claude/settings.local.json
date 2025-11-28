@@ -10,7 +10,8 @@
       "WebFetch(domain:keepaapi.readthedocs.io)",
       "Bash(npx prisma migrate dev:*)",
       "Bash(curl:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []
