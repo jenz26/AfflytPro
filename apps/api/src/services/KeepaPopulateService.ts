@@ -98,44 +98,73 @@ export class KeepaPopulateService {
         let tokensUsed = 0;
 
         try {
-            // Build the deals request using correct Keepa API parameters
-            // domainId MUST be inside the selection JSON, NOT as a URL param
-            // NOTE: priceTypes can only contain ONE value, not multiple!
-            // Omitting priceTypes returns all deal types
+            // We need to query multiple price types to get more deals
+            // priceTypes can only contain ONE value per request, so we make multiple calls
+            // 18 = BUY_BOX_SHIPPING (most relevant - what customer pays)
+            // 0 = AMAZON (Amazon direct)
+            // 1 = NEW (Marketplace new)
+            const priceTypesToQuery = [18, 0, 1]; // BuyBox, Amazon, Marketplace New
 
-            const dealParams: Record<string, any> = {
-                page: 0,
-                domainId: KEEPA_DOMAIN_IT,  // 8 = Italy
-                priceTypes: [0],  // 0 = Amazon price (required, only ONE value allowed)
-                hasReviews: true,
-                isRangeEnabled: true,
-                deltaPercentRange: [minDiscountPercent, 100]
-            };
+            const allDeals: any[] = [];
+            const seenAsins = new Set<string>();
 
-            // Add minimum rating filter (Keepa uses 0-50 scale, not 0-500)
-            // 2 stars = 20 on Keepa scale
-            if (minRating > 0) {
-                dealParams.minRating = Math.floor(minRating / 10);
+            for (const priceType of priceTypesToQuery) {
+                // Stop if we have enough deals
+                if (allDeals.length >= maxDeals * 2) break;
+
+                const dealParams: Record<string, any> = {
+                    page: 0,
+                    domainId: KEEPA_DOMAIN_IT,  // 8 = Italy
+                    priceTypes: [priceType],
+                    dateRange: 0, // Last 24 hours (freshest deals)
+                    hasReviews: true,
+                    isRangeEnabled: true,
+                    deltaPercentRange: [minDiscountPercent, 100],
+                    singleVariation: true, // Avoid duplicate variations
+                    filterErotic: true // Exclude adult content
+                };
+
+                // Add minimum rating filter (Keepa uses 0-50 scale, not 0-500)
+                if (minRating > 0) {
+                    dealParams.minRating = Math.floor(minRating / 10);
+                }
+
+                try {
+                    const response = await this.client.get('/deal', {
+                        params: {
+                            key: this.apiKey,
+                            selection: JSON.stringify(dealParams)
+                        }
+                    });
+
+                    const responseData = response.data as any;
+                    const deals = responseData.deals?.dr || [];
+                    tokensUsed += 5;
+
+                    // Add unique deals only
+                    for (const deal of deals) {
+                        if (!seenAsins.has(deal.asin)) {
+                            seenAsins.add(deal.asin);
+                            allDeals.push(deal);
+                        }
+                    }
+
+                    console.log(`[Keepa] PriceType ${priceType}: ${deals.length} deals found, ${allDeals.length} unique total`);
+
+                } catch (error: any) {
+                    console.error(`[Keepa] PriceType ${priceType} failed:`, error.message);
+                }
+
+                // Small delay between requests
+                await new Promise(r => setTimeout(r, 200));
             }
 
-            // Keepa API call
-            const response = await this.client.get('/deal', {
-                params: {
-                    key: this.apiKey,
-                    selection: JSON.stringify(dealParams)
-                }
-            });
-
-            const responseData = response.data as any;
-            const deals = responseData.deals?.dr || [];
-            tokensUsed = 5;
-
-            if (!deals || deals.length === 0) {
+            if (allDeals.length === 0) {
                 return { saved: 0, skipped: 0, errors: [], tokensUsed };
             }
 
             // Process and save deals
-            for (const deal of deals.slice(0, maxDeals)) {
+            for (const deal of allDeals.slice(0, maxDeals)) {
                 try {
                     const product = await this.saveDeal(deal);
                     if (product) {

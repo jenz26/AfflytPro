@@ -5,8 +5,8 @@
 
 import { keepaPopulateService } from '../services/KeepaPopulateService';
 
-const POPULATE_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const MAX_DEALS_PER_RUN = 50;
+const POPULATE_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours (more frequent)
+const MAX_DEALS_PER_RUN = 150; // Up to 150 deals per run (more coverage)
 const MIN_DISCOUNT_PERCENT = 5;
 const MIN_RATING = 200;
 
