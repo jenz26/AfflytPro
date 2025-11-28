@@ -39,17 +39,56 @@ export interface KeepaProductFinderParams {
     perPage?: number;
 }
 
+// Keepa Domain IDs (from documentation)
+const KEEPA_DOMAIN_IDS: Record<string, number> = {
+    'com': 1,
+    'co.uk': 2,
+    'de': 3,
+    'fr': 4,
+    'co.jp': 5,
+    'ca': 6,
+    'it': 8,
+    'es': 9,
+    'in': 10,
+    'com.mx': 11,
+    'com.br': 12
+};
+
+// Price Type indices for csv field
+const PRICE_TYPES = {
+    AMAZON: 0,
+    NEW: 1,
+    USED: 2,
+    SALES: 3,
+    LISTPRICE: 4,
+    COLLECTIBLE: 5,
+    REFURBISHED: 6,
+    NEW_FBM_SHIPPING: 7,
+    LIGHTNING_DEAL: 8,
+    WAREHOUSE: 9,
+    NEW_FBA: 10,
+    COUNT_NEW: 11,
+    COUNT_USED: 12,
+    COUNT_REFURBISHED: 13,
+    COUNT_COLLECTIBLE: 14,
+    EXTRA_INFO_UPDATES: 15,
+    RATING: 16,
+    COUNT_REVIEWS: 17,
+    BUY_BOX_SHIPPING: 18
+};
+
 export class KeepaEngine {
     private client: AxiosInstance;
     private apiKey: string;
-    private domain: string;
+    private domainId: number;
     private maxRetries: number;
     private refreshQueue: Set<string> = new Set();
     private isProcessingQueue = false;
 
     constructor() {
         this.apiKey = process.env.KEEPA_API_KEY || '';
-        this.domain = process.env.KEEPA_DOMAIN || 'IT';
+        const domainCode = process.env.KEEPA_DOMAIN || 'it';
+        this.domainId = KEEPA_DOMAIN_IDS[domainCode.toLowerCase()] || 8; // Default to Italy
         this.maxRetries = parseInt(process.env.KEEPA_MAX_RETRIES || '3');
 
         if (!this.apiKey) {
@@ -241,11 +280,11 @@ export class KeepaEngine {
                 return await this.client.get('/product', {
                     params: {
                         key: this.apiKey,
-                        domain: this.domain,
+                        domain: this.domainId, // Use numeric domain ID (8 for Italy)
                         asin,
-                        history: 1,  // Include price history
-                        stats: 30,   // Include 30-day stats
-                        offers: 20   // Include offers
+                        stats: 30,   // Include 30-day stats (provides current prices, averages, etc.)
+                        rating: 1    // Include rating and review count history (1 token extra if fresh)
+                        // Note: 'offers' parameter costs 6 tokens per page - skip for basic verification
                     }
                 });
             });
@@ -266,29 +305,99 @@ export class KeepaEngine {
 
     /**
      * Parse Keepa JSON response to our KeepaProduct format
+     *
+     * Uses the stats object (from stats parameter) for current prices and averages.
+     * Falls back to csv array if stats not available.
+     *
+     * Price Type indices for stats.current[]:
+     * 0=AMAZON, 1=NEW, 3=SALES, 4=LISTPRICE, 16=RATING, 17=COUNT_REVIEWS, 18=BUY_BOX_SHIPPING
      */
     private parseKeepaResponse(keepaData: any): KeepaProduct {
-        // Extract latest values from data arrays (with type assertions)
-        const latestAmazonPrice = KeepaUtils.getLatestValue(keepaData.data?.NEW) as number | null;
-        const latestListPrice = KeepaUtils.getLatestValue(keepaData.data?.LISTPRICE) as number | null;
-        const latestRating = KeepaUtils.getLatestValue(keepaData.data?.RATING) as number | null;
-        const latestReviews = KeepaUtils.getLatestValue(keepaData.data?.REVIEWS) as number | null;
-        const latestSalesRank = KeepaUtils.getLatestValue(keepaData.data?.SALES) as number | null;
+        const stats = keepaData.stats;
 
-        // Use buyBoxPrice as fallback for current price
-        const currentPriceCents = latestAmazonPrice || keepaData.buyBoxPrice || 0;
-        const listPriceCents = latestListPrice || currentPriceCents;
+        // Extract current values from stats.current[] array using Price Type indexing
+        // Price is in cents (smallest currency unit), -1 means no offer available
+        let currentPriceCents = -1;
+        let listPriceCents = -1;
+        let salesRank: number | undefined;
+        let rating: number | undefined;
+        let reviewCount: number | undefined;
+
+        if (stats && stats.current) {
+            // Try Amazon price first, then Buy Box, then New marketplace
+            currentPriceCents = stats.current[PRICE_TYPES.AMAZON];
+            if (currentPriceCents <= 0) {
+                currentPriceCents = stats.current[PRICE_TYPES.BUY_BOX_SHIPPING];
+            }
+            if (currentPriceCents <= 0) {
+                currentPriceCents = stats.current[PRICE_TYPES.NEW];
+            }
+
+            // Get list price for original price
+            listPriceCents = stats.current[PRICE_TYPES.LISTPRICE];
+
+            // If no list price, use 30-day average as reference
+            if (listPriceCents <= 0 && stats.avg30) {
+                listPriceCents = stats.avg30[PRICE_TYPES.AMAZON] || stats.avg30[PRICE_TYPES.NEW];
+            }
+
+            // Get sales rank
+            const rankValue = stats.current[PRICE_TYPES.SALES];
+            salesRank = rankValue > 0 ? rankValue : undefined;
+
+            // Get rating (0-50 scale in Keepa, we convert to 0-5)
+            const ratingValue = stats.current[PRICE_TYPES.RATING];
+            rating = ratingValue > 0 ? ratingValue / 10 : undefined;
+
+            // Get review count
+            const reviewValue = stats.current[PRICE_TYPES.COUNT_REVIEWS];
+            reviewCount = reviewValue > 0 ? reviewValue : undefined;
+        }
+
+        // Fallback to csv array if stats not available
+        if (currentPriceCents <= 0 && keepaData.csv) {
+            const amazonPrices = keepaData.csv[PRICE_TYPES.AMAZON];
+            const newPrices = keepaData.csv[PRICE_TYPES.NEW];
+
+            // csv format: [keepaTime, value, keepaTime, value, ...]
+            // Get last value (most recent)
+            if (amazonPrices && amazonPrices.length >= 2) {
+                currentPriceCents = amazonPrices[amazonPrices.length - 1];
+            } else if (newPrices && newPrices.length >= 2) {
+                currentPriceCents = newPrices[newPrices.length - 1];
+            }
+
+            const listPrices = keepaData.csv[PRICE_TYPES.LISTPRICE];
+            if (listPrices && listPrices.length >= 2) {
+                listPriceCents = listPrices[listPrices.length - 1];
+            }
+        }
+
+        // If still no list price, use current price (no discount)
+        if (listPriceCents <= 0) {
+            listPriceCents = currentPriceCents;
+        }
+
+        // Build image URL from images array
+        let imageUrl: string | undefined;
+        if (keepaData.images && keepaData.images.length > 0) {
+            const firstImage = keepaData.images[0];
+            const imageName = firstImage.l || firstImage.m;
+            if (imageName) {
+                imageUrl = `https://m.media-amazon.com/images/I/${imageName}`;
+            }
+        }
 
         return {
             asin: keepaData.asin,
             title: keepaData.title || `Product ${keepaData.asin}`,
-            currentPrice: KeepaUtils.centsToEuros(currentPriceCents),
-            originalPrice: KeepaUtils.centsToEuros(listPriceCents),
-            salesRank: latestSalesRank ?? undefined,
-            rating: latestRating ? KeepaUtils.keepaRatingToStars(latestRating) : undefined,
-            reviewCount: latestReviews ?? undefined,
+            currentPrice: currentPriceCents > 0 ? KeepaUtils.centsToEuros(currentPriceCents) : 0,
+            originalPrice: listPriceCents > 0 ? KeepaUtils.centsToEuros(listPriceCents) : 0,
+            salesRank,
+            rating,
+            reviewCount,
             category: KeepaUtils.extractCategoryName(keepaData),
-            imageUrl: keepaData.imageUrl || undefined
+            imageUrl
         };
     }
 
@@ -352,21 +461,35 @@ export class KeepaEngine {
         }
 
         try {
+            // Product Finder returns only ASINs, not full product objects
+            // Token cost: 10 + 1 per 100 ASINs
             const response = await this.retryWithBackoff(async () => {
-                return await this.client.post('/product', {
-                    key: this.apiKey,
-                    domain: this.domain,
-                    selection: JSON.stringify({
-                        ...params,
-                        page: params.page || 0,
-                        perPage: params.perPage || 50
-                    })
+                return await this.client.get('/query', {
+                    params: {
+                        key: this.apiKey,
+                        domain: this.domainId,
+                        selection: JSON.stringify({
+                            ...params,
+                            page: params.page || 0,
+                            perPage: params.perPage || 50
+                        })
+                    }
                 });
             });
 
-            const products = response.data.products || [];
+            // Response contains { asinList: string[], totalResults: number }
+            const asinList = response.data.asinList || [];
 
-            return products.map((keepaData: any) => this.parseKeepaResponse(keepaData));
+            // If we need full product data, we'd have to call /product for each ASIN
+            // For now, return basic structure with just ASINs
+            // The caller should use checkAndRefresh() to get full data
+            return asinList.map((asin: string) => ({
+                asin,
+                title: '',
+                currentPrice: 0,
+                originalPrice: 0,
+                category: ''
+            } as KeepaProduct));
 
         } catch (error: any) {
             throw this.handleKeepaError(error, 'product-finder');
