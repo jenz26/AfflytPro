@@ -112,18 +112,19 @@ export class KeepaClient {
       domainId: KEEPA_DOMAIN_IT,
       priceTypes: [priceType],
       includeCategories: [categoryId],
-      hasReviews: true,
-      isRangeEnabled: true
+      dateRange: 2,              // Month (last 31 days) - più deal disponibili
+      sortType: 4,               // Sort by percentage delta (highest first)
+      hasReviews: false,         // Non escludere prodotti senza recensioni
+      isRangeEnabled: true,
+      singleVariation: true,     // Una sola variante per prodotto
+      filterErotic: true         // Esclude prodotti adult
     };
 
     // Apply union filters if provided
     if (unionFilters) {
-      // Discount range (min to 100%)
-      if (unionFilters.minDiscount > 0) {
-        selection.deltaPercentRange = [unionFilters.minDiscount, 100];
-      } else {
-        selection.deltaPercentRange = [5, 100];  // Default min 5%
-      }
+      // Discount range (min to 100%) - Keepa minimum is 10%
+      const minDiscount = Math.max(10, unionFilters.minDiscount || 10);
+      selection.deltaPercentRange = [minDiscount, 100];
 
       // Price range (in cents)
       if (unionFilters.minPrice > 0 || unionFilters.maxPrice < 999999) {
@@ -143,7 +144,7 @@ export class KeepaClient {
         selection.salesRankRange = [0, unionFilters.maxSalesRank];
       }
     } else {
-      selection.deltaPercentRange = [5, 100];
+      selection.deltaPercentRange = [10, 100];  // Keepa minimum is 10%
     }
 
     const response = await this.client.get('/deal', {
