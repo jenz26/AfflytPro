@@ -82,7 +82,7 @@ Rispondi SOLO con il testo del messaggio, senza spiegazioni o meta-commenti.`;
 
 const DEFAULT_TEMPLATE = `🔥 **{title}**
 
-💰 **€{currentPrice}** ~~€{originalPrice}~~ (-{discountPercent}%)
+💰 **€{currentPrice}** ~€{originalPrice}~ (-{discountPercent}%)
 {ratingLine}
 👉 {affiliateUrl}
 

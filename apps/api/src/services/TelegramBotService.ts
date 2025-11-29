@@ -25,13 +25,15 @@ function escapeMarkdownV2(text: string): string {
  * 2. Escape special characters EXCEPT * and _ used for formatting
  */
 function convertLLMToMarkdownV2(text: string): string {
-    // Step 1: Convert **bold** to MarkdownV2 *bold*
-    // We need to do this BEFORE escaping to preserve the formatting
+    // Step 1: Convert standard Markdown to Telegram MarkdownV2
+    // **bold** → *bold*
+    // ~~strikethrough~~ → ~strikethrough~ (Telegram uses single tilde)
     let result = text.replace(/\*\*(.+?)\*\*/g, '*$1*');
+    result = result.replace(/~~(.+?)~~/g, '~$1~');
 
     // Step 2: Escape special characters for MarkdownV2
     // We need to escape: _ * [ ] ( ) ~ ` > # + - = | { } . ! \
-    // BUT we must preserve * used for bold and _ used for italic
+    // BUT we must preserve * for bold, _ for italic, ~ for strikethrough
 
     // First, temporarily protect our formatting markers
     const boldMatches: string[] = [];
@@ -44,6 +46,12 @@ function convertLLMToMarkdownV2(text: string): string {
     result = result.replace(/_([^_]+)_/g, (match, content) => {
         italicMatches.push(content);
         return `\x00ITALIC${italicMatches.length - 1}\x00`;
+    });
+
+    const strikeMatches: string[] = [];
+    result = result.replace(/~([^~]+)~/g, (match, content) => {
+        strikeMatches.push(content);
+        return `\x00STRIKE${strikeMatches.length - 1}\x00`;
     });
 
     // Now escape all special characters
@@ -63,6 +71,14 @@ function convertLLMToMarkdownV2(text: string): string {
         // Escape the content inside italic
         const escapedContent = content.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
         return `_${escapedContent}_`;
+    });
+
+    // Restore strikethrough markers
+    result = result.replace(/\x00STRIKE(\d+)\x00/g, (match, index) => {
+        const content = strikeMatches[parseInt(index)];
+        // Escape the content inside strikethrough
+        const escapedContent = content.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+        return `~${escapedContent}~`;
     });
 
     return result;
