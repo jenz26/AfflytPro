@@ -231,7 +231,8 @@ export class TelegramBotService {
         // Convert LLM Markdown (**bold**) to Telegram MarkdownV2 (*bold*)
         // and escape special characters while preserving formatting
         const safeCopy = convertLLMToMarkdownV2(deal.customCopy);
-        message = `${safeCopy}\n\n_\\#Ad \\| Deal trovato da Afflyt Pro 🤖_`;
+        // Add the tracked short link - LLMCopyService no longer includes links
+        message = `${safeCopy}\n\n👉 [Vai su Amazon](${shortUrl})\n\n_\\#Ad \\| Deal trovato da Afflyt Pro 🤖_`;
       } else {
         // Default template message
         // Escape title for MarkdownV2

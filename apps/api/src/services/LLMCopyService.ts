@@ -214,13 +214,16 @@ export class LLMCopyService {
       throw new Error('Empty response from LLM');
     }
 
-    // Post-process: add affiliate link if not present
-    const finalText = text.includes(deal.affiliateUrl)
-      ? text
-      : `${text}\n\n👉 ${deal.affiliateUrl}`;
+    // Don't add the link here - TelegramBotService will add the tracked short link
+    // Remove any link the LLM might have included (they asked to not include links)
+    const cleanText = text
+      .replace(/👉\s*https?:\/\/[^\s]+/g, '')  // Remove 👉 + URL
+      .replace(/https?:\/\/www\.amazon\.[^\s]+/g, '')  // Remove Amazon URLs
+      .replace(/https?:\/\/amzn\.[^\s]+/g, '')  // Remove amzn.to URLs
+      .trim();
 
     return {
-      text: finalText,
+      text: cleanText,
       source: 'LLM',
       tokensUsed: response.usage?.total_tokens,
       generatedAt: new Date()
