@@ -11,6 +11,7 @@ import type {
 import { KeepaQueue } from './KeepaQueue';
 import { KeepaCache } from './KeepaCache';
 import { AMAZON_IT_CATEGORIES, getCategoryByName } from '../../data/amazon-categories';
+import { captureException, addBreadcrumb } from '../../lib/sentry';
 
 type RuleWithRelations = AutomationRule & {
   user: Pick<User, 'id' | 'plan'>;
@@ -102,6 +103,12 @@ export class AutomationScheduler {
       }
     } catch (error) {
       console.error('[AutomationScheduler] Error checking due rules:', error);
+
+      // Sentry: Capture scheduler errors
+      captureException(error as Error, {
+        component: 'AutomationScheduler',
+        operation: 'checkDueRules'
+      });
     }
   }
 
@@ -187,12 +194,31 @@ export class AutomationScheduler {
       console.log(`[AutomationScheduler] Job already pending for ${categoryName}, attaching rules`);
     }
 
+    // Sentry: Track category batch processing
+    addBreadcrumb(`Processing ${rules.length} rules for ${categoryName}`, 'scheduler.batch', {
+      categoryId,
+      categoryName,
+      rulesCount: rules.length,
+      cacheStatus,
+      ruleIds: rules.map(r => r.id)
+    });
+
     // Enqueue or attach each rule
     for (const rule of rules) {
       try {
         await this.enqueueRule(categoryId, categoryName, rule);
       } catch (error) {
         console.error(`[AutomationScheduler] Error enqueueing rule ${rule.id}:`, error);
+
+        // Sentry: Capture rule enqueue error
+        captureException(error as Error, {
+          ruleId: rule.id,
+          ruleName: rule.name,
+          categoryId,
+          categoryName,
+          component: 'AutomationScheduler',
+          operation: 'enqueueRule'
+        });
       }
     }
   }

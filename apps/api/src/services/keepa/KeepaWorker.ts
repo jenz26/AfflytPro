@@ -17,6 +17,7 @@ import { ScoringEngine } from '../ScoringEngine';
 import { TelegramBotService } from '../TelegramBotService';
 import { SecurityService } from '../SecurityService';
 import { LLMCopyService, type DealCopyPayload, type LLMCopyConfig } from '../LLMCopyService';
+import { captureException, addBreadcrumb, Sentry } from '../../lib/sentry';
 
 const DEFAULT_AMAZON_TAG = 'afflyt-21';
 
@@ -163,6 +164,14 @@ export class KeepaWorker {
           console.log(`[KeepaWorker] Syncing tokens with Keepa (have ${tokensAvailable}, need ${estimatedCost})`);
           await this.tokenManager.syncFromKeepa();
           await this.redis.set(lastSyncKey, now.toString(), 'EX', 60);
+
+          // Sentry: Track token wait events
+          addBreadcrumb('Waiting for tokens', 'keepa.tokens', {
+            tokensAvailable,
+            estimatedCost,
+            jobId: nextJob.id,
+            category: nextJob.category
+          });
         }
         return;
       }
@@ -171,6 +180,12 @@ export class KeepaWorker {
       await this.processQueue();
     } catch (error) {
       console.error('[KeepaWorker] Tick error:', error);
+
+      // Sentry: Capture tick errors
+      captureException(error as Error, {
+        component: 'KeepaWorker',
+        operation: 'tick'
+      });
     }
   }
 
@@ -194,11 +209,39 @@ export class KeepaWorker {
 
     console.log(`[KeepaWorker] Processing job ${job.id} for ${job.category} (${job.waitingRules.length} rules)`);
 
+    // Sentry: Add breadcrumb for job start
+    addBreadcrumb(`Processing job ${job.id}`, 'keepa.worker', {
+      jobId: job.id,
+      category: job.category,
+      categoryId: job.categoryId,
+      rulesCount: job.waitingRules.length,
+      isPrefetch: job.isPrefetch
+    });
+
     try {
       await this.executeJob(job);
       await this.queue.completeJob(job);
+
+      // Sentry: Add breadcrumb for job completion
+      addBreadcrumb(`Job ${job.id} completed`, 'keepa.worker', {
+        jobId: job.id,
+        category: job.category
+      });
     } catch (error) {
       console.error(`[KeepaWorker] Job ${job.id} failed:`, error);
+
+      // Sentry: Capture job failure with context
+      captureException(error as Error, {
+        jobId: job.id,
+        category: job.category,
+        categoryId: job.categoryId,
+        rulesCount: job.waitingRules.length,
+        ruleIds: job.waitingRules.map(r => r.ruleId),
+        isPrefetch: job.isPrefetch,
+        component: 'KeepaWorker',
+        operation: 'processQueue'
+      });
+
       // Requeue with lower priority
       job.priority += 50;
       await this.queue.requeue(job);
@@ -212,43 +255,75 @@ export class KeepaWorker {
   private async executeJob(job: QueueJob): Promise<void> {
     const startTime = Date.now();
 
-    // FASE 5.4: Check cache first - if fresh, use cached deals
-    const { status: cacheStatus, data: cachedData } = await this.cache.checkStatus(job.category);
-    let finalDeals: Deal[];
-    let cacheHit = false;
+    // Sentry: Start a transaction for job execution
+    const transaction = Sentry.startSpanManual(
+      {
+        op: 'keepa.job',
+        name: `Job ${job.category}`,
+      },
+      (span) => span
+    );
 
-    if (cacheStatus === 'fresh' && cachedData) {
-      // Use cached deals - no Keepa API call needed!
-      console.log(`[KeepaWorker] Cache HIT for ${job.category} - using cached deals`);
-      if (cachedData.deals.length > 0) {
-        finalDeals = cachedData.deals;
-        cacheHit = true;
-        await this.redis.hincrby('keepa:stats', 'cache_hits', 1);
+    try {
+      // Add context to the span
+      transaction.setAttribute('job.id', job.id);
+      transaction.setAttribute('job.category', job.category);
+      transaction.setAttribute('job.categoryId', job.categoryId);
+      transaction.setAttribute('job.rulesCount', job.waitingRules.length);
+      transaction.setAttribute('job.isPrefetch', job.isPrefetch);
+
+      // FASE 5.4: Check cache first - if fresh, use cached deals
+      const { status: cacheStatus, data: cachedData } = await this.cache.checkStatus(job.category);
+      let finalDeals: Deal[];
+      let cacheHit = false;
+
+      transaction.setAttribute('cache.status', cacheStatus);
+
+      if (cacheStatus === 'fresh' && cachedData) {
+        // Use cached deals - no Keepa API call needed!
+        console.log(`[KeepaWorker] Cache HIT for ${job.category} - using cached deals`);
+        if (cachedData.deals.length > 0) {
+          finalDeals = cachedData.deals;
+          cacheHit = true;
+          await this.redis.hincrby('keepa:stats', 'cache_hits', 1);
+        } else {
+          // Cache was marked fresh but empty, fetch anyway
+          finalDeals = await this.fetchAndVerifyDeals(job);
+        }
       } else {
-        // Cache was marked fresh but empty, fetch anyway
+        // Cache miss or stale - fetch from Keepa
+        console.log(`[KeepaWorker] Cache ${cacheStatus} for ${job.category} - fetching from Keepa`);
+        await this.redis.hincrby('keepa:stats', 'cache_misses', 1);
         finalDeals = await this.fetchAndVerifyDeals(job);
+
+        // Save to cache
+        await this.cache.save(job.category, finalDeals, job.isPrefetch ? 'prefetch' : 'automation');
       }
-    } else {
-      // Cache miss or stale - fetch from Keepa
-      console.log(`[KeepaWorker] Cache ${cacheStatus} for ${job.category} - fetching from Keepa`);
-      await this.redis.hincrby('keepa:stats', 'cache_misses', 1);
-      finalDeals = await this.fetchAndVerifyDeals(job);
 
-      // Save to cache
-      await this.cache.save(job.category, finalDeals, job.isPrefetch ? 'prefetch' : 'automation');
+      transaction.setAttribute('cache.hit', cacheHit);
+      transaction.setAttribute('deals.count', finalDeals.length);
+
+      if (finalDeals.length === 0) {
+        console.log(`[KeepaWorker] No deals for ${job.category}`);
+        transaction.setStatus({ code: 1, message: 'No deals found' });
+        return;
+      }
+
+      // Process each waiting rule
+      console.log(`[KeepaWorker] Notifying ${job.waitingRules.length} waiting rules with ${finalDeals.length} deals`);
+      await this.notifyWaitingRules(job.waitingRules, finalDeals, cacheHit);
+
+      const duration = Date.now() - startTime;
+      console.log(`[KeepaWorker] Job ${job.id} completed in ${duration}ms`);
+
+      transaction.setAttribute('job.durationMs', duration);
+      transaction.setStatus({ code: 0 }); // OK
+    } catch (error) {
+      transaction.setStatus({ code: 2, message: (error as Error).message }); // ERROR
+      throw error;
+    } finally {
+      transaction.end();
     }
-
-    if (finalDeals.length === 0) {
-      console.log(`[KeepaWorker] No deals for ${job.category}`);
-      return;
-    }
-
-    // Process each waiting rule
-    console.log(`[KeepaWorker] Notifying ${job.waitingRules.length} waiting rules with ${finalDeals.length} deals`);
-    await this.notifyWaitingRules(job.waitingRules, finalDeals, cacheHit);
-
-    const duration = Date.now() - startTime;
-    console.log(`[KeepaWorker] Job ${job.id} completed in ${duration}ms`);
   }
 
   /**
@@ -308,6 +383,19 @@ export class KeepaWorker {
         await this.processRule(rule, deals, cacheHit);
       } catch (error) {
         console.error(`[KeepaWorker] Error processing rule ${rule.ruleId}:`, error);
+
+        // Sentry: Capture rule processing error
+        captureException(error as Error, {
+          ruleId: rule.ruleId,
+          channelId: rule.channelId,
+          minScore: rule.minScore,
+          dealsPerRun: rule.dealsPerRun,
+          dealPublishMode: rule.dealPublishMode,
+          dealsAvailable: deals.length,
+          cacheHit,
+          component: 'KeepaWorker',
+          operation: 'notifyWaitingRules'
+        });
       }
     }
   }
@@ -662,8 +750,30 @@ export class KeepaWorker {
           deal.currentPrice
         );
         publishedCount++;
+
+        // Sentry: Track successful publish
+        addBreadcrumb(`Published deal ${deal.asin}`, 'keepa.publish', {
+          asin: deal.asin,
+          ruleId: rule.ruleId,
+          channelId: rule.channelId,
+          price: deal.currentPrice,
+          discount: deal.discountPercent,
+          score: deal.score,
+          copySource: copyResult.source
+        });
       } else {
         console.error(`[KeepaWorker] Failed to publish ${deal.asin}:`, result.error);
+
+        // Sentry: Capture publish failure
+        captureException(new Error(`Telegram publish failed: ${result.error}`), {
+          asin: deal.asin,
+          ruleId: rule.ruleId,
+          channelId: rule.channelId,
+          telegramChannelId: channel.channelId,
+          error: result.error,
+          component: 'KeepaWorker',
+          operation: 'publishDeals'
+        });
       }
 
       // Small delay between messages to avoid rate limiting

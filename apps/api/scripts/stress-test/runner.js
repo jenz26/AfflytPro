@@ -125,9 +125,9 @@ async function main() {
         lastUpdate = processedRules;
       }
 
-      // Timeout after 3 minutes
-      if (elapsed > 180000) {
-        console.log('\n⚠️  Timeout reached (3 min). Some jobs may still be processing.');
+      // Timeout after 5 minutes (for rate limiter tests)
+      if (elapsed > 300000) {
+        console.log('\n⚠️  Timeout reached (5 min). Some jobs may still be processing.');
         break;
       }
     }

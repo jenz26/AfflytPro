@@ -32,6 +32,37 @@ async function main() {
 
     console.log(`\nUsing user: ${user.email} (${user.id})`);
 
+    // 1b. Find or create a test channel for stress testing
+    const testChannelName = 'STRESS_TEST_CHANNEL';
+    let channel = await prisma.channel.findFirst({
+      where: {
+        userId: user.id,
+        name: testChannelName
+      },
+      select: { id: true, name: true, channelId: true }
+    });
+
+    if (!channel) {
+      // Create a test channel with TEST_ prefix so TelegramBotService will mock it
+      channel = await prisma.channel.create({
+        data: {
+          userId: user.id,
+          name: testChannelName,
+          platform: 'TELEGRAM',
+          channelId: 'TEST_STRESS_CHANNEL',  // This triggers the mock in TelegramBotService
+          credentialId: null,
+          status: 'CONNECTED',
+          amazonTag: 'afflyt-21'
+        },
+        select: { id: true, name: true, channelId: true }
+      });
+      console.log(`✅ Created test channel: ${channel.name} (${channel.id})`);
+    } else {
+      console.log(`Using existing test channel: ${channel.name} (${channel.id})`);
+    }
+
+    console.log(`   Telegram channelId: ${channel.channelId} (MOCKED - no real messages)`)
+
     // 2. Check for existing test rules
     const existingRules = await prisma.automationRule.findMany({
       where: { name: { startsWith: config.TEST_PREFIX } }
@@ -70,8 +101,8 @@ async function main() {
             userId: user.id,
             name: ruleName,
             isActive: true,
-            // Use TEST_ channel ID - mocked in TelegramBotService
-            channelId: `${config.TEST_CHANNEL_PREFIX}${category.id}`,
+            // Use the test channel (its channelId starts with TEST_ so TelegramBotService mocks it)
+            channelId: channel.id,
             // Category as string array (Keepa category ID)
             categories: [category.id.toString()],
             // Filters from variation

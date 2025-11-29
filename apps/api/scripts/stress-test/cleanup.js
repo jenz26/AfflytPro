@@ -26,6 +26,15 @@ async function main() {
     });
     console.log(`\n✅ Deleted ${deleteResult.count} test automation rules`);
 
+    // 1b. Delete test channel
+    const testChannelName = 'STRESS_TEST_CHANNEL';
+    const channelDelete = await prisma.channel.deleteMany({
+      where: { name: testChannelName }
+    });
+    if (channelDelete.count > 0) {
+      console.log(`✅ Deleted test channel: ${testChannelName}`);
+    }
+
     // 2. Clear stress test Redis keys
     const stressKeys = await redis.keys('stress:*');
     if (stressKeys.length > 0) {

@@ -12,16 +12,21 @@ module.exports = {
   TEST_CHANNEL_PREFIX: 'TEST_STRESS_',
 
   // Categories to test (Keepa category IDs for Amazon IT)
+  // IDs from apps/api/src/data/amazon-categories.ts
+  // STRESS TEST v5: ERROR RESILIENCE TEST
+  // Mix of valid rules + rules that will hit errors (bad channel)
+  // Tests: error isolation, job continues despite individual rule failures
   CATEGORIES: [
-    { id: 412463011, name: 'Elettronica', rulesCount: 8 },
-    { id: 524015031, name: 'Casa e cucina', rulesCount: 6 },
-    { id: 524009011, name: 'Sport e tempo libero', rulesCount: 4 },
-    { id: 523998031, name: 'Giochi e giocattoli', rulesCount: 2 }
+    { id: 524015031, name: 'Casa e cucina', rulesCount: 15 },
+    { id: 412609031, name: 'Elettronica', rulesCount: 10 },
+    { id: 523997031, name: 'Giochi e giocattoli', rulesCount: 5 }
   ],
 
-  // Total: 20 rules → should become 4 jobs (1 per category)
+  // Total: 30 rules → 3 jobs
+  // All rules use TEST_ channel (mock) - errors come from channel lookup
+  // Tests that errors don't crash the job, just skip the rule
 
-  // Rule variations for each category
+  // Rule variations for each category (20 variations for 200 rules = 10 rules per variation)
   RULE_VARIATIONS: [
     { minScore: 60, minDiscount: 20, maxPrice: 50 },
     { minScore: 50, minDiscount: 15, maxPrice: 100 },
@@ -30,7 +35,19 @@ module.exports = {
     { minScore: 55, minDiscount: 18, maxPrice: 75 },
     { minScore: 65, minDiscount: 22, maxPrice: 150 },
     { minScore: 45, minDiscount: 12, maxPrice: 300 },
-    { minScore: 75, minDiscount: 30, maxPrice: 80 }
+    { minScore: 75, minDiscount: 30, maxPrice: 80 },
+    { minScore: 30, minDiscount: 5, maxPrice: 500 },
+    { minScore: 80, minDiscount: 35, maxPrice: 60 },
+    { minScore: 35, minDiscount: 8, maxPrice: 400 },
+    { minScore: 58, minDiscount: 19, maxPrice: 90 },
+    { minScore: 62, minDiscount: 21, maxPrice: 120 },
+    { minScore: 48, minDiscount: 14, maxPrice: 180 },
+    { minScore: 72, minDiscount: 28, maxPrice: 70 },
+    { minScore: 42, minDiscount: 11, maxPrice: 250 },
+    { minScore: 52, minDiscount: 16, maxPrice: 130 },
+    { minScore: 68, minDiscount: 24, maxPrice: 95 },
+    { minScore: 38, minDiscount: 9, maxPrice: 350 },
+    { minScore: 78, minDiscount: 32, maxPrice: 55 }
   ],
 
   // Redis keys for metrics
@@ -43,9 +60,9 @@ module.exports = {
 
   // Expected results
   EXPECTED: {
-    totalRules: 20,
-    totalJobs: 4,  // 1 per category due to batching
-    tokensSaved: 16,  // 20 - 4 = 16 API calls saved
-    maxTimeSeconds: 60  // With 20 tokens/min, 4 jobs should complete in ~12s
+    totalRules: 30,
+    totalJobs: 3,  // 3 categories = 3 jobs
+    tokensSaved: 27,  // 30 - 3 = 27 API calls saved
+    maxTimeSeconds: 60  // Should complete quickly
   }
 };
