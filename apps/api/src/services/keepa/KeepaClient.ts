@@ -481,8 +481,10 @@ export class KeepaClient {
       const deltaValue = range90?.[PRICE_TYPE.BUY_BOX] ?? range90?.[PRICE_TYPE.AMAZON] ?? range90?.[PRICE_TYPE.NEW] ??
                         rangeMonth?.[PRICE_TYPE.BUY_BOX] ?? rangeMonth?.[PRICE_TYPE.AMAZON] ?? rangeMonth?.[PRICE_TYPE.NEW] ?? 0;
 
-      if (typeof deltaValue === 'number' && deltaValue < 0) {
-        discountPercent = Math.abs(deltaValue);
+      // Positive value = price dropped below average = discount
+      // e.g., deltaPercent of 86 means price is 86% below average
+      if (typeof deltaValue === 'number' && deltaValue > 0) {
+        discountPercent = deltaValue;
       }
     }
     discountPercent = Math.max(0, Math.min(99, Math.round(discountPercent)));
