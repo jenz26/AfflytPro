@@ -49,32 +49,33 @@ const DEVELOPER_PROMPT = `Sei un copywriter per Afflyt Pro, una piattaforma che 
 
 OBIETTIVO:
 - Generare 1 solo testo breve (5-8 righe max) in ITALIANO.
-- Tono: chiaro, concreto, niente hype esagerato.
 - Target: utenti che seguono canali sconti su Telegram.
 
-REGOLE FERREE (NON VIOLARLE MAI):
+⚠️ STILE E TONO:
+- Se l'utente specifica uno stile (es. "ironico", "slang giovanile", "formale"), DEVI seguirlo fedelmente.
+- Lo stile dell'utente ha la PRIORITÀ ASSOLUTA sul tono del messaggio.
+- Se non è specificato uno stile, usa un tono chiaro e concreto.
+- ESEMPIO: se l'utente dice "tono ironico come svolta dell'umanità", scrivi come se il prodotto fosse rivoluzionario in modo scherzoso.
+- ESEMPIO: se l'utente dice "slang giovanile", usa espressioni tipo "bro", "spacca", "top", "che bomba".
+
+REGOLE DI COMPLIANCE (NON VIOLARLE MAI):
 - NON inventare prezzi, coupon, percentuali o benefici non presenti nei dati.
-- NON scrivere mai "prezzo più basso di sempre" o "minimo storico" se isHistoricalLow ≠ true.
-- NON menzionare codici sconto, coupon o promozioni extra se non indicati nei dati.
+- NON scrivere "prezzo più basso di sempre" o "minimo storico" se isHistoricalLow ≠ true.
+- NON menzionare codici sconto o promozioni extra se non indicati.
 - NON garantire disponibilità, spedizione o tempi di consegna.
-- NON usare linguaggio fuorviante o troppo aggressivo (no "imperdibile", "obbligatorio", "da non perdere").
 - NON aggiungere link, hashtag o menzioni - vengono aggiunti separatamente.
 
-DEVI SEMPRE:
+CONTENUTO OBBLIGATORIO:
 - Mostrare il prezzo attuale e, se disponibile, il prezzo precedente o lo sconto %.
-- Evidenziare in 1 riga il "perché" è interessante (uso pratico, problema che risolve).
-- Se hasVisibleDiscount è true, puoi dire "in offerta" o "scontato".
-- Chiudere con una riga tipo: "Prezzo e disponibilità possono variare, verifica su Amazon."
+- Chiudere con: "Prezzo e disponibilità possono variare, verifica su Amazon."
 
 FORMAT OUTPUT:
 - Nessun titolo separato, inizia direttamente con il contenuto.
-- Massimo 2-3 emoji se utili, niente emoji decorative inutili.
-- Niente markdown complesso (massimo **grassetto** su 1-2 parole chiave).
-- Nessun saluto iniziale ("Ciao!", "Ehi!") o finale ("A presto!").
-- Nessun link nel testo (il sistema lo aggiunge dopo).
+- Massimo 2-3 emoji se utili.
+- Massimo **grassetto** su 1-2 parole chiave.
+- Nessun link nel testo.
 
-Se i dati sono poveri o incoerenti, genera un testo neutro e prudente.
-Rispondi SOLO con il testo del messaggio, senza spiegazioni o meta-commenti.`;
+Rispondi SOLO con il testo del messaggio.`;
 
 // ═══════════════════════════════════════════════════════════════
 // DEFAULT TEMPLATE
@@ -192,6 +193,9 @@ export class LLMCopyService {
     deal: DealCopyPayload,
     config: LLMCopyConfig
   ): Promise<CopyGenerationResult> {
+    // Debug: log style prompt
+    console.log(`[LLMCopyService] Generating for ${deal.asin}, customStylePrompt: "${config.customStylePrompt || '(none)'}"`);
+
     const userContent = this.buildUserContent(deal, config.customStylePrompt);
 
     const response = await this.openai!.chat.completions.create({
@@ -226,9 +230,12 @@ export class LLMCopyService {
   private buildUserContent(deal: DealCopyPayload, customStyle?: string | null): string {
     const lines: string[] = [];
 
+    // Put style FIRST and make it prominent
     if (customStyle) {
-      lines.push(`STILE RICHIESTO DALL'UTENTE (seguilo senza stravolgere i dati):`);
-      lines.push(customStyle);
+      lines.push(`⚠️ STILE OBBLIGATORIO - USA QUESTO TONO:`);
+      lines.push(`"${customStyle}"`);
+      lines.push('');
+      lines.push('IMPORTANTE: Il testo DEVE riflettere lo stile sopra. Non ignorarlo!');
       lines.push('');
     }
 
@@ -251,7 +258,12 @@ export class LLMCopyService {
     lines.push(`- Minimo storico: ${deal.isHistoricalLow ? 'SÌ' : 'NO'}`);
     lines.push(`- Sconto visibile su Amazon: ${deal.hasVisibleDiscount ? 'SÌ' : 'NO'}`);
     lines.push('');
-    lines.push('Genera ora il testo del post seguendo le regole indicate.');
+
+    if (customStyle) {
+      lines.push(`Genera il testo RISPETTANDO LO STILE "${customStyle}".`);
+    } else {
+      lines.push('Genera ora il testo del post.');
+    }
 
     return lines.join('\n');
   }
