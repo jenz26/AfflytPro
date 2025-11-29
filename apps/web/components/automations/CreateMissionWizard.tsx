@@ -49,6 +49,9 @@ export interface MissionConfig {
 
     // Step 5: Destination
     channelId: string;
+    dealPublishMode: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
+    includeKeepaChart: boolean;
+    amazonTagOverride: string;
 
     // Activation
     isActive: boolean;
@@ -114,6 +117,9 @@ const initialMissionConfig: MissionConfig = {
     listedAfter: undefined,
     minScore: 70,
     channelId: '',
+    dealPublishMode: 'DISCOUNTED_ONLY',
+    includeKeepaChart: false,
+    amazonTagOverride: '',
     isActive: true,
 };
 
@@ -307,7 +313,13 @@ export function CreateMissionWizard({
                         channelId={mission.channelId}
                         userPlan={wizardConfig.planLimits.plan}
                         frequencyLabel={wizardConfig.planLimits.frequencyLabel}
+                        dealPublishMode={mission.dealPublishMode}
+                        includeKeepaChart={mission.includeKeepaChart}
+                        amazonTagOverride={mission.amazonTagOverride}
                         onChange={(channelId) => updateMission({ channelId })}
+                        onDealModeChange={(dealPublishMode) => updateMission({ dealPublishMode })}
+                        onKeepaChartChange={(includeKeepaChart) => updateMission({ includeKeepaChart })}
+                        onAmazonTagChange={(amazonTagOverride) => updateMission({ amazonTagOverride })}
                     />
                 );
             case 6:

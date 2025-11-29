@@ -75,6 +75,7 @@ const createRuleSchema = z.object({
     // Deal Publish Mode
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).default('DISCOUNTED_ONLY'),
     includeKeepaChart: z.boolean().default(false),
+    amazonTagOverride: z.string().max(50).optional(),
 
     // Triggers/Actions (optional - will use defaults if not provided)
     triggers: z.array(triggerActionSchema).optional(),
@@ -122,6 +123,7 @@ const updateRuleSchema = z.object({
     // Deal Publish Mode (NEW)
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).optional(),
     includeKeepaChart: z.boolean().optional(),
+    amazonTagOverride: z.string().max(50).optional(),
 });
 
 const idParamSchema = z.object({
@@ -470,6 +472,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     // Deal Publish Mode
                     dealPublishMode: parsed.dealPublishMode,
                     includeKeepaChart: parsed.includeKeepaChart,
+                    ...(parsed.amazonTagOverride ? { amazonTagOverride: parsed.amazonTagOverride } : {}),
 
                     // Triggers and actions
                     triggers: {

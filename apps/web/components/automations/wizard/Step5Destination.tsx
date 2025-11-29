@@ -25,9 +25,11 @@ interface Step5DestinationProps {
     frequencyLabel: string;
     dealPublishMode?: DealPublishMode;
     includeKeepaChart?: boolean;
+    amazonTagOverride?: string;
     onChange: (channelId: string) => void;
     onDealModeChange?: (mode: DealPublishMode) => void;
     onKeepaChartChange?: (include: boolean) => void;
+    onAmazonTagChange?: (tag: string) => void;
 }
 
 export function Step5Destination({
@@ -36,9 +38,11 @@ export function Step5Destination({
     frequencyLabel,
     dealPublishMode = 'DISCOUNTED_ONLY',
     includeKeepaChart = false,
+    amazonTagOverride = '',
     onChange,
     onDealModeChange,
-    onKeepaChartChange
+    onKeepaChartChange,
+    onAmazonTagChange
 }: Step5DestinationProps) {
     const t = useTranslations('automations.wizard.step5');
     const [channels, setChannels] = useState<Channel[]>([]);
@@ -49,7 +53,7 @@ export function Step5Destination({
         const fetchChannels = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/channels`, {
+                const response = await fetch(`${API_BASE}/user/channels`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -69,6 +73,7 @@ export function Step5Destination({
 
     const connectedChannels = channels.filter(c => c.status === 'CONNECTED');
     const isTestingMode = !channelId || channelId === '';
+    const selectedChannel = channels.find(c => c.id === channelId);
 
     return (
         <div className="space-y-6">
@@ -183,6 +188,29 @@ export function Step5Destination({
                     </div>
                 )}
             </div>
+
+            {/* Amazon Tag Override */}
+            {channelId && (
+                <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-300">
+                        Tag Affiliato Amazon (opzionale)
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={amazonTagOverride}
+                            onChange={(e) => onAmazonTagChange?.(e.target.value)}
+                            placeholder={selectedChannel?.amazonTag || 'es. miostore-21'}
+                            className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none transition-colors"
+                        />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        {selectedChannel?.amazonTag
+                            ? `Se lasci vuoto, verrà usato il tag del canale: ${selectedChannel.amazonTag}`
+                            : 'Inserisci il tag affiliato Amazon da usare per questa automazione'}
+                    </p>
+                </div>
+            )}
 
             {/* Frequency Info */}
             <GlassCard className="p-4 bg-afflyt-dark-100/50">

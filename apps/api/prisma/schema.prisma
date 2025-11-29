@@ -579,6 +579,9 @@ model AutomationRule {
   /// Includere il grafico storico prezzi Keepa nel messaggio
   includeKeepaChart  Boolean @default(false)
 
+  /// Override del tag affiliato Amazon per questa automazione (sovrascrive quello del canale)
+  amazonTagOverride  String?
+
   // ═══════════════════════════════════════════════════════════════
   // SCHEDULING CONFIG
   // ═══════════════════════════════════════════════════════════════

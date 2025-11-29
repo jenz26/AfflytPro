@@ -108,7 +108,8 @@ export default function AutomationStudioPage() {
                         schedulePreset: ruleData.schedulePreset,
                         // Deal publish options
                         dealPublishMode: ruleData.dealPublishMode,
-                        includeKeepaChart: ruleData.includeKeepaChart
+                        includeKeepaChart: ruleData.includeKeepaChart,
+                        amazonTagOverride: ruleData.amazonTagOverride || undefined
                     })
                 });
 
