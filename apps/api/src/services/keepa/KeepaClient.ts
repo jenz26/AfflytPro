@@ -507,9 +507,10 @@ export class KeepaClient {
       imageUrl = `https://m.media-amazon.com/images/I/${raw.image}`;
     }
 
-    // Deal API provides discount data - if there's a discount, treat as visible discount
-    // This will be refined by Product API verification if available
-    const hasVisibleDiscount = discountPercent >= 5; // Min 5% to consider as discounted
+    // Deal API with deltaPercentRange filter guarantees discount
+    // Our filter uses [15, 100], so all returned deals have 15%+ discount
+    // Even if deltaPercent parsing fails, the Keepa filter already validated it
+    const hasVisibleDiscount = true; // Guaranteed by deltaPercentRange filter
 
     return {
       asin: raw.asin,
