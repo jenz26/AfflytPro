@@ -21,28 +21,49 @@ function escapeMarkdownV2(text: string): string {
  * Telegram MarkdownV2 uses: *bold*, _italic_ (but special chars must be escaped)
  *
  * Strategy:
- * 1. Extract and preserve **bold** and _italic_ markers
- * 2. Escape all special characters in the text content
- * 3. Convert **bold** to *bold* for MarkdownV2
+ * 1. Convert **bold** to *bold* directly (Telegram format)
+ * 2. Escape special characters EXCEPT * and _ used for formatting
  */
 function convertLLMToMarkdownV2(text: string): string {
-    // Characters that need escaping in MarkdownV2 (excluding formatting chars we'll handle)
-    const escapeChars = /([[\]()~`>#+\-=|{}.!\\])/g;
+    // Step 1: Convert **bold** to MarkdownV2 *bold*
+    // We need to do this BEFORE escaping to preserve the formatting
+    let result = text.replace(/\*\*(.+?)\*\*/g, '*$1*');
 
-    // Step 1: Temporarily replace formatting markers with placeholders
-    let result = text
-        .replace(/\*\*(.+?)\*\*/g, '<<<BOLD>>>$1<<<ENDBOLD>>>')  // **bold** -> placeholder
-        .replace(/_(.+?)_/g, '<<<ITALIC>>>$1<<<ENDITALIC>>>');   // _italic_ -> placeholder
+    // Step 2: Escape special characters for MarkdownV2
+    // We need to escape: _ * [ ] ( ) ~ ` > # + - = | { } . ! \
+    // BUT we must preserve * used for bold and _ used for italic
 
-    // Step 2: Escape special characters (but not * and _ which we'll use for formatting)
-    result = result.replace(escapeChars, '\\$1');
+    // First, temporarily protect our formatting markers
+    const boldMatches: string[] = [];
+    result = result.replace(/\*([^*]+)\*/g, (match, content) => {
+        boldMatches.push(content);
+        return `\x00BOLD${boldMatches.length - 1}\x00`;
+    });
 
-    // Step 3: Convert placeholders to MarkdownV2 formatting
-    result = result
-        .replace(/<<<BOLD>>>/g, '*')
-        .replace(/<<<ENDBOLD>>>/g, '*')
-        .replace(/<<<ITALIC>>>/g, '_')
-        .replace(/<<<ENDITALIC>>>/g, '_');
+    const italicMatches: string[] = [];
+    result = result.replace(/_([^_]+)_/g, (match, content) => {
+        italicMatches.push(content);
+        return `\x00ITALIC${italicMatches.length - 1}\x00`;
+    });
+
+    // Now escape all special characters
+    result = result.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+
+    // Restore bold markers (content was escaped, so we just wrap with *)
+    result = result.replace(/\x00BOLD(\d+)\x00/g, (match, index) => {
+        const content = boldMatches[parseInt(index)];
+        // Escape the content inside bold
+        const escapedContent = content.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+        return `*${escapedContent}*`;
+    });
+
+    // Restore italic markers
+    result = result.replace(/\x00ITALIC(\d+)\x00/g, (match, index) => {
+        const content = italicMatches[parseInt(index)];
+        // Escape the content inside italic
+        const escapedContent = content.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+        return `_${escapedContent}_`;
+    });
 
     return result;
 }
