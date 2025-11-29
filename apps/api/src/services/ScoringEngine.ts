@@ -9,7 +9,12 @@
  * - Rating (20%)
  * - Price Drop History (15%)
  *
- * When only Deal API data is available (no rating/salesRank):
+ * When Deal API data is available (salesRank but no rating):
+ * - Discount (50%)
+ * - Sales Rank (30%)
+ * - Price Drop History (20%)
+ *
+ * When minimal data is available (no rating, no salesRank):
  * - Discount (70%)
  * - Price Drop History (30%)
  *
@@ -17,10 +22,10 @@
  */
 
 export interface ScoreComponents {
-    discountScore: number;    // 0-40 (or 0-70 when no rating data)
-    salesRankScore: number;   // 0-25
+    discountScore: number;    // 0-40 (or scaled when missing data)
+    salesRankScore: number;   // 0-25 (or scaled when missing data)
     ratingScore: number;      // 0-20
-    priceDropScore: number;   // 0-15 (or 0-30 when no rating data)
+    priceDropScore: number;   // 0-15 (or scaled when missing data)
 }
 
 export interface ProductScoreInput {
@@ -44,7 +49,7 @@ export class ScoringEngine {
         const hasRatingData = product.rating !== undefined && product.rating !== null;
         const hasSalesRankData = product.salesRank !== undefined && product.salesRank !== null;
 
-        // Calculate raw component scores
+        // Calculate raw component scores (0-1 normalized)
         const rawDiscount = this.calculateDiscountScore(product.discount);
         const rawSalesRank = hasSalesRankData ? this.calculateSalesRankScore(product.salesRank, product.category) : 0;
         const rawRating = hasRatingData ? this.calculateRatingScore(product.rating, product.reviewCount) : 0;
@@ -53,7 +58,7 @@ export class ScoringEngine {
         let components: ScoreComponents;
 
         if (!hasRatingData && !hasSalesRankData) {
-            // Deal API mode: only discount and price drop available
+            // Minimal data mode: only discount and price drop available
             // Redistribute weights: discount 70%, price drop 30%
             const discountNormalized = (rawDiscount / 40) * 70;
             const priceDropNormalized = (rawPriceDrop / 15) * 30;
@@ -64,8 +69,21 @@ export class ScoringEngine {
                 ratingScore: 0,
                 priceDropScore: priceDropNormalized
             };
+        } else if (!hasRatingData && hasSalesRankData) {
+            // Deal API mode: salesRank available but no rating
+            // Redistribute rating's 20% weight: discount 50%, salesRank 30%, priceDrop 20%
+            const discountNormalized = (rawDiscount / 40) * 50;
+            const salesRankNormalized = (rawSalesRank / 25) * 30;
+            const priceDropNormalized = (rawPriceDrop / 15) * 20;
+
+            components = {
+                discountScore: discountNormalized,
+                salesRankScore: salesRankNormalized,
+                ratingScore: 0,
+                priceDropScore: priceDropNormalized
+            };
         } else {
-            // Full data mode: use standard weights
+            // Full data mode: use standard weights (40+25+20+15=100)
             components = {
                 discountScore: rawDiscount,
                 salesRankScore: rawSalesRank,
@@ -99,26 +117,42 @@ export class ScoringEngine {
     /**
      * Sales Rank Score (25% weight)
      * Lower rank = higher score (inverse relationship)
+     *
+     * Uses logarithmic scaling for better distribution:
+     * - Rank 1-100: 25-20 points (top sellers)
+     * - Rank 100-1000: 20-15 points (excellent)
+     * - Rank 1000-10000: 15-8 points (good)
+     * - Rank 10000-50000: 8-3 points (average)
+     * - Rank 50000+: 3-0 points (below average)
      */
     private calculateSalesRankScore(salesRank: number | undefined, category: string): number {
-        if (!salesRank) return 0;
+        if (!salesRank || salesRank <= 0) return 0;
 
-        // Category-specific thresholds
+        // Category-specific thresholds (rank at which score becomes 0)
         const categoryThresholds: Record<string, number> = {
-            'Elettronica': 1000,
-            'Casa e cucina': 2000,
-            'Sport e tempo libero': 1500,
-            'Libri': 500,
-            'default': 1000
+            'Elettronica': 50000,
+            'Casa e cucina': 100000,
+            'Sport e tempo libero': 75000,
+            'Giardino e giardinaggio': 100000,
+            'Fai da te': 75000,
+            'Libri': 25000,
+            'default': 75000
         };
 
-        const threshold = categoryThresholds[category] || categoryThresholds['default'];
+        const maxRank = categoryThresholds[category] || categoryThresholds['default'];
 
-        // Inverse scaling: rank 1 = 25 points, rank > threshold = 0 points
+        // Logarithmic scaling for better distribution
         if (salesRank <= 1) return 25;
-        if (salesRank >= threshold) return 0;
+        if (salesRank >= maxRank) return 0;
 
-        return 25 * (1 - (salesRank / threshold));
+        // Use log scale: log(1) = 0, log(maxRank) = max
+        const logRank = Math.log10(salesRank);
+        const logMax = Math.log10(maxRank);
+
+        // Score decreases as rank increases (higher rank = worse)
+        const score = 25 * (1 - (logRank / logMax));
+
+        return Math.max(0, score);
     }
 
     /**
