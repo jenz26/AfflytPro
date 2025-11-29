@@ -51,11 +51,19 @@ const loadOnboardingState = (): OnboardingState | null => {
     if (typeof window === 'undefined') return null;
     try {
         const saved = localStorage.getItem(ONBOARDING_STATE_KEY);
-        if (saved) {
-            return JSON.parse(saved);
+        if (saved && saved !== 'undefined' && saved !== 'null') {
+            const parsed = JSON.parse(saved);
+            // Validate structure
+            if (parsed && typeof parsed === 'object' && 'currentStep' in parsed) {
+                return parsed;
+            }
         }
     } catch (e) {
         console.error('Failed to load onboarding state:', e);
+        // Clear corrupted data
+        try {
+            localStorage.removeItem(ONBOARDING_STATE_KEY);
+        } catch {}
     }
     return null;
 };

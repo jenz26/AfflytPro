@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
+import { setAuthToken } from '@/lib/auth';
 
 type Status = 'loading' | 'success' | 'error';
 
@@ -42,7 +43,7 @@ export default function VerifyEmailPage() {
                     setMessage(data.message);
                     // Store token for auto-login
                     if (data.token) {
-                        localStorage.setItem('token', data.token);
+                        setAuthToken(data.token);
                     }
                 } else {
                     setStatus('error');

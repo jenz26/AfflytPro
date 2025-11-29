@@ -11,6 +11,7 @@ import { API_BASE } from '@/lib/api/config';
 import { detectEmailProvider, getWebmailUrl, type EmailProviderInfo } from '@/lib/email-provider-detection';
 import { Analytics } from '@/components/analytics/PostHogProvider';
 import { setMonitoringUser } from '@/lib/monitoring';
+import { setAuthToken } from '@/lib/auth';
 
 type AuthMode = 'login' | 'register' | 'magic-link' | 'forgot-password';
 type AlertType = 'error' | 'success' | 'info';
@@ -84,7 +85,7 @@ export default function AuthPage() {
             const data = await res.json();
 
             if (res.ok) {
-                localStorage.setItem('token', data.token);
+                setAuthToken(data.token);
                 // Track login success and set user context across all services
                 Analytics.trackLoginSuccess('password');
                 if (data.user?.id) {

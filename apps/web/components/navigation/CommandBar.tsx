@@ -28,6 +28,7 @@ import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
 import { API_BASE } from '@/lib/api/config';
+import { removeAuthToken } from '@/lib/auth';
 
 interface UserProfile {
     name: string | null;
@@ -122,8 +123,8 @@ export const CommandBar = () => {
                 }).catch(() => { /* Ignore errors - we're logging out anyway */ });
             }
         } finally {
-            // Clear all auth-related data
-            localStorage.removeItem('token');
+            // Clear all auth-related data (token + cookie)
+            removeAuthToken();
             localStorage.removeItem('user');
             // Redirect to login
             window.location.href = `/${locale}/auth/login`;

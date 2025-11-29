@@ -9,6 +9,7 @@ import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
 import { Analytics } from '@/components/analytics/PostHogProvider';
 import { setMonitoringUser } from '@/lib/monitoring';
+import { setAuthToken } from '@/lib/auth';
 
 type Status = 'loading' | 'success' | 'error';
 
@@ -42,9 +43,9 @@ export default function MagicLinkPage() {
                 if (res.ok) {
                     setStatus('success');
                     setMessage(t('loginSuccess'));
-                    // Store token
+                    // Store token in localStorage and cookie
                     if (data.token) {
-                        localStorage.setItem('token', data.token);
+                        setAuthToken(data.token);
                     }
                     // Track magic link success and set user context across all services
                     Analytics.trackMagicLinkClicked();

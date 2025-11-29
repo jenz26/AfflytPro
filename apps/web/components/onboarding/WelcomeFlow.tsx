@@ -70,11 +70,13 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
         // Load saved step from localStorage
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem('onboarding_progress');
-            if (saved) {
+            if (saved && saved !== 'undefined' && saved !== 'null') {
                 try {
-                    const { step: savedStep } = JSON.parse(saved);
-                    return savedStep || 0;
+                    const parsed = JSON.parse(saved);
+                    return parsed?.step || 0;
                 } catch (e) {
+                    // Clear corrupted data
+                    try { localStorage.removeItem('onboarding_progress'); } catch {}
                     return 0;
                 }
             }
@@ -83,34 +85,27 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
     });
 
     const [surveyData, setSurveyData] = useState<SurveyData>(() => {
-        // Carica i dati salvati da localStorage
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('onboarding_progress');
-            if (saved) {
-                try {
-                    const { data } = JSON.parse(saved);
-                    return data || {
-                        goal: null,
-                        audienceSize: null,
-                        experienceLevel: null,
-                        channels: []
-                    };
-                } catch (e) {
-                    return {
-                        goal: null,
-                        audienceSize: null,
-                        experienceLevel: null,
-                        channels: []
-                    };
-                }
-            }
-        }
-        return {
+        const defaultData: SurveyData = {
             goal: null,
             audienceSize: null,
             experienceLevel: null,
             channels: []
         };
+        // Carica i dati salvati da localStorage
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('onboarding_progress');
+            if (saved && saved !== 'undefined' && saved !== 'null') {
+                try {
+                    const parsed = JSON.parse(saved);
+                    return parsed?.data || defaultData;
+                } catch (e) {
+                    // Clear corrupted data
+                    try { localStorage.removeItem('onboarding_progress'); } catch {}
+                    return defaultData;
+                }
+            }
+        }
+        return defaultData;
     });
 
     const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);

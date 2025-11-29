@@ -21,6 +21,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { API_BASE } from '@/lib/api/config';
+import { removeAuthToken } from '@/lib/auth';
 
 interface Session {
     id: string;
@@ -165,7 +166,7 @@ export default function SecurityPage() {
 
             // Logout required after revoking all sessions
             if (data.logoutRequired) {
-                localStorage.removeItem('token');
+                removeAuthToken();
                 localStorage.removeItem('user');
                 window.location.href = `/${locale}/auth/login`;
             }
@@ -211,7 +212,7 @@ export default function SecurityPage() {
             }
 
             // Account deleted - redirect to home
-            localStorage.removeItem('token');
+            removeAuthToken();
             localStorage.removeItem('user');
             window.location.href = `/${locale}/auth/login`;
         } catch (error) {

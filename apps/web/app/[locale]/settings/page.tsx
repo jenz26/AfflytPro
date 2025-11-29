@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { API_BASE } from '@/lib/api/config';
+import { removeAuthToken } from '@/lib/auth';
 
 interface SettingsCardData {
     key: string;
@@ -73,7 +74,7 @@ export default function SettingsHubPage() {
 
                 if (!profileRes.ok) {
                     if (profileRes.status === 401) {
-                        localStorage.removeItem('token');
+                        removeAuthToken();
                         router.push(`/${locale}/auth/login`);
                         return;
                     }
