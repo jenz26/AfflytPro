@@ -107,23 +107,29 @@ export class KeepaClient {
     tokensLeft: number;
     refillIn: number;
   }> {
+    // Base selection con filtri QUALITÀ di default
     const selection: Record<string, any> = {
       page: 0,
       domainId: KEEPA_DOMAIN_IT,
       priceTypes: [priceType],
       includeCategories: [categoryId],
-      dateRange: 2,              // Month (last 31 days) - più deal disponibili
-      sortType: 4,               // Sort by percentage delta (highest first)
-      hasReviews: false,         // Non escludere prodotti senza recensioni
+      dateRange: 2,                     // Ultimi 31 giorni
+      sortType: 4,                      // Ordina per % sconto (più alto prima)
       isRangeEnabled: true,
-      singleVariation: true,     // Una sola variante per prodotto
-      filterErotic: true         // Esclude prodotti adult
+      singleVariation: true,            // Una sola variante per prodotto
+      filterErotic: true,               // Escludi prodotti adult
+
+      // FILTRI QUALITÀ BASE (testati con successo)
+      hasReviews: true,                 // Solo prodotti con recensioni
+      minRating: 30,                    // Almeno 3.0 stelle
+      salesRankRange: [0, 200000],      // Solo prodotti che vendono
+      deltaPercentRange: [15, 100]      // Sconto almeno 15%
     };
 
-    // Apply union filters if provided
+    // Override con filtri personalizzati dalla rule (se più restrittivi)
     if (unionFilters) {
-      // Discount range (min to 100%) - Keepa minimum is 10%
-      const minDiscount = Math.max(10, unionFilters.minDiscount || 10);
+      // Discount range - usa il più alto tra default (15%) e rule
+      const minDiscount = Math.max(15, unionFilters.minDiscount || 15);
       selection.deltaPercentRange = [minDiscount, 100];
 
       // Price range (in cents)
@@ -134,17 +140,16 @@ export class KeepaClient {
         ];
       }
 
-      // Rating (Keepa uses 0-50 scale, we use 0-500)
+      // Rating - usa il più alto tra default (30) e rule
       if (unionFilters.minRating > 0) {
-        selection.minRating = Math.round(unionFilters.minRating / 10);
+        const ruleRating = Math.round(unionFilters.minRating / 10);
+        selection.minRating = Math.max(30, ruleRating);
       }
 
-      // Sales rank
-      if (unionFilters.maxSalesRank > 0) {
+      // Sales rank - usa il più basso (più restrittivo) tra default (200k) e rule
+      if (unionFilters.maxSalesRank > 0 && unionFilters.maxSalesRank < 200000) {
         selection.salesRankRange = [0, unionFilters.maxSalesRank];
       }
-    } else {
-      selection.deltaPercentRange = [10, 100];  // Keepa minimum is 10%
     }
 
     const response = await this.client.get('/deal', {
