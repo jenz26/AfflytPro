@@ -14,6 +14,39 @@ function escapeMarkdownV2(text: string): string {
     return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 }
 
+/**
+ * Convert LLM-generated Markdown to Telegram MarkdownV2
+ *
+ * LLM generates standard Markdown: **bold**, _italic_
+ * Telegram MarkdownV2 uses: *bold*, _italic_ (but special chars must be escaped)
+ *
+ * Strategy:
+ * 1. Extract and preserve **bold** and _italic_ markers
+ * 2. Escape all special characters in the text content
+ * 3. Convert **bold** to *bold* for MarkdownV2
+ */
+function convertLLMToMarkdownV2(text: string): string {
+    // Characters that need escaping in MarkdownV2 (excluding formatting chars we'll handle)
+    const escapeChars = /([[\]()~`>#+\-=|{}.!\\])/g;
+
+    // Step 1: Temporarily replace formatting markers with placeholders
+    let result = text
+        .replace(/\*\*(.+?)\*\*/g, '<<<BOLD>>>$1<<<ENDBOLD>>>')  // **bold** -> placeholder
+        .replace(/_(.+?)_/g, '<<<ITALIC>>>$1<<<ENDITALIC>>>');   // _italic_ -> placeholder
+
+    // Step 2: Escape special characters (but not * and _ which we'll use for formatting)
+    result = result.replace(escapeChars, '\\$1');
+
+    // Step 3: Convert placeholders to MarkdownV2 formatting
+    result = result
+        .replace(/<<<BOLD>>>/g, '*')
+        .replace(/<<<ENDBOLD>>>/g, '*')
+        .replace(/<<<ITALIC>>>/g, '_')
+        .replace(/<<<ENDITALIC>>>/g, '_');
+
+    return result;
+}
+
 export class TelegramBotService {
   /**
    * Validate bot token
@@ -158,9 +191,9 @@ export class TelegramBotService {
 
       // Use custom LLM copy if provided, otherwise generate default message
       if (deal.customCopy) {
-        // Escape the custom copy for MarkdownV2
-        // Note: The LLM already generates plain text, we need to escape special chars
-        const safeCopy = escapeMarkdownV2(deal.customCopy);
+        // Convert LLM Markdown (**bold**) to Telegram MarkdownV2 (*bold*)
+        // and escape special characters while preserving formatting
+        const safeCopy = convertLLMToMarkdownV2(deal.customCopy);
         message = `${safeCopy}\n\n_\\#Ad \\| Deal trovato da Afflyt Pro 🤖_`;
       } else {
         // Default template message
