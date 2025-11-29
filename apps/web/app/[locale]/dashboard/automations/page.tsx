@@ -481,6 +481,9 @@ export default function AutomationStudioPage() {
                         primeOnly: false,
                         brandInclude: [],
                         brandExclude: [],
+                        dealPublishMode: editingRule.dealPublishMode || 'DISCOUNTED_ONLY',
+                        includeKeepaChart: editingRule.includeKeepaChart || false,
+                        amazonTagOverride: '',
                     } : null}
                     onComplete={handleCreateRule}
                     onCancel={() => {
