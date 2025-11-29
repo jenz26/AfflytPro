@@ -19,6 +19,8 @@ const PRICE_TYPE = {
   AMAZON: 0,
   NEW: 1,
   USED: 2,
+  SALES_RANK: 3,
+  LIST_PRICE: 4,  // Prezzo di listino (prezzo barrato su Amazon)
   BUY_BOX: 18
 } as const;
 
@@ -281,25 +283,26 @@ export class KeepaClient {
       ? buyBoxPriceCents / 100
       : deal.currentPrice;
 
-    // Get saving basis (list price for strikethrough)
-    const savingBasisCents = stats.buyBoxSavingBasis || stats.listPrice;
-    const buyBoxSavingBasis = savingBasisCents && savingBasisCents > 0
-      ? savingBasisCents / 100
-      : undefined;
+    // Get LIST_PRICE from stats.current[4] - this is the strikethrough price on Amazon
+    // Fallback to buyBoxSavingBasis or stats.listPrice (all in cents)
+    const listPriceCents = stats.current?.[PRICE_TYPE.LIST_PRICE] ??
+                           stats.buyBoxSavingBasis ??
+                           stats.listPrice ?? 0;
+    const listPrice = listPriceCents > 0 ? listPriceCents / 100 : 0;
 
-    // Determine if there's a visible discount (strikethrough price)
-    const hasVisibleDiscount = buyBoxSavingBasis !== undefined &&
-      buyBoxSavingBasis > buyBoxPrice;
+    // Determine if there's a VISIBLE discount on Amazon
+    // Amazon shows strikethrough price when listPrice > currentPrice
+    const hasVisibleDiscount = listPrice > 0 && listPrice > buyBoxPrice;
 
-    // Calculate accurate discount
+    // Calculate accurate discount based on listPrice (visible) or keep original (historical)
     let discountPercent = deal.discountPercent;
     let originalPrice = deal.originalPrice;
-    if (hasVisibleDiscount && buyBoxSavingBasis) {
-      discountPercent = Math.round(((buyBoxSavingBasis - buyBoxPrice) / buyBoxSavingBasis) * 100);
-      originalPrice = buyBoxSavingBasis;
+    if (hasVisibleDiscount) {
+      discountPercent = Math.round(((listPrice - buyBoxPrice) / listPrice) * 100);
+      originalPrice = listPrice;
     }
 
-    // Check if at historical low
+    // Check if at historical low (for "minimo storico" deals)
     const minPrices = stats.min;
     const historicalMinBuyBox = minPrices?.[PRICE_TYPE.BUY_BOX]?.[0];
     const isHistoricalLow = historicalMinBuyBox !== undefined &&
@@ -313,7 +316,7 @@ export class KeepaClient {
       discountPercent,
       discountAbsolute: originalPrice - buyBoxPrice,
       buyBoxPrice,
-      buyBoxSavingBasis,
+      buyBoxSavingBasis: listPrice > 0 ? listPrice : undefined,
       hasVisibleDiscount,
       isHistoricalLow,
       isVerified: true,
@@ -467,33 +470,49 @@ export class KeepaClient {
                               raw.current?.[PRICE_TYPE.NEW] ?? 0;
     const currentPrice = currentPriceCents > 0 ? currentPriceCents / 100 : 0;
 
-    // Get discount from deltaPercent
-    // Format: deltaPercent[dateRange][priceType] where:
-    // - dateRange: 0=day, 1=week, 2=month, 3=90days
-    // - priceType: 0=Amazon, 1=New, 18=BuyBox
+    // Get LIST_PRICE (index 4) - this is the strikethrough price shown on Amazon
+    const listPriceCents = raw.current?.[PRICE_TYPE.LIST_PRICE] ?? 0;
+    const listPrice = listPriceCents > 0 ? listPriceCents / 100 : 0;
+
+    // Determine if there's a VISIBLE discount on Amazon
+    // Amazon shows strikethrough price when listPrice > currentPrice
+    const hasVisibleDiscount = listPrice > 0 && listPrice > currentPrice;
+
+    // Calculate discount - prefer listPrice-based calculation for visible discounts
     let discountPercent = 0;
-    if (raw.deltaPercent && Array.isArray(raw.deltaPercent)) {
-      // Try 90-day range first (index 3), then month (index 2)
-      const range90 = raw.deltaPercent[3]; // 90 days
-      const rangeMonth = raw.deltaPercent[2]; // month
+    let originalPrice = currentPrice;
 
-      // Get BuyBox (18), Amazon (0), or New (1) delta from each range
-      const deltaValue = range90?.[PRICE_TYPE.BUY_BOX] ?? range90?.[PRICE_TYPE.AMAZON] ?? range90?.[PRICE_TYPE.NEW] ??
-                        rangeMonth?.[PRICE_TYPE.BUY_BOX] ?? rangeMonth?.[PRICE_TYPE.AMAZON] ?? rangeMonth?.[PRICE_TYPE.NEW] ?? 0;
+    if (hasVisibleDiscount) {
+      // Use listPrice for accurate visible discount calculation
+      discountPercent = Math.round(((listPrice - currentPrice) / listPrice) * 100);
+      originalPrice = listPrice;
+    } else {
+      // Fall back to deltaPercent for historical low detection
+      // Format: deltaPercent[dateRange][priceType] where:
+      // - dateRange: 0=day, 1=week, 2=month, 3=90days
+      // - priceType: 0=Amazon, 1=New, 18=BuyBox
+      if (raw.deltaPercent && Array.isArray(raw.deltaPercent)) {
+        // Try 90-day range first (index 3), then month (index 2)
+        const range90 = raw.deltaPercent[3]; // 90 days
+        const rangeMonth = raw.deltaPercent[2]; // month
 
-      // Positive value = price dropped below average = discount
-      // e.g., deltaPercent of 86 means price is 86% below average
-      if (typeof deltaValue === 'number' && deltaValue > 0) {
-        discountPercent = deltaValue;
+        // Get BuyBox (18), Amazon (0), or New (1) delta from each range
+        const deltaValue = range90?.[PRICE_TYPE.BUY_BOX] ?? range90?.[PRICE_TYPE.AMAZON] ?? range90?.[PRICE_TYPE.NEW] ??
+                          rangeMonth?.[PRICE_TYPE.BUY_BOX] ?? rangeMonth?.[PRICE_TYPE.AMAZON] ?? rangeMonth?.[PRICE_TYPE.NEW] ?? 0;
+
+        // Positive value = price dropped below average = discount
+        if (typeof deltaValue === 'number' && deltaValue > 0) {
+          discountPercent = deltaValue;
+        }
+      }
+
+      // Calculate original price from delta
+      if (discountPercent > 0 && currentPrice > 0) {
+        originalPrice = currentPrice / (1 - discountPercent / 100);
       }
     }
-    discountPercent = Math.max(0, Math.min(99, Math.round(discountPercent)));
 
-    // Calculate original price
-    let originalPrice = currentPrice;
-    if (discountPercent > 0 && currentPrice > 0) {
-      originalPrice = currentPrice / (1 - discountPercent / 100);
-    }
+    discountPercent = Math.max(0, Math.min(99, Math.round(discountPercent)));
 
     // Get category
     const categoryId = raw.rootCat || raw.categories?.[0] || 0;
@@ -508,11 +527,6 @@ export class KeepaClient {
     } else if (typeof raw.image === 'string') {
       imageUrl = `https://m.media-amazon.com/images/I/${raw.image}`;
     }
-
-    // Deal API with deltaPercentRange filter guarantees discount
-    // Our filter uses [15, 100], so all returned deals have 15%+ discount
-    // Even if deltaPercent parsing fails, the Keepa filter already validated it
-    const hasVisibleDiscount = true; // Guaranteed by deltaPercentRange filter
 
     return {
       asin: raw.asin,
@@ -531,7 +545,7 @@ export class KeepaClient {
       dealEndDate: null,
       fetchedAt: new Date(),
       isVerified: false,
-      hasVisibleDiscount,          // Set based on discount from Deal API
+      hasVisibleDiscount,          // TRUE only if listPrice > currentPrice (Amazon shows strikethrough)
       isHistoricalLow: undefined   // Will be set by Product API verification
     };
   }
