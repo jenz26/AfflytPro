@@ -8,8 +8,26 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const prisma = new PrismaClient();
 
 /**
+ * Amazon IT Category IDs (from apps/api/src/data/amazon-categories.ts)
+ */
+const CATEGORY_IDS = {
+    ELECTRONICS: '412609031',      // Elettronica
+    HOME_KITCHEN: '524015031',     // Casa e cucina
+    FASHION: '5512286031',         // Moda (gated)
+    BEAUTY: '6198082031',          // Bellezza (gated)
+    SPORTS: '524012031',           // Sport e tempo libero
+    TOYS: '523997031',             // Giochi e giocattoli
+    COMPUTERS: '425916031',        // Informatica
+    VIDEO_GAMES: '412603031',      // Videogiochi (gated)
+    BABY: '1571286031',            // Prima infanzia
+    HEALTH: '1571289031',          // Salute e cura della persona
+    GARDEN: '635016031',           // Giardino e giardinaggio
+};
+
+/**
  * Onboarding Templates - Based on UX Study
  * These are the 3 main templates shown in the onboarding flow
+ * Using numeric category IDs for Keepa API compatibility
  */
 const ONBOARDING_TEMPLATES = [
     {
@@ -20,8 +38,8 @@ const ONBOARDING_TEMPLATES = [
         popularity: 92,
         estimatedRevenue: '€500-2000/mese',
         schedule: '0 */6 * * *', // Every 6 hours
-        minScore: 85,
-        categories: ['Electronics', 'Home'],
+        minScore: 65,
+        categories: [CATEGORY_IDS.ELECTRONICS, CATEGORY_IDS.HOME_KITCHEN],
         maxPrice: 100,
         isActive: true,
         successStories: [
@@ -37,8 +55,8 @@ const ONBOARDING_TEMPLATES = [
         popularity: 87,
         estimatedRevenue: '€300-1000/mese',
         schedule: '0 9 * * *', // Every day at 9:00
-        minScore: 75,
-        categories: ['All'],
+        minScore: 60,
+        categories: [CATEGORY_IDS.HOME_KITCHEN, CATEGORY_IDS.ELECTRONICS, CATEGORY_IDS.SPORTS],
         maxPrice: null,
         isActive: true,
         successStories: [
@@ -53,8 +71,8 @@ const ONBOARDING_TEMPLATES = [
         popularity: 76,
         estimatedRevenue: '€800-3000/mese',
         schedule: '0 */12 * * *', // Every 12 hours
-        minScore: 90,
-        categories: ['Fashion', 'Beauty', 'Watches'],
+        minScore: 70,
+        categories: [CATEGORY_IDS.ELECTRONICS, CATEGORY_IDS.COMPUTERS],
         maxPrice: 500,
         isActive: true,
         successStories: [
@@ -65,6 +83,7 @@ const ONBOARDING_TEMPLATES = [
 
 /**
  * Additional Advanced Templates
+ * Using numeric category IDs for Keepa API compatibility
  */
 const ADVANCED_TEMPLATES = [
     {
@@ -75,8 +94,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 91,
         estimatedRevenue: '€400-1500/mese',
         schedule: '*/30 * * * *', // Every 30 minutes
-        minScore: 80,
-        categories: ['All'],
+        minScore: 60,
+        categories: [CATEGORY_IDS.ELECTRONICS, CATEGORY_IDS.HOME_KITCHEN, CATEGORY_IDS.SPORTS],
         maxPrice: null,
         isActive: true,
         successStories: [
@@ -91,8 +110,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 83,
         estimatedRevenue: '€600-2500/mese',
         schedule: '0 */8 * * *', // Every 8 hours
-        minScore: 82,
-        categories: ['Video Games', 'Computers', 'Electronics'],
+        minScore: 65,
+        categories: [CATEGORY_IDS.COMPUTERS, CATEGORY_IDS.ELECTRONICS],
         maxPrice: 200,
         isActive: true,
         successStories: [
@@ -107,8 +126,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 79,
         estimatedRevenue: '€300-1200/mese',
         schedule: '0 10,18 * * *', // 10:00 and 18:00
-        minScore: 78,
-        categories: ['Home & Kitchen', 'Home', 'Furniture'],
+        minScore: 60,
+        categories: [CATEGORY_IDS.HOME_KITCHEN, CATEGORY_IDS.GARDEN],
         maxPrice: 150,
         isActive: true,
         successStories: [
@@ -123,8 +142,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 74,
         estimatedRevenue: '€500-1800/mese',
         schedule: '0 7,19 * * *', // 7:00 and 19:00
-        minScore: 80,
-        categories: ['Sports', 'Health & Household', 'Beauty'],
+        minScore: 60,
+        categories: [CATEGORY_IDS.SPORTS, CATEGORY_IDS.HEALTH],
         maxPrice: 120,
         isActive: true,
         successStories: [
@@ -139,8 +158,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 86,
         estimatedRevenue: '€700-2800/mese',
         schedule: '0 12 * * *', // Every day at 12:00
-        minScore: 85,
-        categories: ['All'],
+        minScore: 65,
+        categories: [CATEGORY_IDS.TOYS, CATEGORY_IDS.HOME_KITCHEN, CATEGORY_IDS.ELECTRONICS],
         maxPrice: 80,
         isActive: true,
         successStories: [
@@ -155,8 +174,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 89,
         estimatedRevenue: '€900-3500/mese',
         schedule: '0 */6 * * *', // Every 6 hours
-        minScore: 88,
-        categories: ['Electronics', 'Computers', 'Cell Phones & Accessories'],
+        minScore: 70,
+        categories: [CATEGORY_IDS.ELECTRONICS, CATEGORY_IDS.COMPUTERS],
         maxPrice: 300,
         isActive: true,
         successStories: [
@@ -171,8 +190,8 @@ const ADVANCED_TEMPLATES = [
         popularity: 77,
         estimatedRevenue: '€400-1400/mese',
         schedule: '0 9,16 * * *', // 9:00 and 16:00
-        minScore: 80,
-        categories: ['Baby Products', 'Toys & Games'],
+        minScore: 60,
+        categories: [CATEGORY_IDS.BABY, CATEGORY_IDS.TOYS],
         maxPrice: 100,
         isActive: true,
         successStories: [

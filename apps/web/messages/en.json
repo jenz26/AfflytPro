@@ -1610,6 +1610,10 @@
         "name": "Discord",
         "description": "Perfect for community-based deal sharing"
       },
+      "email": {
+        "name": "Email Newsletter",
+        "description": "Send deals directly to your subscribers' inbox"
+      },
       "facebook": {
         "name": "Facebook",
         "description": "Reach your Facebook audience with automated posts"

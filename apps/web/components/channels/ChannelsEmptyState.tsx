@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import {
     Send,
     MessageSquare,
+    Mail,
     Facebook,
     Twitter,
     Linkedin,
@@ -43,6 +44,14 @@ const channelOptions: ChannelOption[] = [
         icon: MessageSquare,
         difficulty: 'easy',
         timeEstimate: '2 min',
+        comingSoon: true,
+    },
+    {
+        platform: 'email',
+        icon: Mail,
+        difficulty: 'easy',
+        timeEstimate: '5 min',
+        comingSoon: true,
     },
     {
         platform: 'facebook',

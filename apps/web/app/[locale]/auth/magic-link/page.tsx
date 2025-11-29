@@ -57,9 +57,13 @@ export default function MagicLinkPage() {
                             plan: data.user.plan,
                         });
                     }
-                    // Redirect after short delay
+                    // Redirect after short delay - new users go to onboarding
                     setTimeout(() => {
-                        router.push(`/${locale}/dashboard`);
+                        if (data.isNewUser) {
+                            router.push(`/${locale}/onboarding`);
+                        } else {
+                            router.push(`/${locale}/dashboard`);
+                        }
                     }, 1500);
                 } else {
                     setStatus('error');

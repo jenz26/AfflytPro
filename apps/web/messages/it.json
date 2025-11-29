@@ -1579,6 +1579,10 @@
         "name": "Discord",
         "description": "Perfetto per condivisione offerte in community"
       },
+      "email": {
+        "name": "Newsletter Email",
+        "description": "Invia offerte direttamente nella inbox dei tuoi iscritti"
+      },
       "facebook": {
         "name": "Facebook",
         "description": "Raggiungi il tuo pubblico Facebook con post automatici"
