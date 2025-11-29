@@ -294,7 +294,27 @@ export class LLMCopyService {
   private buildCacheKey(deal: DealCopyPayload, config: LLMCopyConfig): string {
     // Cache key includes price to invalidate when price changes
     const priceCents = Math.round(deal.currentPrice * 100);
-    return `llm:copy:${deal.asin}:${config.ruleId}:${priceCents}`;
+
+    // Include style prompt hash to invalidate cache when user changes style
+    // Use a simple hash to avoid very long cache keys
+    const styleHash = config.customStylePrompt
+      ? this.simpleHash(config.customStylePrompt)
+      : 'default';
+
+    return `llm:copy:${deal.asin}:${config.ruleId}:${priceCents}:${styleHash}`;
+  }
+
+  /**
+   * Simple string hash for cache key differentiation
+   */
+  private simpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(36);
   }
 
   private async getFromCache(key: string): Promise<string | null> {
