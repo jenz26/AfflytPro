@@ -175,6 +175,12 @@ export class TelegramBotService {
     userId?: string,
     amazonTag?: string
   ) {
+    // Mock for stress test channels - dont actually send to Telegram
+    if (channelId.startsWith('TEST_')) {
+      console.log(`[Telegram] MOCK: Would send ${deal.asin} to ${channelId}`);
+      return { success: true, shortUrl: `https://mock.test/${deal.asin}`, mocked: true };
+    }
+
     try {
       const bot = new Telegraf(token);
 

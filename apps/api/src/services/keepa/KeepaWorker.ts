@@ -20,6 +20,10 @@ import { LLMCopyService, type DealCopyPayload, type LLMCopyConfig } from '../LLM
 
 const DEFAULT_AMAZON_TAG = 'afflyt-21';
 
+// Stress test mode: reduces logging, accumulates metrics in Redis
+const STRESS_TEST_MODE = process.env.STRESS_TEST_MODE === 'true';
+const TEST_CHANNEL_PREFIX = 'TEST_';
+
 export class KeepaWorker {
   private redis: Redis;
   private prisma: PrismaClient;
@@ -34,6 +38,16 @@ export class KeepaWorker {
 
   private isRunning = false;
   private tickInterval: NodeJS.Timeout | null = null;
+
+  // Stress test metrics (accumulated in memory, flushed to Redis)
+  private stressMetrics = {
+    rulesProcessed: 0,
+    dealsPublished: 0,
+    duplicatesSkipped: 0,
+    jobsCompleted: 0,
+    tokenWaits: 0,
+    errors: 0
+  };
 
   constructor(
     redis: Redis,
@@ -75,6 +89,51 @@ export class KeepaWorker {
       this.tickInterval = null;
     }
     console.log('[KeepaWorker] Stopped');
+
+    // Flush stress test metrics on stop
+    if (STRESS_TEST_MODE) {
+      this.flushStressMetrics();
+    }
+  }
+
+  // ============================================
+  // STRESS TEST HELPERS
+  // ============================================
+
+  /**
+   * Log only if not in stress test mode (reduces Railway log volume)
+   */
+  private log(message: string, force = false): void {
+    if (!STRESS_TEST_MODE || force) {
+      console.log(message);
+    }
+  }
+
+  /**
+   * Check if a channel is a test channel (mock Telegram)
+   */
+  private isTestChannel(channelId: string | null): boolean {
+    return channelId?.startsWith(TEST_CHANNEL_PREFIX) ?? false;
+  }
+
+  /**
+   * Flush accumulated metrics to Redis for stress test analysis
+   */
+  private async flushStressMetrics(): Promise<void> {
+    try {
+      await this.redis.hset('stress:metrics', {
+        rulesProcessed: this.stressMetrics.rulesProcessed,
+        dealsPublished: this.stressMetrics.dealsPublished,
+        duplicatesSkipped: this.stressMetrics.duplicatesSkipped,
+        jobsCompleted: this.stressMetrics.jobsCompleted,
+        tokenWaits: this.stressMetrics.tokenWaits,
+        errors: this.stressMetrics.errors,
+        timestamp: Date.now()
+      });
+      console.log(`[KeepaWorker] Stress metrics flushed: ${JSON.stringify(this.stressMetrics)}`);
+    } catch (error) {
+      console.error('[KeepaWorker] Failed to flush stress metrics:', error);
+    }
   }
 
   // ============================================
