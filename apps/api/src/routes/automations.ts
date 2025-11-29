@@ -741,6 +741,46 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
     });
 
     /**
+     * POST /automation/cache/clear
+     * Clear Keepa deal cache to force fresh fetch
+     * Admin endpoint - requires auth
+     */
+    fastify.post('/cache/clear', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+        try {
+            const userId = (request as any).user.id;
+
+            // Get Redis instance
+            const { getRedis } = await import('../lib/redis');
+            const redis = getRedis();
+
+            // Find and delete all keepa cache keys
+            const cacheKeys = await redis.keys('keepa:cache:*');
+            let deletedCount = 0;
+
+            if (cacheKeys.length > 0) {
+                for (const key of cacheKeys) {
+                    await redis.del(key);
+                    deletedCount++;
+                }
+            }
+
+            fastify.log.info({ userId, deletedCount }, 'Keepa cache cleared');
+
+            return reply.send({
+                success: true,
+                message: `Cleared ${deletedCount} cached categories`,
+                deletedKeys: cacheKeys
+            });
+        } catch (error: any) {
+            fastify.log.error(error);
+            return reply.code(500).send({
+                error: 'Internal server error',
+                message: 'Failed to clear cache'
+            });
+        }
+    });
+
+    /**
      * GET /automation/templates
      * List all automation templates for marketplace
      */
