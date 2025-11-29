@@ -275,21 +275,20 @@ export class KeepaWorker {
       console.log(`[KeepaWorker] Top scores: ${topScores.join(', ')}`);
     }
 
-    // 4. Limit to dealsPerRun
-    const toPublish = scoredFiltered.slice(0, rule.dealsPerRun);
-
+    // 4. Pass ALL scored deals to publishDeals - it will publish up to dealsPerRun
+    //    This allows it to skip duplicates and continue to next deals in the list
     let published = 0;
-    if (toPublish.length === 0) {
+    if (scoredFiltered.length === 0) {
       console.log(`[KeepaWorker] Rule ${rule.ruleId}: No deals passed filters (minScore: ${rule.minScore})`);
       await this.updateRuleStats(rule.ruleId, 0, true);
     } else {
-      // 5. Check deduplication and publish
-      published = await this.publishDeals(rule, toPublish);
+      // 5. Check deduplication and publish (pass all candidates, limit enforced inside)
+      published = await this.publishDeals(rule, scoredFiltered);
 
       // 6. Update rule stats
       await this.updateRuleStats(rule.ruleId, published);
 
-      console.log(`[KeepaWorker] Rule ${rule.ruleId}: Published ${published}/${toPublish.length} deals`);
+      console.log(`[KeepaWorker] Rule ${rule.ruleId}: Published ${published}/${scoredFiltered.length} candidates`);
     }
 
     // 7. Save telemetry for analysis
@@ -532,12 +531,20 @@ export class KeepaWorker {
     };
 
     let publishedCount = 0;
+    let skippedDuplicates = 0;
 
     for (const deal of deals) {
+      // Stop if we've published enough deals
+      if (publishedCount >= rule.dealsPerRun) {
+        console.log(`[KeepaWorker] Reached dealsPerRun limit (${rule.dealsPerRun})`);
+        break;
+      }
+
       // Check deduplication
       const isDuplicate = await this.isDuplicate(rule.channelId, deal.asin, rule.ruleId);
       if (isDuplicate) {
-        console.log(`[KeepaWorker] Skipping ${deal.asin} - already published to channel`);
+        skippedDuplicates++;
+        console.log(`[KeepaWorker] Skipping ${deal.asin} - already published (${skippedDuplicates} skipped so far)`);
         continue;
       }
 

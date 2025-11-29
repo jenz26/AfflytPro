@@ -109,7 +109,12 @@ export default function AutomationStudioPage() {
                         // Deal publish options
                         dealPublishMode: ruleData.dealPublishMode,
                         includeKeepaChart: ruleData.includeKeepaChart,
-                        amazonTagOverride: ruleData.amazonTagOverride || undefined
+                        amazonTagOverride: ruleData.amazonTagOverride || undefined,
+                        // LLM Copy options
+                        copyMode: ruleData.copyMode,
+                        messageTemplate: ruleData.messageTemplate,
+                        customStylePrompt: ruleData.customStylePrompt,
+                        llmModel: ruleData.llmModel
                     })
                 });
 
