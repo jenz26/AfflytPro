@@ -16,6 +16,7 @@ import { KeepaTokenManager } from './KeepaTokenManager';
 import { ScoringEngine } from '../ScoringEngine';
 import { TelegramBotService } from '../TelegramBotService';
 import { SecurityService } from '../SecurityService';
+import { LLMCopyService, type DealCopyPayload, type LLMCopyConfig } from '../LLMCopyService';
 
 const DEFAULT_AMAZON_TAG = 'afflyt-21';
 
@@ -29,6 +30,7 @@ export class KeepaWorker {
   private tokenManager: KeepaTokenManager;
   private scoringEngine: ScoringEngine;
   private securityService: SecurityService;
+  private llmCopyService: LLMCopyService;
 
   private isRunning = false;
   private tickInterval: NodeJS.Timeout | null = null;
@@ -48,6 +50,7 @@ export class KeepaWorker {
     this.tokenManager = new KeepaTokenManager(redis, config, keepaApiKey);
     this.scoringEngine = new ScoringEngine();
     this.securityService = new SecurityService();
+    this.llmCopyService = new LLMCopyService(redis);
   }
 
   // ============================================
@@ -473,7 +476,7 @@ export class KeepaWorker {
       return 0;
     }
 
-    // Get channel with credential
+    // Get channel with credential AND rule LLM config
     const channel = await this.prisma.channel.findUnique({
       where: { id: rule.channelId },
       include: {
@@ -492,6 +495,17 @@ export class KeepaWorker {
       return 0;
     }
 
+    // Get rule LLM configuration
+    const ruleConfig = await this.prisma.automationRule.findUnique({
+      where: { id: rule.ruleId },
+      select: {
+        copyMode: true,
+        messageTemplate: true,
+        customStylePrompt: true,
+        llmModel: true
+      }
+    });
+
     // Decrypt bot token
     let botToken: string;
     try {
@@ -508,6 +522,15 @@ export class KeepaWorker {
       userDefault: channel.user.brandId || DEFAULT_AMAZON_TAG
     });
 
+    // Prepare LLM config
+    const llmConfig: LLMCopyConfig = {
+      copyMode: (ruleConfig?.copyMode as 'TEMPLATE' | 'LLM') || 'TEMPLATE',
+      messageTemplate: ruleConfig?.messageTemplate,
+      customStylePrompt: ruleConfig?.customStylePrompt,
+      llmModel: ruleConfig?.llmModel || 'gpt-4o-mini',
+      ruleId: rule.ruleId
+    };
+
     let publishedCount = 0;
 
     for (const deal of deals) {
@@ -518,7 +541,27 @@ export class KeepaWorker {
         continue;
       }
 
-      // Publish to Telegram
+      const affiliateLink = this.buildAffiliateLink(deal.asin, amazonTag);
+
+      // Generate copy (LLM or template)
+      const copyPayload: DealCopyPayload = {
+        asin: deal.asin,
+        title: deal.title,
+        currentPrice: deal.currentPrice,
+        originalPrice: deal.originalPrice,
+        discountPercent: deal.discountPercent,
+        category: deal.category,
+        rating: deal.rating,
+        reviewCount: deal.reviewCount,
+        isHistoricalLow: deal.isHistoricalLow,
+        hasVisibleDiscount: deal.hasVisibleDiscount,
+        affiliateUrl: affiliateLink
+      };
+
+      const copyResult = await this.llmCopyService.generateCopy(copyPayload, llmConfig);
+      console.log(`[KeepaWorker] Copy generated for ${deal.asin} via ${copyResult.source}`);
+
+      // Publish to Telegram with custom copy
       const result = await TelegramBotService.sendDealToChannel(
         channel.channelId,
         botToken,
@@ -531,19 +574,27 @@ export class KeepaWorker {
           rating: deal.rating ?? 0,
           reviewCount: deal.reviewCount ?? 0,
           imageUrl: deal.imageUrl,
-          affiliateLink: this.buildAffiliateLink(deal.asin, amazonTag),
+          affiliateLink,
           dealType: deal.hasVisibleDiscount ? 'discounted' : 'lowest_price',
           hasVisibleDiscount: deal.hasVisibleDiscount,
           isLowestEver: deal.isHistoricalLow,
-          includeKeepaChart: rule.includeKeepaChart
+          includeKeepaChart: rule.includeKeepaChart,
+          customCopy: copyResult.text // Pass LLM-generated copy
         },
         channel.user.id,
         amazonTag
       );
 
       if (result.success) {
-        // Record in history
-        await this.recordDealPublished(rule.channelId, deal.asin, rule.ruleId);
+        // Record in history with copy metadata
+        await this.recordDealPublished(
+          rule.channelId,
+          deal.asin,
+          rule.ruleId,
+          copyResult.text,
+          copyResult.source,
+          deal.currentPrice
+        );
         publishedCount++;
       } else {
         console.error(`[KeepaWorker] Failed to publish ${deal.asin}:`, result.error);
@@ -586,7 +637,14 @@ export class KeepaWorker {
     return true;
   }
 
-  private async recordDealPublished(channelId: string, asin: string, ruleId: string): Promise<void> {
+  private async recordDealPublished(
+    channelId: string,
+    asin: string,
+    ruleId: string,
+    generatedCopy?: string,
+    copySource?: string,
+    priceAtGeneration?: number
+  ): Promise<void> {
     // Get rule's dedupeWindowHours
     const rule = await this.prisma.automationRule.findUnique({
       where: { id: ruleId },
@@ -607,12 +665,20 @@ export class KeepaWorker {
         channelId,
         asin,
         ruleId,
-        expiresAt
+        expiresAt,
+        generatedCopy,
+        copySource,
+        copyGeneratedAt: generatedCopy ? new Date() : undefined,
+        priceAtGeneration
       },
       update: {
         ruleId,
         publishedAt: new Date(),
-        expiresAt
+        expiresAt,
+        generatedCopy,
+        copySource,
+        copyGeneratedAt: generatedCopy ? new Date() : undefined,
+        priceAtGeneration
       }
     });
   }

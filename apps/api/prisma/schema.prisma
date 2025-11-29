@@ -302,6 +302,22 @@ model ChannelDealHistory {
   publishedAt DateTime @default(now())
   expiresAt   DateTime // Auto-cleanup: publishedAt + dedupeWindowHours
 
+  // ═══════════════════════════════════════════════════════════════
+  // LLM COPY TRACKING (audit & regeneration)
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Testo effettivamente usato per il messaggio
+  generatedCopy     String?
+
+  /// Fonte del testo: TEMPLATE | LLM | LLM_CACHE | LLM_FALLBACK_TEMPLATE
+  copySource        String?
+
+  /// Quando è stato generato il testo (per cache invalidation)
+  copyGeneratedAt   DateTime?
+
+  /// Prezzo al momento della generazione (per rigenerare se cambia)
+  priceAtGeneration Float?
+
   @@unique([channelId, asin])
   @@index([channelId])
   @@index([expiresAt])
@@ -604,6 +620,25 @@ model AutomationRule {
 
   /// Contatore run consecutive senza pubblicare (per notifica)
   emptyRunsCount     Int       @default(0)
+
+  // ═══════════════════════════════════════════════════════════════
+  // LLM COPY GENERATION
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Modalità generazione testo: TEMPLATE = placeholders, LLM = AI-generated
+  copyMode          String   @default("TEMPLATE")  // TEMPLATE | LLM
+
+  /// Template per modalità TEMPLATE (con placeholders {title}, {price}, etc.)
+  messageTemplate   String?
+
+  /// Istruzioni personalizzate per lo stile LLM (es. "tono informale, niente emoji")
+  customStylePrompt String?
+
+  /// Modello LLM da usare (default gpt-4o-mini per costi bassi)
+  llmModel          String   @default("gpt-4o-mini")
+
+  /// Limite giornaliero post con LLM per questa rule
+  llmMaxPostsPerDay Int      @default(50)
 
   // ═══════════════════════════════════════════════════════════════
   // EXECUTION STATS

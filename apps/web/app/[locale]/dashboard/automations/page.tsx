@@ -484,6 +484,11 @@ export default function AutomationStudioPage() {
                         dealPublishMode: editingRule.dealPublishMode || 'DISCOUNTED_ONLY',
                         includeKeepaChart: editingRule.includeKeepaChart || false,
                         amazonTagOverride: '',
+                        // LLM Copy fields
+                        copyMode: (editingRule as any).copyMode || 'TEMPLATE',
+                        messageTemplate: (editingRule as any).messageTemplate || undefined,
+                        customStylePrompt: (editingRule as any).customStylePrompt || undefined,
+                        llmModel: (editingRule as any).llmModel || 'gpt-4o-mini',
                     } : null}
                     onComplete={handleCreateRule}
                     onCancel={() => {

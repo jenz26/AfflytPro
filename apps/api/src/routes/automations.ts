@@ -77,6 +77,12 @@ const createRuleSchema = z.object({
     includeKeepaChart: z.boolean().default(false),
     amazonTagOverride: z.string().max(50).optional(),
 
+    // LLM Copy Generation
+    copyMode: z.enum(['TEMPLATE', 'LLM']).default('TEMPLATE'),
+    messageTemplate: z.string().max(2000).optional(),
+    customStylePrompt: z.string().max(500).optional(),
+    llmModel: z.enum(['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo']).default('gpt-4o-mini'),
+
     // Triggers/Actions (optional - will use defaults if not provided)
     triggers: z.array(triggerActionSchema).optional(),
     actions: z.array(triggerActionSchema.extend({ order: z.number().int().nonnegative() })).optional(),
@@ -124,6 +130,12 @@ const updateRuleSchema = z.object({
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).optional(),
     includeKeepaChart: z.boolean().optional(),
     amazonTagOverride: z.string().max(50).optional(),
+
+    // LLM Copy Generation
+    copyMode: z.enum(['TEMPLATE', 'LLM']).optional(),
+    messageTemplate: z.string().max(2000).nullable().optional(),
+    customStylePrompt: z.string().max(500).nullable().optional(),
+    llmModel: z.enum(['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo']).optional(),
 });
 
 const idParamSchema = z.object({
@@ -473,6 +485,12 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     dealPublishMode: parsed.dealPublishMode,
                     includeKeepaChart: parsed.includeKeepaChart,
                     ...(parsed.amazonTagOverride ? { amazonTagOverride: parsed.amazonTagOverride } : {}),
+
+                    // LLM Copy Generation
+                    copyMode: parsed.copyMode || 'TEMPLATE',
+                    ...(parsed.messageTemplate ? { messageTemplate: parsed.messageTemplate } : {}),
+                    ...(parsed.customStylePrompt ? { customStylePrompt: parsed.customStylePrompt } : {}),
+                    llmModel: parsed.llmModel || 'gpt-4o-mini',
 
                     // Triggers and actions
                     triggers: {

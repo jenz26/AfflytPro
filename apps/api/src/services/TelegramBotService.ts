@@ -99,6 +99,8 @@ export class TelegramBotService {
       hasVisibleDiscount?: boolean;
       isLowestEver?: boolean;
       includeKeepaChart?: boolean;
+      // LLM-generated custom copy
+      customCopy?: string;
     },
     userId?: string,
     amazonTag?: string
@@ -146,44 +148,54 @@ export class TelegramBotService {
       const discountPercent = Math.round(deal.discount * 100);
       const savings = (deal.originalPrice - deal.price).toFixed(2);
 
-      // Escape title for MarkdownV2
-      const safeTitle = escapeMarkdownV2(deal.title);
-      const safePrice = escapeMarkdownV2(deal.price.toString());
-      const safeOriginalPrice = escapeMarkdownV2(deal.originalPrice.toString());
-      const safeSavings = escapeMarkdownV2(savings);
-
-      // Different header based on deal type
-      let header = '🔥 *HOT DEAL ALERT\\!*';
-      let priceSection = '';
-
-      if (deal.dealType === 'lowest_price' && !deal.hasVisibleDiscount) {
-        // Lowest price deal without visible discount on Amazon
-        header = '📉 *PREZZO MINIMO STORICO\\!*';
-        priceSection = `💰 *Prezzo:* €${safePrice}
-📊 _Al minimo storico \\- Non troverai di meglio\\!_`;
-      } else {
-        // Regular discounted deal - use strikethrough ~~ for original price
-        priceSection = `💰 *Prezzo:* €${safePrice} ~€${safeOriginalPrice}~
-💸 *Risparmi:* €${safeSavings} \\(\\-${discountPercent}%\\)`;
-      }
-
-      // Add lowest price badge if applicable
-      const lowestBadge = deal.isLowestEver && deal.hasVisibleDiscount
-        ? '\n🏆 *Prezzo più basso di sempre\\!*'
-        : '';
-
-      // Rating section (only if rating > 0)
-      const ratingSection = deal.rating > 0
-        ? `\n⭐ *Rating:* ${escapeMarkdownV2(deal.rating.toString())}/5 \\(${escapeMarkdownV2(deal.reviewCount.toLocaleString())} recensioni\\)`
-        : '';
-
       // Keepa chart URL (via our proxy to protect API key)
       console.log(`[Telegram] Deal ${deal.asin}: includeKeepaChart=${deal.includeKeepaChart}, API_BASE_PUBLIC=${API_BASE_PUBLIC}`);
       const keepaChartUrl = deal.includeKeepaChart
         ? `${API_BASE_PUBLIC}/keepa/graph/${deal.asin}?domain=it&range=180&bb=1&salesrank=0`
         : null;
 
-      const message = `
+      let message: string;
+
+      // Use custom LLM copy if provided, otherwise generate default message
+      if (deal.customCopy) {
+        // Escape the custom copy for MarkdownV2
+        // Note: The LLM already generates plain text, we need to escape special chars
+        const safeCopy = escapeMarkdownV2(deal.customCopy);
+        message = `${safeCopy}\n\n_\\#Ad \\| Deal trovato da Afflyt Pro 🤖_`;
+      } else {
+        // Default template message
+        // Escape title for MarkdownV2
+        const safeTitle = escapeMarkdownV2(deal.title);
+        const safePrice = escapeMarkdownV2(deal.price.toString());
+        const safeOriginalPrice = escapeMarkdownV2(deal.originalPrice.toString());
+        const safeSavings = escapeMarkdownV2(savings);
+
+        // Different header based on deal type
+        let header = '🔥 *HOT DEAL ALERT\\!*';
+        let priceSection = '';
+
+        if (deal.dealType === 'lowest_price' && !deal.hasVisibleDiscount) {
+          // Lowest price deal without visible discount on Amazon
+          header = '📉 *PREZZO MINIMO STORICO\\!*';
+          priceSection = `💰 *Prezzo:* €${safePrice}
+📊 _Al minimo storico \\- Non troverai di meglio\\!_`;
+        } else {
+          // Regular discounted deal - use strikethrough ~~ for original price
+          priceSection = `💰 *Prezzo:* €${safePrice} ~€${safeOriginalPrice}~
+💸 *Risparmi:* €${safeSavings} \\(\\-${discountPercent}%\\)`;
+        }
+
+        // Add lowest price badge if applicable
+        const lowestBadge = deal.isLowestEver && deal.hasVisibleDiscount
+          ? '\n🏆 *Prezzo più basso di sempre\\!*'
+          : '';
+
+        // Rating section (only if rating > 0)
+        const ratingSection = deal.rating > 0
+          ? `\n⭐ *Rating:* ${escapeMarkdownV2(deal.rating.toString())}/5 \\(${escapeMarkdownV2(deal.reviewCount.toLocaleString())} recensioni\\)`
+          : '';
+
+        message = `
 ${header}
 
 ${safeTitle}
@@ -193,7 +205,8 @@ ${priceSection}${lowestBadge}${ratingSection}
 👉 [Vedi su Amazon](${shortUrl})
 
 _\\#Ad \\| Deal trovato da Afflyt Pro 🤖_
-      `.trim();
+        `.trim();
+      }
 
       // 3. Prepare keyboard (skip for localhost - Telegram requires HTTPS)
       const isLocalhost = shortUrl.startsWith('http://localhost') || shortUrl.startsWith('http://127.0.0.1');

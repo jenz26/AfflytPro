@@ -795,6 +795,47 @@
           "title": "Max Results per Run",
           "description": "Maximum deals per execution",
           "perRun": "per run"
+        },
+        "amazonTag": {
+          "label": "Amazon Affiliate Tag (optional)",
+          "useChannelTag": "Leave empty to use the channel tag: {tag}",
+          "enterTag": "Enter the Amazon affiliate tag to use for this automation"
+        },
+        "dealPublishMode": {
+          "label": "Type of deals to publish",
+          "discountedOnly": {
+            "title": "Visible Discounts Only",
+            "description": "Publish only deals with crossed-out price on Amazon (e.g. €29.99 → €19.99)"
+          },
+          "lowestPrice": {
+            "title": "Lowest Price Only",
+            "description": "Publish only when price is at historical low (even without visible discount)"
+          },
+          "both": {
+            "title": "Both",
+            "description": "Publish both visible discounts and historical lows"
+          }
+        },
+        "keepaChart": {
+          "title": "Price History Chart",
+          "description": "Include Keepa chart to show price trends"
+        },
+        "copyMode": {
+          "label": "Message Text Generation",
+          "template": {
+            "title": "Standard Template",
+            "description": "Use predefined format with price, discount and rating"
+          },
+          "llm": {
+            "title": "AI Copywriter",
+            "badge": "BETA",
+            "description": "Generate unique and engaging text with GPT-4o-mini"
+          }
+        },
+        "customStylePrompt": {
+          "label": "Your channel style (optional)",
+          "placeholder": "E.g.: Casual and friendly tone, not too many emojis, always explain the practical value of the product",
+          "hint": "AI will use these guidelines to adapt the tone and style of messages to your channel."
         }
       },
       "step6": {

@@ -750,6 +750,47 @@
           "title": "Max Risultati per Esecuzione",
           "description": "Massimo deal per esecuzione",
           "perRun": "per esecuzione"
+        },
+        "amazonTag": {
+          "label": "Tag Affiliato Amazon (opzionale)",
+          "useChannelTag": "Se lasci vuoto, verrà usato il tag del canale: {tag}",
+          "enterTag": "Inserisci il tag affiliato Amazon da usare per questa automazione"
+        },
+        "dealPublishMode": {
+          "label": "Tipo di offerte da pubblicare",
+          "discountedOnly": {
+            "title": "Solo Sconti Visibili",
+            "description": "Pubblica solo offerte con prezzo barrato su Amazon (es. €29.99 → €19.99)"
+          },
+          "lowestPrice": {
+            "title": "Solo Minimi Storici",
+            "description": "Pubblica solo quando il prezzo è al minimo storico (anche senza sconto visibile)"
+          },
+          "both": {
+            "title": "Entrambi",
+            "description": "Pubblica sia sconti visibili che minimi storici"
+          }
+        },
+        "keepaChart": {
+          "title": "Grafico Storico Prezzi",
+          "description": "Includi il grafico Keepa per mostrare l'andamento dei prezzi"
+        },
+        "copyMode": {
+          "label": "Generazione Testo Messaggi",
+          "template": {
+            "title": "Template Standard",
+            "description": "Usa il formato predefinito con prezzo, sconto e rating"
+          },
+          "llm": {
+            "title": "AI Copywriter",
+            "badge": "BETA",
+            "description": "Genera testi unici e coinvolgenti con GPT-4o-mini"
+          }
+        },
+        "customStylePrompt": {
+          "label": "Stile del tuo canale (opzionale)",
+          "placeholder": "Es: Tono informale e amichevole, niente emoji eccessive, spiegare sempre il valore pratico del prodotto",
+          "hint": "L'AI userà queste indicazioni per adattare il tono e lo stile dei messaggi al tuo canale."
         }
       },
       "step6": {

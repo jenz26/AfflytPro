@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Send, Radio, Clock, Zap, Plus, AlertCircle, Tag, TrendingDown, BarChart3 } from 'lucide-react';
+import { Send, Radio, Clock, Zap, Plus, AlertCircle, Tag, TrendingDown, BarChart3, Bot, FileText, Sparkles } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
@@ -18,6 +18,7 @@ interface Channel {
 }
 
 type DealPublishMode = 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
+type CopyMode = 'TEMPLATE' | 'LLM';
 
 interface Step5DestinationProps {
     channelId: string;
@@ -26,10 +27,15 @@ interface Step5DestinationProps {
     dealPublishMode?: DealPublishMode;
     includeKeepaChart?: boolean;
     amazonTagOverride?: string;
+    // LLM Copy props
+    copyMode?: CopyMode;
+    customStylePrompt?: string;
     onChange: (channelId: string) => void;
     onDealModeChange?: (mode: DealPublishMode) => void;
     onKeepaChartChange?: (include: boolean) => void;
     onAmazonTagChange?: (tag: string) => void;
+    onCopyModeChange?: (mode: CopyMode) => void;
+    onStylePromptChange?: (prompt: string) => void;
 }
 
 export function Step5Destination({
@@ -39,10 +45,14 @@ export function Step5Destination({
     dealPublishMode = 'DISCOUNTED_ONLY',
     includeKeepaChart = false,
     amazonTagOverride = '',
+    copyMode = 'TEMPLATE',
+    customStylePrompt = '',
     onChange,
     onDealModeChange,
     onKeepaChartChange,
-    onAmazonTagChange
+    onAmazonTagChange,
+    onCopyModeChange,
+    onStylePromptChange
 }: Step5DestinationProps) {
     const t = useTranslations('automations.wizard.step5');
     const [channels, setChannels] = useState<Channel[]>([]);
@@ -379,6 +389,119 @@ export function Step5Destination({
                     </button>
                 </div>
             </GlassCard>
+
+            {/* Copy Mode Selection */}
+            <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">
+                    Generazione Testo Messaggi
+                </label>
+                <div className="space-y-2">
+                    {/* Template Mode */}
+                    <button
+                        onClick={() => onCopyModeChange?.('TEMPLATE')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            copyMode === 'TEMPLATE'
+                                ? 'bg-cyan-500/10 border-cyan-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-cyan-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                copyMode === 'TEMPLATE' ? 'bg-cyan-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <FileText className={`w-5 h-5 ${copyMode === 'TEMPLATE' ? 'text-cyan-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${copyMode === 'TEMPLATE' ? 'text-white' : 'text-gray-300'}`}>
+                                    Template Standard
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    Usa il formato predefinito con prezzo, sconto e rating
+                                </p>
+                            </div>
+                            {copyMode === 'TEMPLATE' && (
+                                <div className="w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* LLM Mode */}
+                    <button
+                        onClick={() => onCopyModeChange?.('LLM')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            copyMode === 'LLM'
+                                ? 'bg-purple-500/10 border-purple-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                copyMode === 'LLM' ? 'bg-purple-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <Sparkles className={`w-5 h-5 ${copyMode === 'LLM' ? 'text-purple-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <p className={`font-medium ${copyMode === 'LLM' ? 'text-white' : 'text-gray-300'}`}>
+                                        AI Copywriter
+                                    </p>
+                                    <span className="px-2 py-0.5 text-[10px] font-bold bg-purple-500/30 text-purple-300 rounded-full">
+                                        BETA
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                    Genera testi unici e coinvolgenti con GPT-4o-mini
+                                </p>
+                            </div>
+                            {copyMode === 'LLM' && (
+                                <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            {/* Custom Style Prompt (only for LLM mode) */}
+            {copyMode === 'LLM' && (
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <label className="block text-sm font-medium text-gray-300">
+                            Stile del tuo canale (opzionale)
+                        </label>
+                        <span className={`text-xs ${(customStylePrompt?.length || 0) > 280 ? 'text-orange-400' : 'text-gray-500'}`}>
+                            {customStylePrompt?.length || 0}/300
+                        </span>
+                    </div>
+                    <textarea
+                        value={customStylePrompt}
+                        onChange={(e) => {
+                            if (e.target.value.length <= 300) {
+                                onStylePromptChange?.(e.target.value);
+                            }
+                        }}
+                        placeholder="Es: Tono amichevole, usa emoji con moderazione, spiega il valore pratico del prodotto, rivolgiti al lettore con il 'tu'"
+                        rows={3}
+                        maxLength={300}
+                        className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white text-sm focus:border-purple-500 focus:outline-none transition-colors resize-none"
+                    />
+                    <p className="text-xs text-gray-500">
+                        Descrivi brevemente il tono e lo stile che vuoi per i messaggi. L'AI seguirà queste indicazioni.
+                    </p>
+                    <GlassCard className="p-3 bg-purple-500/5 border-purple-500/20">
+                        <div className="flex items-start gap-2">
+                            <Bot className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-purple-300">
+                                L'AI genera testi compliance-safe per Amazon, senza inventare prezzi o claim falsi.
+                                Costo stimato: ~€0.001 per messaggio.
+                            </p>
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
         </div>
     );
 }

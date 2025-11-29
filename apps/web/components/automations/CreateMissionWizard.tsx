@@ -53,6 +53,12 @@ export interface MissionConfig {
     includeKeepaChart: boolean;
     amazonTagOverride: string;
 
+    // Step 5b: Copy Mode (LLM)
+    copyMode: 'TEMPLATE' | 'LLM';
+    messageTemplate?: string;
+    customStylePrompt?: string;
+    llmModel: string;
+
     // Activation
     isActive: boolean;
 }
@@ -120,6 +126,10 @@ const initialMissionConfig: MissionConfig = {
     dealPublishMode: 'DISCOUNTED_ONLY',
     includeKeepaChart: false,
     amazonTagOverride: '',
+    copyMode: 'TEMPLATE',
+    messageTemplate: undefined,
+    customStylePrompt: undefined,
+    llmModel: 'gpt-4o-mini',
     isActive: true,
 };
 
@@ -316,10 +326,14 @@ export function CreateMissionWizard({
                         dealPublishMode={mission.dealPublishMode}
                         includeKeepaChart={mission.includeKeepaChart}
                         amazonTagOverride={mission.amazonTagOverride}
+                        copyMode={mission.copyMode}
+                        customStylePrompt={mission.customStylePrompt || ''}
                         onChange={(channelId) => updateMission({ channelId })}
                         onDealModeChange={(dealPublishMode) => updateMission({ dealPublishMode })}
                         onKeepaChartChange={(includeKeepaChart) => updateMission({ includeKeepaChart })}
                         onAmazonTagChange={(amazonTagOverride) => updateMission({ amazonTagOverride })}
+                        onCopyModeChange={(copyMode) => updateMission({ copyMode })}
+                        onStylePromptChange={(customStylePrompt) => updateMission({ customStylePrompt })}
                     />
                 );
             case 6:
