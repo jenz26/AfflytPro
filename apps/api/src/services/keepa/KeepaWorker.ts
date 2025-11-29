@@ -153,12 +153,14 @@ export class KeepaWorker {
     // FASE 5.4: Check cache first - if fresh, use cached deals
     const { status: cacheStatus, data: cachedData } = await this.cache.checkStatus(job.category);
     let finalDeals: Deal[];
+    let cacheHit = false;
 
     if (cacheStatus === 'fresh' && cachedData) {
       // Use cached deals - no Keepa API call needed!
       console.log(`[KeepaWorker] Cache HIT for ${job.category} - using cached deals`);
       if (cachedData.deals.length > 0) {
         finalDeals = cachedData.deals;
+        cacheHit = true;
         await this.redis.hincrby('keepa:stats', 'cache_hits', 1);
       } else {
         // Cache was marked fresh but empty, fetch anyway
@@ -181,7 +183,7 @@ export class KeepaWorker {
 
     // Process each waiting rule
     console.log(`[KeepaWorker] Notifying ${job.waitingRules.length} waiting rules with ${finalDeals.length} deals`);
-    await this.notifyWaitingRules(job.waitingRules, finalDeals);
+    await this.notifyWaitingRules(job.waitingRules, finalDeals, cacheHit);
 
     const duration = Date.now() - startTime;
     console.log(`[KeepaWorker] Job ${job.id} completed in ${duration}ms`);
@@ -238,17 +240,19 @@ export class KeepaWorker {
   // RULE NOTIFICATION
   // ============================================
 
-  private async notifyWaitingRules(rules: WaitingRule[], deals: Deal[]): Promise<void> {
+  private async notifyWaitingRules(rules: WaitingRule[], deals: Deal[], cacheHit = false): Promise<void> {
     for (const rule of rules) {
       try {
-        await this.processRule(rule, deals);
+        await this.processRule(rule, deals, cacheHit);
       } catch (error) {
         console.error(`[KeepaWorker] Error processing rule ${rule.ruleId}:`, error);
       }
     }
   }
 
-  private async processRule(rule: WaitingRule, deals: Deal[]): Promise<void> {
+  private async processRule(rule: WaitingRule, deals: Deal[], cacheHit = false): Promise<void> {
+    const startTime = Date.now();
+
     // 1. Apply rule-specific filters
     const filtered = this.applyRuleFilters(deals, rule);
 
@@ -271,19 +275,90 @@ export class KeepaWorker {
     // 4. Limit to dealsPerRun
     const toPublish = scoredFiltered.slice(0, rule.dealsPerRun);
 
+    let published = 0;
     if (toPublish.length === 0) {
       console.log(`[KeepaWorker] Rule ${rule.ruleId}: No deals passed filters (minScore: ${rule.minScore})`);
       await this.updateRuleStats(rule.ruleId, 0, true);
-      return;
+    } else {
+      // 5. Check deduplication and publish
+      published = await this.publishDeals(rule, toPublish);
+
+      // 6. Update rule stats
+      await this.updateRuleStats(rule.ruleId, published);
+
+      console.log(`[KeepaWorker] Rule ${rule.ruleId}: Published ${published}/${toPublish.length} deals`);
     }
 
-    // 5. Check deduplication and publish
-    const published = await this.publishDeals(rule, toPublish);
+    // 7. Save telemetry for analysis
+    await this.saveRunStats(rule, {
+      dealsFetched: deals.length,
+      dealsAfterFilters: filtered.length,
+      dealsAfterMode: modeFiltered.length,
+      dealsPassingScore: scoredFiltered.length,
+      dealsPublished: published,
+      scores: scored.map(d => d.score),
+      durationMs: Date.now() - startTime,
+      cacheHit
+    });
+  }
 
-    // 6. Update rule stats
-    await this.updateRuleStats(rule.ruleId, published);
+  /**
+   * Save run statistics for telemetry and threshold tuning
+   */
+  private async saveRunStats(
+    rule: WaitingRule,
+    stats: {
+      dealsFetched: number;
+      dealsAfterFilters: number;
+      dealsAfterMode: number;
+      dealsPassingScore: number;
+      dealsPublished: number;
+      scores: number[];
+      durationMs: number;
+      cacheHit: boolean;
+    }
+  ): Promise<void> {
+    try {
+      // Calculate score statistics
+      let avgScore: number | null = null;
+      let minScoreVal: number | null = null;
+      let maxScore: number | null = null;
+      let stdDev: number | null = null;
 
-    console.log(`[KeepaWorker] Rule ${rule.ruleId}: Published ${published}/${toPublish.length} deals`);
+      if (stats.scores.length > 0) {
+        avgScore = stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length;
+        minScoreVal = Math.min(...stats.scores);
+        maxScore = Math.max(...stats.scores);
+
+        // Calculate standard deviation
+        if (stats.scores.length > 1) {
+          const squaredDiffs = stats.scores.map(s => Math.pow(s - avgScore!, 2));
+          stdDev = Math.sqrt(squaredDiffs.reduce((a, b) => a + b, 0) / stats.scores.length);
+        }
+      }
+
+      await this.prisma.automationRunStats.create({
+        data: {
+          ruleId: rule.ruleId,
+          dealsFetched: stats.dealsFetched,
+          dealsAfterFilters: stats.dealsAfterFilters,
+          dealsAfterMode: stats.dealsAfterMode,
+          dealsPassingScore: stats.dealsPassingScore,
+          dealsPublished: stats.dealsPublished,
+          avgScore,
+          minScore: minScoreVal,
+          maxScore,
+          stdDev,
+          minScoreThreshold: rule.minScore,
+          dealPublishMode: rule.dealPublishMode,
+          durationMs: stats.durationMs,
+          cacheHit: stats.cacheHit
+        }
+      });
+    } catch (error) {
+      // Non-critical - don't fail the job if telemetry fails
+      console.error('[KeepaWorker] Failed to save run stats:', error);
+    }
   }
 
   // ============================================

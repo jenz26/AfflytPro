@@ -44,7 +44,7 @@ const createRuleSchema = z.object({
 
     // FREE tier filters
     categories: z.array(z.string()).min(1, 'At least one category is required'),
-    minScore: z.number().min(0).max(100, 'Score must be between 0 and 100').default(70),
+    minScore: z.number().min(0).max(100, 'Score must be between 0 and 100').default(35),
 
     // PRO tier filters
     minPrice: z.number().positive().optional(),
@@ -237,7 +237,7 @@ function validateFiltersForPlan(
 
     // Always include defaults if not set
     if (!valid.minScore) {
-        valid.minScore = 70;
+        valid.minScore = 35;
     }
 
     return { valid, stripped, warnings };
@@ -440,7 +440,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
                     // Apply validated filters
                     categories: validFilters.categories || [],
-                    minScore: validFilters.minScore || 70,
+                    minScore: validFilters.minScore || 35,
 
                     // PRO filters (will be null if stripped)
                     minPrice: validFilters.minPrice,

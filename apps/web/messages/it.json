@@ -648,10 +648,11 @@
         "priceLabel": "Prezzo Massimo (Opzionale)",
         "pricePlaceholder": "Nessun limite",
         "hints": {
-          "low": "Includerà molti deal, anche di qualità bassa",
-          "moderate": "Bilancia quantità e qualità",
-          "good": "Solo deal di buona qualità",
-          "excellent": "Solo i migliori deal (pochi ma ottimi)"
+          "low": "Includerà molti deal, anche di qualità bassa (MEH)",
+          "moderate": "Bilancia quantità e qualità (DECENTE)",
+          "good": "Solo deal di buona qualità (BUONO)",
+          "excellent": "Solo i migliori deal (OTTIMO)",
+          "hot": "Solo offerte bomba! (HOT 🔥)"
         },
         "info": "I filtri ti aiutano a restringere i risultati. Tutti i filtri sono opzionali - più ne aggiungi, meno risultati (ma più mirati) otterrai.",
         "clear": "Pulisci",

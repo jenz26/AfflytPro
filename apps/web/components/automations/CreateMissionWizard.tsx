@@ -115,7 +115,7 @@ const initialMissionConfig: MissionConfig = {
     brandInclude: [],
     brandExclude: [],
     listedAfter: undefined,
-    minScore: 70,
+    minScore: 35,
     channelId: '',
     dealPublishMode: 'DISCOUNTED_ONLY',
     includeKeepaChart: false,

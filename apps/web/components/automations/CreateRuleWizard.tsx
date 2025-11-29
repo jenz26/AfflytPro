@@ -62,7 +62,7 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         name: editingRule?.name || '',
         description: editingRule?.description || '',
         categories: editingRule?.categories || [] as string[], // Already an array from API
-        minScore: editingRule?.minScore || 70,
+        minScore: editingRule?.minScore || 35,
         maxPrice: editingRule?.maxPrice || undefined as number | undefined,
         channelId: editingRule?.channelId || '',
         // Scheduling
@@ -291,10 +291,11 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                 <div className="flex items-center gap-2 text-sm">
                                     <Info className="w-4 h-4 text-afflyt-cyan-400" />
                                     <span className="text-gray-300">
-                                        {rule.minScore < 50 && t('step3.hints.low')}
-                                        {rule.minScore >= 50 && rule.minScore < 70 && t('step3.hints.moderate')}
-                                        {rule.minScore >= 70 && rule.minScore < 85 && t('step3.hints.good')}
-                                        {rule.minScore >= 85 && t('step3.hints.excellent')}
+                                        {rule.minScore < 30 && t('step3.hints.low')}
+                                        {rule.minScore >= 30 && rule.minScore < 45 && t('step3.hints.moderate')}
+                                        {rule.minScore >= 45 && rule.minScore < 60 && t('step3.hints.good')}
+                                        {rule.minScore >= 60 && rule.minScore < 75 && t('step3.hints.excellent')}
+                                        {rule.minScore >= 75 && t('step3.hints.hot')}
                                     </span>
                                 </div>
                             </div>

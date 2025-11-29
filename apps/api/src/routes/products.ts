@@ -29,7 +29,7 @@ export async function productRoutes(fastify: FastifyInstance) {
         const {
             search,
             category,
-            minScore = 70,
+            minScore = 35,
             priceMin,
             priceMax,
             limit = 20,

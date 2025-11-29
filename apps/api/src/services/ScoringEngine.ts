@@ -193,11 +193,19 @@ export class ScoringEngine {
 
     /**
      * Get human-readable score label
+     *
+     * Score ranges:
+     * - 0-29: MEH (riempitivo, scarso interesse)
+     * - 30-44: DECENTE (ok per riempire il canale)
+     * - 45-59: BUONO (vale la pena pubblicare)
+     * - 60-74: OTTIMO (deal di qualità)
+     * - 75+: HOT (bomba, da pubblicare subito)
      */
-    getScoreLabel(score: number): { text: string; color: string } {
-        if (score >= 85) return { text: 'HOT DEAL', color: 'red' };
-        if (score >= 70) return { text: 'OTTIMO', color: 'cyan' };
-        if (score >= 50) return { text: 'BUONO', color: 'yellow' };
-        return { text: 'NORMALE', color: 'gray' };
+    getScoreLabel(score: number): { text: string; color: string; emoji: string } {
+        if (score >= 75) return { text: 'HOT', color: 'red', emoji: '🔥' };
+        if (score >= 60) return { text: 'OTTIMO', color: 'cyan', emoji: '⭐' };
+        if (score >= 45) return { text: 'BUONO', color: 'green', emoji: '✅' };
+        if (score >= 30) return { text: 'DECENTE', color: 'yellow', emoji: '👍' };
+        return { text: 'MEH', color: 'gray', emoji: '😐' };
     }
 }

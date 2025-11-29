@@ -644,10 +644,11 @@
         "priceLabel": "Maximum Price (Optional)",
         "pricePlaceholder": "No limit",
         "hints": {
-          "low": "Will include many deals, even low quality ones",
-          "moderate": "Balances quantity and quality",
-          "good": "Only good quality deals",
-          "excellent": "Only the best deals (few but excellent)"
+          "low": "Will include many deals, even low quality ones (MEH)",
+          "moderate": "Balances quantity and quality (DECENT)",
+          "good": "Only good quality deals (GOOD)",
+          "excellent": "Only the best deals (EXCELLENT)",
+          "hot": "Only hot deals! (HOT 🔥)"
         }
       },
       "step4": {

@@ -50,7 +50,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       total: 2,         // Can create up to 2 rules (but only 1 active)
     },
     channels: 1,
-    minScore: 85,       // Locked at 85+ (only HOT DEALS)
+    minScore: 60,       // Locked at 60+ (OTTIMO deals only)
     execution: {
       cron: '0 */6 * * *',      // Every 6 hours
       intervalMinutes: 360,
@@ -73,7 +73,7 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       total: 10,        // Can create up to 10 rules
     },
     channels: 5,
-    minScore: 70,       // User can adjust 70-100
+    minScore: 35,       // User can adjust 35-100
     execution: {
       cron: '0 */2 * * *',      // Every 2-3 hours
       intervalMinutes: 150,

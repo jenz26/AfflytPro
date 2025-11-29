@@ -505,8 +505,9 @@ model AutomationRule {
   /// Array of category IDs (Keepa format, e.g., ["166199011", "16427032011"])
   categories  String[]
 
-  /// Minimum deal score (0-100), default 70
-  minScore    Int      @default(70)
+  /// Minimum deal score (0-100), default 35
+  /// Soglie consigliate: 35 (default), 45 (qualità), 60 (top only)
+  minScore    Int      @default(35)
 
   // ═══════════════════════════════════════════════════════════════
   // TIER: PRO - Advanced Filters
@@ -637,6 +638,9 @@ model AutomationRule {
 
   // History relation for deduplication
   publishHistory ChannelDealHistory[]
+
+  // Telemetry for monitoring and tuning
+  runStats AutomationRunStats[]
 
   @@index([userId])
   @@index([isActive])
@@ -1088,4 +1092,40 @@ model Automation {
   @@index([userId])
   @@index([enabled])
   @@index([nextRunAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// JOB TELEMETRY - Per monitorare performance e tarare soglie
+// ═══════════════════════════════════════════════════════════════
+
+model AutomationRunStats {
+  id        String   @id @default(cuid())
+  ruleId    String
+  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  // Pipeline counts
+  dealsFetched        Int  // Deals dalla Deal API
+  dealsAfterFilters   Int  // Dopo filtri base (price, brand, etc)
+  dealsAfterMode      Int  // Dopo filtro dealPublishMode
+  dealsPassingScore   Int  // Passano minScore
+  dealsPublished      Int  // Effettivamente pubblicati
+
+  // Score statistics
+  avgScore    Float?  // Media score dei deals dopo filtri base
+  minScore    Float?  // Score minimo
+  maxScore    Float?  // Score massimo
+  stdDev      Float?  // Deviazione standard
+
+  // Thresholds used
+  minScoreThreshold   Int   // minScore usato per filtrare
+  dealPublishMode     String  // DISCOUNTED_ONLY, LOWEST_PRICE, BOTH
+
+  // Performance
+  durationMs  Int     // Tempo esecuzione in ms
+  cacheHit    Boolean @default(false)  // Se ha usato cache
+
+  createdAt DateTime @default(now())
+
+  @@index([ruleId])
+  @@index([createdAt])
 }
