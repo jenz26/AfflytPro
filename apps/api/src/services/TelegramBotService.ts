@@ -333,6 +333,51 @@ _\\#Ad \\| Deal trovato da Afflyt Pro 🤖_
   }
 
   /**
+   * Send a generic message to a channel (for scheduler)
+   */
+  static async sendMessage(
+    channelId: string,
+    token: string,
+    options: {
+      text: string;
+      parseMode?: 'HTML' | 'MarkdownV2';
+      disableWebPagePreview?: boolean;
+      imageUrl?: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    // Mock for stress test channels
+    if (channelId.startsWith('TEST_')) {
+      console.log(`[Telegram] MOCK: Would send message to ${channelId}`);
+      return { success: true, messageId: 'mock-123', };
+    }
+
+    try {
+      const bot = new Telegraf(token);
+
+      let result;
+      if (options.imageUrl) {
+        result = await bot.telegram.sendPhoto(channelId, options.imageUrl, {
+          caption: options.text,
+          parse_mode: options.parseMode || 'HTML',
+        });
+      } else {
+        result = await bot.telegram.sendMessage(channelId, options.text, {
+          parse_mode: options.parseMode || 'HTML',
+          link_preview_options: options.disableWebPagePreview ? { is_disabled: true } : undefined,
+        });
+      }
+
+      return {
+        success: true,
+        messageId: result.message_id.toString(),
+      };
+    } catch (error: any) {
+      console.error('Telegram sendMessage error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Test connection with sample message that looks like a real deal
    */
   static async sendTestMessage(channelId: string, token: string) {

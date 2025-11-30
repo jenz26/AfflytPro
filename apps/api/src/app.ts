@@ -27,9 +27,13 @@ import { KeepaPrefetch } from './services/keepa/KeepaPrefetch';
 import { KeepaTokenManager } from './services/keepa/KeepaTokenManager';
 import { DEFAULT_CONFIG } from './types/keepa';
 import { connectRedis } from './lib/redis';
+// Scheduler Queue System (BullMQ-based, separate from Keepa)
+import { SchedulerQueue, SchedulerCron, setSchedulerCronInstance } from './services/scheduler';
 import prisma from './lib/prisma';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
+import { schedulerRoutes } from './routes/scheduler';
+import { bountyTemplateRoutes } from './routes/bounty-templates';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
 
 // ==================== SENTRY INITIALIZATION ====================
@@ -126,6 +130,8 @@ app.register(dealsRoutes, { prefix: '/api' });
 app.register(templatesRoutes, { prefix: '/user' });
 app.register(billingRoutes, { prefix: '/api' });
 app.register(notificationRoutes, { prefix: '/api' });
+app.register(schedulerRoutes, { prefix: '/api/scheduler' });
+app.register(bountyTemplateRoutes, { prefix: '/api/bounty-templates' });
 
 // Health check
 app.get('/health', async () => {
@@ -232,9 +238,42 @@ const start = async () => {
             process.on('SIGINT', shutdown);
 
             console.log('[Keepa v2] Queue system started successfully');
+
+            // ==================== SCHEDULER QUEUE SYSTEM ====================
+            // Start the scheduled posts queue (BullMQ-based)
+            console.log('[Scheduler] Starting scheduled posts queue...');
+
+            const schedulerQueue = new SchedulerQueue(redis, prisma);
+            await schedulerQueue.start();
+
+            const schedulerCron = new SchedulerCron(prisma, redis, schedulerQueue);
+            schedulerCron.start();
+
+            // Initialize posts without nextRunAt
+            await schedulerCron.initializeNextRunTimes();
+
+            // Register cron instance globally for route access
+            setSchedulerCronInstance(schedulerCron);
+
+            // Extend graceful shutdown
+            const originalShutdown = shutdown;
+            const extendedShutdown = async () => {
+                console.log('[Scheduler] Shutting down...');
+                schedulerCron.stop();
+                await schedulerQueue.stop();
+                originalShutdown();
+            };
+
+            process.removeListener('SIGTERM', shutdown);
+            process.removeListener('SIGINT', shutdown);
+            process.on('SIGTERM', extendedShutdown);
+            process.on('SIGINT', extendedShutdown);
+
+            console.log('[Scheduler] Scheduled posts queue started successfully');
         } else {
             if (!process.env.REDIS_URL) {
                 console.log('[Keepa v2] REDIS_URL not configured, queue system disabled');
+                console.log('[Scheduler] Scheduled posts disabled (requires Redis)');
             }
             if (!process.env.KEEPA_API_KEY) {
                 console.log('[Keepa v2] KEEPA_API_KEY not configured, queue system disabled');

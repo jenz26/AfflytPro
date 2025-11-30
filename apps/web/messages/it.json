@@ -181,6 +181,7 @@
     "analytics": "Analytics",
     "dealFinder": "Deal Finder",
     "automations": "Automazioni",
+    "scheduler": "Programmazione",
     "channels": "Canali",
     "help": "Aiuto",
     "settings": "Impostazioni",
@@ -2030,6 +2031,119 @@
       "deleteAboutTo": "Stai per eliminare:",
       "deleteWarning": "Questo rimuoverà la chiave da tutti i canali e automazioni connessi.",
       "deleteConfirmButton": "Sì, Elimina"
+    }
+  },
+  "scheduler": {
+    "title": "Programmazione Contenuti",
+    "subtitle": "Pianifica e automatizza i tuoi post",
+    "loading": "Caricamento post programmati...",
+    "nextExecution": "Prossima Esecuzione",
+    "noPending": "Nessun post in coda",
+    "newSchedule": "Nuovo Post",
+    "allTypes": "Tutti i tipi",
+    "searchPlaceholder": "Cerca post...",
+    "activeSchedules": "Post Attivi",
+    "overdue": "In ritardo",
+    "lessThanMinute": "< 1 min",
+    "minutes": "min",
+    "hours": "ore",
+    "testSuccess": "Messaggio di test inviato con successo!",
+    "testError": "Errore nell'invio del messaggio di test",
+    "filters": {
+      "all": "Tutti",
+      "active": "Attivi",
+      "paused": "In Pausa"
+    },
+    "empty": {
+      "title": "Nessun Post Programmato",
+      "description": "Crea il tuo primo post programmato per iniziare",
+      "cta": "Crea Post"
+    },
+    "stats": {
+      "runs": "Esecuzioni",
+      "fails": "Errori",
+      "clicks": "Click"
+    },
+    "actions": {
+      "edit": "Modifica",
+      "test": "Invia Test",
+      "logs": "Vedi Log",
+      "delete": "Elimina",
+      "pause": "Metti in Pausa",
+      "activate": "Attiva"
+    },
+    "deleteModal": {
+      "title": "Eliminare Post?",
+      "description": "Stai per eliminare questo post programmato.",
+      "warning": "Questa azione non può essere annullata.",
+      "confirm": "Sì, Elimina",
+      "cancel": "Annulla"
+    },
+    "logs": {
+      "title": "Log Esecuzioni",
+      "empty": "Nessuna esecuzione registrata",
+      "testExecution": "Esecuzione di test"
+    },
+    "wizard": {
+      "createTitle": "Crea Post Programmato",
+      "editTitle": "Modifica Post Programmato",
+      "subtitle": "Configura il tuo post automatico",
+      "steps": {
+        "basics": "Base",
+        "content": "Contenuto",
+        "schedule": "Orario",
+        "review": "Riepilogo"
+      },
+      "fields": {
+        "name": "Nome",
+        "type": "Tipo di Post",
+        "channel": "Canale",
+        "content": "Contenuto del Messaggio",
+        "mediaUrl": "URL Immagine/Media",
+        "schedule": "Programmazione",
+        "timezone": "Fuso Orario"
+      },
+      "placeholders": {
+        "name": "Es: Reminder Prime Day",
+        "selectChannel": "Seleziona un canale...",
+        "content": "Scrivi il contenuto del tuo messaggio..."
+      },
+      "loadingChannels": "Caricamento canali...",
+      "noChannels": "Nessun canale configurato. Aggiungi un canale nelle impostazioni.",
+      "optional": "opzionale",
+      "contentHelp": "Puoi usare variabili come {{date}}, {{time}}, {{channelName}}, {{link}}",
+      "variablesTitle": "Variabili disponibili:",
+      "variables": {
+        "date": "Data corrente",
+        "time": "Ora corrente",
+        "channelName": "Nome del canale",
+        "link": "Link tracciato (per bounty)"
+      },
+      "customCronLabel": "Espressione Cron personalizzata:",
+      "cronHelp": "Formato: minuto ora giorno mese giorno_settimana",
+      "conflictSettings": {
+        "title": "Gestione Conflitti",
+        "skipIfDealPending": "Salta se c'è un deal in coda",
+        "bufferMinutes": "Minuti di buffer dopo un deal"
+      },
+      "review": {
+        "title": "Riepilogo",
+        "contentPreview": "Anteprima Contenuto"
+      },
+      "errors": {
+        "nameRequired": "Il nome è obbligatorio",
+        "typeRequired": "Seleziona un tipo di post",
+        "channelRequired": "Seleziona un canale",
+        "contentRequired": "Il contenuto è obbligatorio",
+        "contentTooLong": "Il contenuto è troppo lungo (max 4096 caratteri)",
+        "scheduleRequired": "La programmazione è obbligatoria",
+        "invalidCron": "Espressione cron non valida"
+      },
+      "back": "Indietro",
+      "next": "Avanti",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "create": "Crea Post"
     }
   }
 }

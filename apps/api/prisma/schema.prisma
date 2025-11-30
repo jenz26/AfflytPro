@@ -143,6 +143,36 @@ enum DealPublishMode {
   BOTH               // Entrambi i tipi di deal
 }
 
+// === SCHEDULER ENUMS ===
+
+enum LinkType {
+  DEAL       // Link a prodotto da automazione
+  BOUNTY     // Link bounty (Prime, Audible, etc.)
+  SCHEDULED  // Link da scheduled post
+  MANUAL     // Link creato manualmente
+}
+
+enum ScheduledPostType {
+  CUSTOM       // Testo libero programmato
+  BOUNTY       // Link bounty Amazon (Prime, Audible, Music, Kindle)
+  RECAP        // Top deals delle ultime 24h con LLM
+  CROSS_PROMO  // Promozione altri canali del network
+  WELCOME      // Benvenuto ai nuovi iscritti
+  SPONSORED    // Contenuti brand/sponsor
+}
+
+enum ExecutionStatus {
+  PENDING            // In coda
+  RUNNING            // In esecuzione
+  SUCCESS            // Completato con successo
+  FAILED             // Fallito
+  SKIPPED_CONFLICT   // Saltato per conflitto con deal
+  SKIPPED_RATE_LIMIT // Saltato per rate limit
+  SKIPPED_CHANNEL    // Saltato per canale disattivato
+  RETRY              // In attesa di retry
+  RESCHEDULED        // Riprogrammato per conflitto
+}
+
 // === USER & AUTHENTICATION ===
 
 model User {
@@ -184,6 +214,7 @@ model User {
   notifications       Notification[]
   subscription        Subscription?
   automations         Automation[]
+  scheduledPosts      ScheduledPost[]
 
   @@index([email])
   @@index([plan])
@@ -281,6 +312,7 @@ model Channel {
   updatedAt       DateTime         @updatedAt
   automationRules AutomationRule[]
   dealHistory     ChannelDealHistory[]
+  scheduledPosts  ScheduledPost[]
 
   @@index([userId])
   @@index([platform])
@@ -423,8 +455,8 @@ model Product {
 
 model AffiliateLink {
   id             String  @id @default(uuid())
-  productId      String
-  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId      String?  // Optional: null for BOUNTY links
+  product        Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId         String
   user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   amazonTag      String  // e.g., "contindig-21"
@@ -432,6 +464,16 @@ model AffiliateLink {
   shortUrl       String  // Generated short link
   fullUrl        String  // Full Amazon URL with tag
   destinationUrl String  // Final Amazon product URL
+
+  // Link type classification
+  linkType         LinkType  @default(DEAL)
+
+  // Optional: link to scheduled post (for BOUNTY/SCHEDULED types)
+  scheduledPostId  String?
+  scheduledPost    ScheduledPost? @relation(fields: [scheduledPostId], references: [id], onDelete: SetNull)
+
+  // Optional: channel for tracking
+  channelId        String?
 
   // Tracking metrics
   clicks          Int   @default(0)
@@ -447,6 +489,9 @@ model AffiliateLink {
   @@index([productId])
   @@index([userId])
   @@index([shortCode])
+  @@index([linkType])
+  @@index([scheduledPostId])
+  @@index([channelId])
 }
 
 model KeepaMonthlyBudget {
@@ -1163,4 +1208,120 @@ model AutomationRunStats {
 
   @@index([ruleId])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHEDULER - Scheduled Posts for non-deal content
+// ═══════════════════════════════════════════════════════════════
+
+model ScheduledPost {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channelId     String
+  channel       Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Type and content
+  type          ScheduledPostType
+  name          String                  // Identificative name
+  content       String                  // Message content (can include {{variables}})
+  mediaUrl      String?                 // Optional image/video URL
+
+  // Scheduling
+  schedule      String                  // Cron expression (e.g., "0 9 * * *")
+  timezone      String   @default("Europe/Rome")  // IANA timezone
+  isActive      Boolean  @default(true)
+
+  // Conflict detection settings (JSON)
+  conflictSettings Json?  // { skipIfDealPending, bufferMinutes, rescheduleOnConflict }
+
+  // Type-specific settings (JSON)
+  settings      Json?    // BountySettings, RecapSettings, CrossPromoSettings, etc.
+
+  // Execution tracking
+  lastRunAt     DateTime?
+  nextRunAt     DateTime?
+  runCount      Int      @default(0)
+  failCount     Int      @default(0)    // Consecutive failures
+
+  // Performance aggregate
+  totalClicks   Int      @default(0)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  executions    ScheduledPostExecution[]
+  affiliateLinks AffiliateLink[]
+
+  @@index([userId])
+  @@index([channelId])
+  @@index([nextRunAt])
+  @@index([isActive, nextRunAt])
+  @@index([type])
+}
+
+model ScheduledPostExecution {
+  id              String   @id @default(cuid())
+  scheduledPostId String
+  scheduledPost   ScheduledPost @relation(fields: [scheduledPostId], references: [id], onDelete: Cascade)
+
+  // Execution details
+  executedAt      DateTime @default(now())
+  status          ExecutionStatus
+
+  // Telegram response
+  messageId       String?              // Telegram message ID
+  chatId          String?              // Telegram chat ID
+
+  // Error tracking
+  error           String?              // Error message if failed
+  errorCode       String?              // Error code for categorization
+  retryCount      Int      @default(0)
+
+  // Performance metrics (populated async)
+  clicks          Int      @default(0)
+
+  // Content snapshot (for debugging)
+  contentSnapshot String?              // Content that was sent
+
+  // Conflict info (if skipped)
+  conflictReason  String?              // RECENT_DEAL, PENDING_DEAL, etc.
+  rescheduledTo   DateTime?            // If rescheduled, when
+
+  @@index([scheduledPostId])
+  @@index([executedAt])
+  @@index([status])
+}
+
+model BountyTemplate {
+  id          String   @id @default(cuid())
+
+  // Template info
+  name        String               // e.g., "Amazon Prime IT"
+  bountyType  String               // PRIME, AUDIBLE, MUSIC, KINDLE
+  locale      String   @default("it")  // Template language
+
+  // URLs
+  baseUrl     String               // URL without tag
+  tagParam    String   @default("tag")  // Tag parameter name
+
+  // Default content per style
+  casualCopy      String?          // Casual style copy
+  professionalCopy String?         // Professional style copy
+  urgentCopy      String?          // Urgent style copy
+
+  // Emoji
+  emoji       String?              // Suggested emoji
+
+  // Metadata
+  avgCommission Float?             // Estimated average commission
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([bountyType])
+  @@index([locale])
 }

@@ -12,7 +12,8 @@ import {
     Sun,
     Globe,
     HelpCircle,
-    PieChart
+    PieChart,
+    Calendar
 } from 'lucide-react';
 
 export const FuturisticSidebar = () => {
@@ -33,6 +34,7 @@ export const FuturisticSidebar = () => {
         { icon: PieChart, label: t('analytics'), path: '/dashboard/analytics' },
         { icon: Search, label: t('dealFinder'), path: '/deals' },
         { icon: Zap, label: t('automations'), path: '/automations' },
+        { icon: Calendar, label: t('scheduler'), path: '/dashboard/scheduler' },
         { icon: CreditCard, label: t('billing'), path: '/billing' },
         { icon: HelpCircle, label: t('help'), path: '/help' },
         { icon: Settings, label: t('settings'), path: '/settings' }

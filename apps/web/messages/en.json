@@ -181,6 +181,7 @@
     "analytics": "Analytics",
     "dealFinder": "Deal Finder",
     "automations": "Automations",
+    "scheduler": "Scheduler",
     "channels": "Channels",
     "help": "Help",
     "settings": "Settings",
@@ -2061,6 +2062,119 @@
       "deleteAboutTo": "You are about to delete:",
       "deleteWarning": "This will remove the key from all connected channels and automations.",
       "deleteConfirmButton": "Yes, Delete"
+    }
+  },
+  "scheduler": {
+    "title": "Content Scheduler",
+    "subtitle": "Plan and automate your posts",
+    "loading": "Loading scheduled posts...",
+    "nextExecution": "Next Execution",
+    "noPending": "No pending posts",
+    "newSchedule": "New Post",
+    "allTypes": "All types",
+    "searchPlaceholder": "Search posts...",
+    "activeSchedules": "Active Posts",
+    "overdue": "Overdue",
+    "lessThanMinute": "< 1 min",
+    "minutes": "min",
+    "hours": "hours",
+    "testSuccess": "Test message sent successfully!",
+    "testError": "Error sending test message",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "empty": {
+      "title": "No Scheduled Posts",
+      "description": "Create your first scheduled post to get started",
+      "cta": "Create Post"
+    },
+    "stats": {
+      "runs": "Runs",
+      "fails": "Failures",
+      "clicks": "Clicks"
+    },
+    "actions": {
+      "edit": "Edit",
+      "test": "Send Test",
+      "logs": "View Logs",
+      "delete": "Delete",
+      "pause": "Pause",
+      "activate": "Activate"
+    },
+    "deleteModal": {
+      "title": "Delete Post?",
+      "description": "You are about to delete this scheduled post.",
+      "warning": "This action cannot be undone.",
+      "confirm": "Yes, Delete",
+      "cancel": "Cancel"
+    },
+    "logs": {
+      "title": "Execution Logs",
+      "empty": "No executions recorded",
+      "testExecution": "Test execution"
+    },
+    "wizard": {
+      "createTitle": "Create Scheduled Post",
+      "editTitle": "Edit Scheduled Post",
+      "subtitle": "Configure your automated post",
+      "steps": {
+        "basics": "Basics",
+        "content": "Content",
+        "schedule": "Schedule",
+        "review": "Review"
+      },
+      "fields": {
+        "name": "Name",
+        "type": "Post Type",
+        "channel": "Channel",
+        "content": "Message Content",
+        "mediaUrl": "Image/Media URL",
+        "schedule": "Schedule",
+        "timezone": "Timezone"
+      },
+      "placeholders": {
+        "name": "E.g.: Prime Day Reminder",
+        "selectChannel": "Select a channel...",
+        "content": "Write your message content..."
+      },
+      "loadingChannels": "Loading channels...",
+      "noChannels": "No channels configured. Add a channel in settings.",
+      "optional": "optional",
+      "contentHelp": "You can use variables like {{date}}, {{time}}, {{channelName}}, {{link}}",
+      "variablesTitle": "Available variables:",
+      "variables": {
+        "date": "Current date",
+        "time": "Current time",
+        "channelName": "Channel name",
+        "link": "Tracked link (for bounty)"
+      },
+      "customCronLabel": "Custom Cron expression:",
+      "cronHelp": "Format: minute hour day month weekday",
+      "conflictSettings": {
+        "title": "Conflict Management",
+        "skipIfDealPending": "Skip if a deal is pending",
+        "bufferMinutes": "Buffer minutes after a deal"
+      },
+      "review": {
+        "title": "Review",
+        "contentPreview": "Content Preview"
+      },
+      "errors": {
+        "nameRequired": "Name is required",
+        "typeRequired": "Select a post type",
+        "channelRequired": "Select a channel",
+        "contentRequired": "Content is required",
+        "contentTooLong": "Content is too long (max 4096 characters)",
+        "scheduleRequired": "Schedule is required",
+        "invalidCron": "Invalid cron expression"
+      },
+      "back": "Back",
+      "next": "Next",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create Post"
     }
   }
 }

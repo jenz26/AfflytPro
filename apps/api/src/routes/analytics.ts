@@ -317,11 +317,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         id: link.id,
         shortCode: link.shortCode,
         shortUrl: link.shortUrl,
-        product: {
+        product: link.product ? {
           title: link.product.title,
           imageUrl: link.product.imageUrl,
           asin: link.product.asin
-        },
+        } : null,
         metrics: {
           clicks,
           conversions,
