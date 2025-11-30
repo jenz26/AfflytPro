@@ -821,8 +821,17 @@ export async function authRoutes(fastify: FastifyInstance) {
           ? 'Check your email for the access link.'
           : 'Controlla la tua email per il link di accesso.';
 
-        // In beta testing mode, validate beta invite code
-        if (BETA_TESTING_MODE) {
+        // Check if user already exists (ADMIN users can bypass beta check)
+        const existingUser = await prisma.user.findUnique({
+          where: { email: normalizedEmail },
+          select: { id: true, role: true, isActive: true },
+        });
+
+        // ADMIN users bypass beta code check entirely
+        const isAdminUser = existingUser?.role === 'ADMIN';
+
+        // In beta testing mode, validate beta invite code (except for ADMIN users)
+        if (BETA_TESTING_MODE && !isAdminUser) {
           if (!betaCode) {
             return reply.code(400).send({
               error: 'beta_code_required',
