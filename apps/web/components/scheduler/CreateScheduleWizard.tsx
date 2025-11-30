@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   X,
@@ -12,6 +12,14 @@ import {
   Settings,
   Check,
   AlertCircle,
+  Play,
+  RotateCcw,
+  Type,
+  Link as LinkIcon,
+  Image,
+  Hash,
+  Loader2,
+  Send,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -67,7 +75,15 @@ interface CreateScheduleWizardProps {
   editingPost: ScheduledPost | null;
   onComplete: (data: any) => void;
   onCancel: () => void;
+  onTestPublish?: (data: any) => Promise<void>;
 }
+
+// Content Variables for click-to-insert
+const CONTENT_VARIABLES = [
+  { key: '{{date}}', label: 'Data', icon: Calendar },
+  { key: '{{time}}', label: 'Ora', icon: Clock },
+  { key: '{{channelName}}', label: 'Nome canale', icon: Hash },
+];
 
 const POST_TYPES = [
   { value: 'CUSTOM', label: 'Custom Content', description: 'Testo libero programmato' },
@@ -99,7 +115,7 @@ const TIMEZONES = [
   { value: 'UTC', label: 'UTC' },
 ];
 
-export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: CreateScheduleWizardProps) {
+export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTestPublish }: CreateScheduleWizardProps) {
   const t = useTranslations('scheduler.wizard');
   const [step, setStep] = useState(1);
   const [channels, setChannels] = useState<ChannelWithTag[]>([]);
@@ -107,6 +123,8 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [showCustomCron, setShowCustomCron] = useState(false);
   const [showCustomBountyUrl, setShowCustomBountyUrl] = useState(false);
+  const [isTestPublishing, setIsTestPublishing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -225,6 +243,51 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
     }
   };
 
+  const handleTestPublish = async () => {
+    if (!onTestPublish || !formData.channelId) return;
+
+    setIsTestPublishing(true);
+    try {
+      await onTestPublish(formData);
+    } finally {
+      setIsTestPublishing(false);
+    }
+  };
+
+  // Insert variable at cursor position in textarea
+  const insertVariable = (variable: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    const newContent = before + variable + after;
+
+    updateFormData('content', newContent);
+
+    // Restore cursor position after the inserted variable
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 0);
+  };
+
+  // Reset content to default template based on type
+  const resetContent = () => {
+    const defaults: Record<string, string> = {
+      'CUSTOM': '',
+      'BOUNTY': '🎁 Prova gratis Amazon Prime!\n\n30 giorni di spedizioni gratuite, Prime Video e molto altro.\n\n👉 {{link}}',
+      'RECAP': '📊 Top Deals di oggi {{date}}\n\nEcco le migliori offerte trovate oggi:\n\n{{deals}}',
+      'CROSS_PROMO': '📢 Seguici anche su:\n\n{{channelName}}',
+      'WELCOME': '👋 Benvenuto nel canale!\n\nQui troverai le migliori offerte ogni giorno.',
+      'SPONSORED': '📌 Contenuto sponsorizzato\n\n[Inserisci il tuo messaggio qui]',
+    };
+    updateFormData('content', defaults[formData.type] || '');
+  };
+
   const updateFormData = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when field is updated
@@ -241,10 +304,10 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <GlassCard className="max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <GlassCard className="max-w-2xl w-full my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-afflyt-glass-border">
+        <div className="shrink-0 flex items-center justify-between p-4 border-b border-afflyt-glass-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-afflyt-dark-100" />
@@ -262,7 +325,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
         </div>
 
         {/* Steps Indicator */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-afflyt-glass-border">
+        <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-afflyt-glass-border">
           {steps.map((s, i) => (
             <div key={s.num} className="flex items-center">
               <div
@@ -290,8 +353,8 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
           ))}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* Content - Scrollable Area */}
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           {/* Step 1: Basics */}
           {step === 1 && (
             <div className="space-y-6">
@@ -494,32 +557,91 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
 
           {/* Step 2: Content */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Type-specific instructions */}
               {formData.type === 'BOUNTY' && (
-                <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                  <p className="text-sm font-medium text-purple-300 mb-2">💎 Bounty Link</p>
+                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                  <p className="text-sm font-medium text-purple-300 mb-1">💎 Bounty Link</p>
                   <p className="text-xs text-gray-400">
-                    {t('bountyHelp') || 'Scrivi il messaggio per il tuo bounty link. Il link affiliato verrà generato automaticamente con il tuo tag quando il post viene pubblicato. Usa {{link}} per posizionare il link.'}
+                    {t('bountyHelp') || 'Scrivi il messaggio per il tuo bounty link. Il link affiliato verrà generato automaticamente. Usa {{link}} per posizionare il link.'}
                   </p>
                 </div>
               )}
 
               {formData.type === 'RECAP' && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                  <p className="text-sm font-medium text-blue-300 mb-2">📊 Daily Recap</p>
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-sm font-medium text-blue-300 mb-1">📊 Daily Recap</p>
                   <p className="text-xs text-gray-400">
-                    {t('recapHelp') || 'Il recap giornaliero includerà automaticamente i top deals delle ultime 24h. Puoi personalizzare intro e outro.'}
+                    {t('recapHelp') || 'Il recap giornaliero includerà automaticamente i top deals delle ultime 24h.'}
                   </p>
                 </div>
               )}
 
-              {/* Content */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  {t('fields.content')}
-                </label>
+              {/* Content Editor */}
+              <div className="p-4 bg-afflyt-dark-100/50 rounded-lg border border-afflyt-glass-border">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="flex items-center gap-2 text-sm font-medium text-white">
+                    <Type className="w-4 h-4 text-afflyt-cyan-400" />
+                    {t('fields.content')}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={resetContent}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset
+                  </button>
+                </div>
+
+                {/* Variable Buttons - Click to Insert */}
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-2">{t('variablesTitle') || 'Clicca per inserire'}:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {CONTENT_VARIABLES.map((variable) => {
+                      const Icon = variable.icon;
+                      return (
+                        <button
+                          key={variable.key}
+                          type="button"
+                          onClick={() => insertVariable(variable.key)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono bg-afflyt-cyan-500/20 text-afflyt-cyan-300 hover:bg-afflyt-cyan-500/30 transition-colors"
+                          title={variable.label}
+                        >
+                          <Icon className="w-3 h-3" />
+                          {variable.key}
+                        </button>
+                      );
+                    })}
+                    {/* Type-specific variables */}
+                    {formData.type === 'BOUNTY' && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable('{{link}}')}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors"
+                        title="Link affiliato bounty"
+                      >
+                        <LinkIcon className="w-3 h-3" />
+                        {'{{link}}'}
+                      </button>
+                    )}
+                    {formData.type === 'RECAP' && (
+                      <button
+                        type="button"
+                        onClick={() => insertVariable('{{deals}}')}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors"
+                        title="Lista top deals"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        {'{{deals}}'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Textarea */}
                 <textarea
+                  ref={textareaRef}
                   value={formData.content}
                   onChange={(e) => updateFormData('content', e.target.value)}
                   placeholder={
@@ -529,16 +651,25 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                       ? '📊 Top Deals di oggi {{date}}\n\nEcco le migliori offerte trovate oggi:\n\n{{deals}}'
                       : t('placeholders.content')
                   }
-                  rows={8}
-                  className={`w-full px-4 py-3 bg-afflyt-glass-white border rounded-lg text-white placeholder:text-gray-600 focus:outline-none resize-none ${
-                    errors.content ? 'border-red-500' : 'border-afflyt-glass-border focus:border-afflyt-cyan-500'
+                  rows={10}
+                  className={`w-full px-4 py-3 bg-gray-900 border rounded-lg text-white font-mono text-sm placeholder:text-gray-600 focus:outline-none resize-none ${
+                    errors.content ? 'border-red-500' : 'border-gray-700 focus:border-afflyt-cyan-500'
                   }`}
+                  spellCheck={false}
                 />
-                <div className="flex justify-between mt-1">
+
+                {/* Footer with character count */}
+                <div className="flex items-center justify-between mt-2">
                   <p className="text-xs text-gray-500">
-                    {t('contentHelp')}
+                    Supporta *grassetto*, _corsivo_, [link](url)
                   </p>
-                  <p className={`text-xs ${formData.content.length > 4096 ? 'text-red-400' : 'text-gray-500'}`}>
+                  <p className={`text-xs font-mono ${
+                    formData.content.length > 4096
+                      ? 'text-red-400'
+                      : formData.content.length > 3500
+                      ? 'text-yellow-400'
+                      : 'text-gray-500'
+                  }`}>
                     {formData.content.length}/4096
                   </p>
                 </div>
@@ -547,8 +678,9 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
 
               {/* Media URL (optional) */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  {t('fields.mediaUrl')} <span className="text-gray-500">({t('optional')})</span>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+                  <Image className="w-4 h-4 text-gray-400" />
+                  {t('fields.mediaUrl')} <span className="text-gray-500 text-xs">({t('optional')})</span>
                 </label>
                 <input
                   type="url"
@@ -557,31 +689,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                   placeholder="https://..."
                   className="w-full px-4 py-3 bg-afflyt-glass-white border border-afflyt-glass-border rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500"
                 />
-              </div>
-
-              {/* Variables Help */}
-              <div className="p-4 bg-afflyt-glass-white rounded-lg">
-                <p className="text-sm font-medium text-white mb-2">{t('variablesTitle')}</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <code className="text-afflyt-cyan-400">{'{{date}}'}</code>
-                  <span className="text-gray-400">{t('variables.date')}</span>
-                  <code className="text-afflyt-cyan-400">{'{{time}}'}</code>
-                  <span className="text-gray-400">{t('variables.time')}</span>
-                  <code className="text-afflyt-cyan-400">{'{{channelName}}'}</code>
-                  <span className="text-gray-400">{t('variables.channelName')}</span>
-                  {formData.type === 'BOUNTY' && (
-                    <>
-                      <code className="text-purple-400">{'{{link}}'}</code>
-                      <span className="text-gray-400">{t('variables.bountyLink') || 'Link affiliato bounty'}</span>
-                    </>
-                  )}
-                  {formData.type === 'RECAP' && (
-                    <>
-                      <code className="text-blue-400">{'{{deals}}'}</code>
-                      <span className="text-gray-400">{t('variables.deals') || 'Lista top deals'}</span>
-                    </>
-                  )}
-                </div>
+                <p className="text-xs text-gray-500 mt-1">URL immagine o GIF da allegare al messaggio</p>
               </div>
             </div>
           )}
@@ -699,33 +807,34 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
 
           {/* Step 4: Review */}
           {step === 4 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
+              {/* Summary Card */}
               <div className="p-4 bg-afflyt-glass-white rounded-lg">
                 <h3 className="text-lg font-semibold text-white mb-4">{t('review.title')}</h3>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">{t('fields.name')}</span>
-                    <span className="text-white">{formData.name}</span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-afflyt-glass-border">
+                    <span className="text-gray-400 text-sm">{t('fields.name')}</span>
+                    <span className="text-white font-medium">{formData.name}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">{t('fields.type')}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-afflyt-glass-border">
+                    <span className="text-gray-400 text-sm">{t('fields.type')}</span>
                     <span className="text-white">
                       {POST_TYPES.find((t) => t.value === formData.type)?.label}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">{t('fields.channel')}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-afflyt-glass-border">
+                    <span className="text-gray-400 text-sm">{t('fields.channel')}</span>
                     <span className="text-white">
-                      {channels.find((c) => c.id === formData.channelId)?.name}
+                      {channels.find((c) => c.id === formData.channelId)?.name || '-'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">{t('fields.schedule')}</span>
-                    <span className="text-white font-mono">{formData.schedule}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-afflyt-glass-border">
+                    <span className="text-gray-400 text-sm">{t('fields.schedule')}</span>
+                    <span className="text-white font-mono text-sm">{formData.schedule}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">{t('fields.timezone')}</span>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-400 text-sm">{t('fields.timezone')}</span>
                     <span className="text-white">
                       {TIMEZONES.find((t) => t.value === formData.timezone)?.label}
                     </span>
@@ -733,18 +842,70 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                 </div>
               </div>
 
+              {/* Content Preview */}
               <div className="p-4 bg-afflyt-glass-white rounded-lg">
                 <h4 className="text-sm font-medium text-gray-400 mb-2">{t('review.contentPreview')}</h4>
-                <p className="text-white text-sm whitespace-pre-wrap line-clamp-6">
-                  {formData.content}
-                </p>
+                <div className="p-3 bg-gray-900 rounded-lg border border-gray-700">
+                  <p className="text-white text-sm whitespace-pre-wrap font-mono">
+                    {formData.content || <span className="text-gray-500 italic">Nessun contenuto</span>}
+                  </p>
+                </div>
               </div>
+
+              {/* Test Publish Button */}
+              {onTestPublish && formData.channelId && (
+                <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                        <Play className="w-5 h-5 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {t('review.testPublish') || 'Pubblica Ora'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {t('review.testPublishDesc') || 'Invia subito questo messaggio al canale selezionato'}
+                        </p>
+                      </div>
+                    </div>
+                    <CyberButton
+                      variant="secondary"
+                      onClick={handleTestPublish}
+                      disabled={isTestPublishing}
+                      className="bg-green-500/20 border-green-500/40 hover:bg-green-500/30 text-green-300"
+                    >
+                      {isTestPublishing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Invio...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Invia Ora
+                        </>
+                      )}
+                    </CyberButton>
+                  </div>
+                </div>
+              )}
+
+              {/* Warning if no channel selected */}
+              {!formData.channelId && (
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <p className="text-xs text-yellow-400 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Nessun canale selezionato. Il post verrà salvato ma non pubblicato.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-afflyt-glass-border">
+        <div className="shrink-0 flex items-center justify-between p-4 border-t border-afflyt-glass-border">
           <div>
             {step > 1 && (
               <CyberButton variant="ghost" onClick={handleBack}>
