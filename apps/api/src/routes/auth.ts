@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { UAParser } from 'ua-parser-js';
 import prisma from '../lib/prisma';
 import {
   AuthEmailService,
@@ -69,6 +70,13 @@ const resendVerificationSchema = z.object({
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MINUTES = 15;
 const BCRYPT_ROUNDS = 12;
+
+// Beta testing mode - when enabled, only magic link login is allowed
+const BETA_TESTING_MODE = process.env.BETA_TESTING === 'true';
+
+if (BETA_TESTING_MODE) {
+  console.log('[Auth] BETA TESTING MODE ENABLED - Password login/registration disabled');
+}
 
 // ==================== RATE LIMIT CONFIGS ====================
 // Stricter limits for auth endpoints to prevent brute force attacks
@@ -285,9 +293,99 @@ function sanitizeUser(user: any) {
   return safeUser;
 }
 
+/**
+ * Parse user agent to extract device info
+ */
+function parseUserAgent(userAgent: string | undefined): {
+  browser: string | null;
+  os: string | null;
+  deviceType: string;
+} {
+  if (!userAgent) {
+    return { browser: null, os: null, deviceType: 'unknown' };
+  }
+
+  const parser = new UAParser(userAgent);
+  const result = parser.getResult();
+
+  const browser = result.browser.name
+    ? `${result.browser.name}${result.browser.version ? ` ${result.browser.version.split('.')[0]}` : ''}`
+    : null;
+
+  const os = result.os.name
+    ? `${result.os.name}${result.os.version ? ` ${result.os.version}` : ''}`
+    : null;
+
+  // Determine device type
+  let deviceType = 'desktop';
+  if (result.device.type === 'mobile') {
+    deviceType = 'mobile';
+  } else if (result.device.type === 'tablet') {
+    deviceType = 'tablet';
+  }
+
+  return { browser, os, deviceType };
+}
+
+/**
+ * Create a session record after successful login
+ */
+async function createLoginSession(
+  userId: string,
+  jwtToken: string,
+  request: FastifyRequest
+): Promise<void> {
+  try {
+    const userAgent = request.headers['user-agent'];
+    const ipAddress = request.ip || request.headers['x-forwarded-for']?.toString().split(',')[0];
+    const { browser, os, deviceType } = parseUserAgent(userAgent);
+
+    // Hash the JWT token to use as session identifier
+    const tokenHash = hashToken(jwtToken);
+
+    // Session expires in 7 days (or match your JWT expiry)
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await prisma.session.create({
+      data: {
+        userId,
+        tokenHash,
+        userAgent,
+        ipAddress,
+        deviceType,
+        browser,
+        os,
+        expiresAt,
+        lastActiveAt: new Date(),
+      },
+    });
+
+    console.log(`[Auth] Session created for user ${userId}: ${browser} on ${os} (${deviceType})`);
+  } catch (error) {
+    // Don't fail the login if session creation fails
+    console.error('[Auth] Failed to create session:', error);
+  }
+}
+
 // ==================== ROUTE HANDLERS ====================
 
 export async function authRoutes(fastify: FastifyInstance) {
+  /**
+   * GET /auth/config
+   * Get auth configuration (public endpoint)
+   * Returns beta testing mode status and available auth methods
+   */
+  fastify.get('/config', async (_request, reply) => {
+    return reply.send({
+      betaTestingMode: BETA_TESTING_MODE,
+      availableAuthMethods: BETA_TESTING_MODE
+        ? ['magic_link']
+        : ['magic_link', 'password'],
+      passwordLoginEnabled: !BETA_TESTING_MODE,
+      passwordRegistrationEnabled: !BETA_TESTING_MODE,
+    });
+  });
+
   /**
    * POST /auth/register
    * Register a new user with email/password
@@ -302,6 +400,17 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
+        // Block password registration during beta testing
+        if (BETA_TESTING_MODE) {
+          const locale = (request.body as any)?.locale;
+          return reply.code(403).send({
+            error: 'beta_mode',
+            message: locale === 'en'
+              ? 'During beta testing, only Magic Link login is available. Please use Magic Link to sign up.'
+              : 'Durante la beta, è disponibile solo il login con Magic Link. Usa Magic Link per registrarti.',
+          });
+        }
+
         const { email, password, name, locale } = registerSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
@@ -447,6 +556,9 @@ export async function authRoutes(fastify: FastifyInstance) {
           brandId: user.brandId,
         });
 
+        // Create session record for device tracking
+        await createLoginSession(user.id, jwtToken, request);
+
         return reply.send({
           message: 'Email verificata con successo!',
           token: jwtToken,
@@ -532,6 +644,15 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
+        // Block password login during beta testing
+        if (BETA_TESTING_MODE) {
+          return reply.code(403).send({
+            error: 'beta_mode',
+            message: 'Durante la beta, è disponibile solo il login con Magic Link.',
+            messageEn: 'During beta testing, only Magic Link login is available.',
+          });
+        }
+
         const { email, password } = loginSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
@@ -650,6 +771,9 @@ export async function authRoutes(fastify: FastifyInstance) {
           brandId: user.brandId,
           plan: user.plan,
         });
+
+        // Create session record for device tracking
+        await createLoginSession(user.id, token, request);
 
         return reply.send({
           message: 'Login effettuato con successo',
@@ -845,6 +969,9 @@ export async function authRoutes(fastify: FastifyInstance) {
           brandId: user.brandId,
           plan: user.plan,
         });
+
+        // Create session record for device tracking
+        await createLoginSession(user.id, jwtToken, request);
 
         return reply.send({
           message: 'Accesso effettuato con successo',

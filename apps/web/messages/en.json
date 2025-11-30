@@ -149,6 +149,10 @@
       "processing": "Processing...",
       "loginFailed": "Login failed. Check your credentials.",
       "connectionError": "Server connection error."
+    },
+    "beta": {
+      "title": "Beta Testing Mode",
+      "description": "During beta, only Magic Link login is available for enhanced security."
     }
   },
   "common": {
@@ -637,62 +641,6 @@
         "descriptionHint": "Help yourself remember what this automation does"
       },
       "step2": {
-        "categoriesLabel": "Select Target Categories *",
-        "selectedCount": "{count} categories selected"
-      },
-      "step3": {
-        "minScoreLabel": "Minimum Deal Score:",
-        "priceLabel": "Maximum Price (Optional)",
-        "pricePlaceholder": "No limit",
-        "hints": {
-          "low": "Will include many deals, even low quality ones (MEH)",
-          "moderate": "Balances quantity and quality (DECENT)",
-          "good": "Only good quality deals (GOOD)",
-          "excellent": "Only the best deals (EXCELLENT)",
-          "hot": "Only hot deals! (HOT 🔥)"
-        }
-      },
-      "step4": {
-        "channelLabel": "Where to publish deals?",
-        "loadingChannels": "Loading channels...",
-        "channelActive": "Active",
-        "testingOnly": "Testing Only",
-        "testingOnlyDesc": "Do not publish automatically",
-        "noChannelsWarning": "You have no configured channels. Go to Settings → Channels to add one.",
-        "hint": "You can always test the rule manually before activating it"
-      },
-      "step5": {
-        "ready": "Mission Ready!",
-        "reviewMessage": "Review the configuration before {action}",
-        "activating": "activating",
-        "updating": "updating",
-        "name": "Name:",
-        "categories": "Categories:",
-        "categoriesSelected": "{count} selected",
-        "minScore": "Min Score:",
-        "maxPrice": "Max Price:",
-        "channel": "Channel:",
-        "selected": "Selected",
-        "createAndActivate": "Create and Activate Now",
-        "updateAndActivate": "Update and Activate",
-        "createInactive": "Create but Don't Activate",
-        "updateKeepState": "Update (Keep State)"
-      },
-      "navigation": {
-        "back": "Back",
-        "continue": "Continue"
-      },
-      "categories": {
-        "Electronics": "Electronics",
-        "Computers": "Computers",
-        "Home": "Home & Kitchen",
-        "Beauty": "Beauty",
-        "Gaming": "Gaming",
-        "Books": "Books",
-        "Fashion": "Fashion",
-        "Music": "Music"
-      },
-      "step2": {
         "title": "Select Target Categories",
         "subtitle": "Choose which Amazon categories to monitor",
         "selectedCount": "{count} categories selected",
@@ -846,6 +794,20 @@
           "hint": "AI will use these guidelines to adapt the tone and style of messages to your channel."
         }
       },
+      "navigation": {
+        "back": "Back",
+        "continue": "Continue"
+      },
+      "categories": {
+        "Electronics": "Electronics",
+        "Computers": "Computers",
+        "Home": "Home & Kitchen",
+        "Beauty": "Beauty",
+        "Gaming": "Gaming",
+        "Books": "Books",
+        "Fashion": "Fashion",
+        "Music": "Music"
+      },
       "step6": {
         "title": "Mission Summary",
         "subtitle": "Ready? Let's launch!",
@@ -876,89 +838,326 @@
     }
   },
   "settings": {
-    "channels": {
-      "title": "Publishing Channels",
-      "subtitle": "Manage your Telegram and Discord channels for publishing deals",
-      "addChannel": "Add Channel",
-      "newTelegram": "New Telegram Connection",
-      "instructions": "Instructions:",
-      "instruction1": "Search for @BotFather on Telegram",
-      "instruction2": "Send /newbot command",
-      "instruction3": "Copy the token you receive",
-      "botToken": "Bot Token",
-      "botTokenPlaceholder": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
-      "botTokenRequired": "Please enter the token",
-      "tokenSaveError": "Error saving token",
-      "connectionError": "Connection error",
-      "channelCreateError": "Error creating channel",
-      "channelName": "Channel Name",
-      "channelNamePlaceholder": "e.g. Tech Deals",
-      "channelId": "Channel ID / Username",
-      "channelIdPlaceholder": "@techdeals or -100...",
-      "addBotAsAdmin": "Remember to add the bot as administrator to the channel!",
-      "readyToConnect": "Ready to connect",
-      "connectingBot": "We are about to connect bot {name} to channel {channelId}.",
-      "platformLabel": "Platform",
-      "credentialLabel": "Credential",
-      "savedInVault": "Saved in Vault",
-      "confirmAndConnect": "Confirm and Connect",
-      "saveAndContinue": "Save and Continue",
-      "testConnection": "Test Connection",
-      "testing": "Testing...",
-      "saveChannel": "Save Channel",
-      "saving": "Saving...",
-      "testSuccess": "Connection successful! Bot connected to:",
-      "testFailed": "Connection failed. Check the token and try again.",
-      "noChannels": "No Channels Configured",
-      "noChannelsDesc": "No channels configured. Add one to start publishing.",
-      "addFirst": "Add your first channel",
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "deleteTitle": "Delete channel?",
-      "deleteAboutTo": "You are about to delete:",
-      "deleteWarning": "This action cannot be undone. All automations associated with this channel will be deactivated.",
-      "deleteConfirmButton": "Yes, delete",
-      "platform": {
-        "telegram": "Telegram",
-        "discord": "Discord",
-        "email": "Email"
+    "title": "Settings",
+    "subtitle": "Manage your account and preferences",
+    "tabs": {
+      "profile": "Profile",
+      "billing": "Billing",
+      "channels": "Channels",
+      "apiKeys": "API Keys",
+      "affiliateTags": "Affiliate Tags",
+      "templates": "Templates",
+      "notifications": "Notifications",
+      "security": "Security",
+      "tester": "Beta Tester"
+    },
+    "hub": {
+      "memberSince": "Member since {date}",
+      "ttlUsed": "TTL Used",
+      "channels": "Channels",
+      "automations": "Automations",
+      "manage": "Manage",
+      "quickActions": "Quick Actions",
+      "descriptions": {
+        "profile": "Personal info and billing details",
+        "billing": "Plan, payments and invoices",
+        "channels": "Connected publishing channels",
+        "apiKeys": "API keys and integrations",
+        "affiliateTags": "Amazon tags for automations and analytics",
+        "templates": "Message templates",
+        "notifications": "Notification preferences",
+        "security": "Password and security settings",
+        "tester": "Redeem your beta code"
+      },
+      "actions": {
+        "exportData": "Export Data",
+        "exportDataDesc": "Download all your data",
+        "downloadInvoices": "Download Invoices",
+        "downloadInvoicesDesc": "Get all invoices as PDF",
+        "contactSupport": "Contact Support",
+        "contactSupportDesc": "Get help from our team"
+      }
+    },
+    "profile": {
+      "avatarHint": "Click to upload a new avatar",
+      "personalInfo": "Personal Information",
+      "personalInfoDesc": "Your basic account information",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "emailLocked": "Email cannot be changed",
+      "language": "Language",
+      "timezone": "Timezone",
+      "billingInfo": "Billing Information",
+      "billingInfoDesc": "Used for invoices and receipts",
+      "companyName": "Company Name",
+      "companyNamePlaceholder": "Your Company SRL",
+      "vatNumber": "VAT Number",
+      "fiscalCode": "Fiscal Code",
+      "address": "Address",
+      "addressPlaceholder": "Street, Number",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "pec": "PEC Email",
+      "sdiCode": "SDI Code",
+      "saveChanges": "Save Changes",
+      "saved": "Changes saved!"
+    },
+    "billing": {
+      "currentPlan": "Current Plan",
+      "month": "month",
+      "year": "year",
+      "nextRenewal": "Next renewal",
+      "paymentMethod": "Payment method",
+      "managePlan": "Manage Plan",
+      "cancelPlan": "Cancel Plan",
+      "usageThisMonth": "Usage This Month",
+      "ttlCredits": "TTL Credits",
+      "channels": "Channels",
+      "automations": "Automations",
+      "approachingLimit": "Approaching limit. Consider upgrading.",
+      "availablePlans": "Available Plans",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "popular": "Most Popular",
+      "ttlMonth": "TTL/month",
+      "currentPlanBtn": "Current Plan",
+      "upgrade": "Upgrade",
+      "downgrade": "Downgrade",
+      "paymentMethods": "Payment Methods",
+      "addPaymentMethod": "Add Payment Method",
+      "expires": "Expires",
+      "default": "Default",
+      "remove": "Remove",
+      "invoiceHistory": "Invoice History",
+      "viewAll": "View All",
+      "invoice": "Invoice",
+      "date": "Date",
+      "amount": "Amount",
+      "status": "Status",
+      "invoiceStatus": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed"
+      },
+      "plans": {
+        "free": {
+          "feature1": "100 TTL per month",
+          "feature2": "1 publishing channel",
+          "feature3": "Basic templates"
+        },
+        "pro": {
+          "feature1": "1,000 TTL per month",
+          "feature2": "10 publishing channels",
+          "feature3": "AI-powered templates",
+          "feature4": "Priority support"
+        },
+        "enterprise": {
+          "feature1": "10,000 TTL per month",
+          "feature2": "Unlimited channels",
+          "feature3": "Advanced AI features",
+          "feature4": "Dedicated support",
+          "feature5": "Custom integrations"
+        }
+      }
+    },
+    "notifications": {
+      "email": {
+        "title": "Email Notifications",
+        "description": "Choose which emails you want to receive",
+        "options": {
+          "newDeal": {
+            "title": "New Deal Published",
+            "description": "Get notified when a new deal is published"
+          },
+          "automationError": {
+            "title": "Automation Errors",
+            "description": "Receive alerts when automations fail"
+          },
+          "monthlyReport": {
+            "title": "Monthly Report",
+            "description": "Receive your monthly performance summary"
+          },
+          "weeklyDigest": {
+            "title": "Weekly Digest",
+            "description": "Weekly overview of your activity"
+          },
+          "promotional": {
+            "title": "Promotional Emails",
+            "description": "News, tips and special offers"
+          }
+        }
+      },
+      "inApp": {
+        "title": "In-App Notifications",
+        "description": "Notifications shown in the dashboard",
+        "options": {
+          "realTimeAlerts": {
+            "title": "Real-time Deal Alerts",
+            "description": "Instant notifications for new deals"
+          },
+          "ttlWarnings": {
+            "title": "TTL Limit Warnings",
+            "description": "Alert when approaching usage limits"
+          },
+          "apiKeyExpiration": {
+            "title": "API Key Expiration",
+            "description": "Reminder before keys expire"
+          }
+        }
+      },
+      "push": {
+        "title": "Push Notifications",
+        "description": "Notifications on your mobile device",
+        "enable": "Enable Push Notifications",
+        "enableDescription": "Receive notifications on your phone",
+        "notEnabled": "Push notifications are not enabled. Connect a device to receive mobile alerts.",
+        "connectDevice": "Connect Device"
+      },
+      "digest": {
+        "title": "Notification Digest",
+        "description": "Consolidated notification summary",
+        "frequency": "Frequency",
+        "frequencies": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "never": "Never"
+        },
+        "time": "Delivery Time"
+      },
+      "saved": "Preferences saved!",
+      "saveChanges": "Save Changes"
+    },
+    "security": {
+      "password": {
+        "title": "Password",
+        "lastChanged": "Last changed: {time}",
+        "current": "Current Password",
+        "new": "New Password",
+        "confirm": "Confirm New Password",
+        "change": "Change Password",
+        "mismatch": "Passwords do not match",
+        "changed": "Password changed successfully"
+      },
+      "twoFactor": {
+        "title": "Two-Factor Authentication",
+        "description": "Add an extra layer of security to your account",
+        "status": "2FA Status",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enable": "Enable 2FA",
+        "disable": "Disable 2FA",
+        "recommendation": "We recommend enabling 2FA for better security"
+      },
+      "sessions": {
+        "title": "Active Sessions",
+        "description": "Devices currently logged into your account",
+        "current": "Current",
+        "revoke": "Revoke",
+        "revokeAll": "Revoke All"
+      },
+      "danger": {
+        "title": "Danger Zone",
+        "description": "Irreversible and destructive actions",
+        "export": {
+          "title": "Export Your Data",
+          "description": "Download all your data in JSON format",
+          "button": "Request Export"
+        },
+        "delete": {
+          "title": "Delete Account",
+          "description": "Permanently delete your account and all data",
+          "button": "Delete Account",
+          "modal": {
+            "title": "Delete Account?",
+            "warning": "This action cannot be undone. This will permanently delete:",
+            "item1": "All your channels and automations",
+            "item2": "All your templates and credentials",
+            "item3": "Your subscription and billing history",
+            "final": "Are you absolutely sure?",
+            "confirm": "Yes, Delete My Account"
+          }
+        }
       }
     },
     "credentials": {
-      "title": "API Credentials Vault",
-      "subtitle": "Secure management of your API keys (BYOK - Bring Your Own Key)",
-      "secureVault": "End-to-End Secure Vault",
-      "secureVaultDesc": "Your credentials are encrypted with AES-256 and never shared. Only you have access to your API keys.",
-      "addCredential": "New Credential",
-      "nameLabel": "Identifier Name",
-      "namePlaceholder": "e.g. Production Bot",
-      "valueLabel": "Key/Token Value",
-      "valuePlaceholder": "Paste your API key or token here",
-      "typeLabel": "Type",
-      "createdLabel": "Created",
-      "save": "Save to Vault",
+      "title": "API Keys",
+      "subtitle": "Manage your API credentials securely",
+      "addCredential": "Add API Key",
+      "secureVault": "Secure Vault",
+      "secureVaultDesc": "All credentials are encrypted with AES-256 and never exposed in plain text",
+      "types": {
+        "telegram": "Telegram Bot",
+        "amazon": "Amazon Affiliate Tag"
+      },
+      "telegramDesc": "Bot token for publishing to Telegram channels",
+      "amazonDesc": "Your Amazon Associates affiliate tag",
+      "nameLabel": "Label",
+      "namePlaceholder": "e.g., Main Bot, Production Key",
+      "valueLabel": "API Key / Token",
+      "save": "Save Securely",
       "saving": "Saving...",
-      "saveFailed": "Failed to add credential",
-      "connectionError": "Error adding credential",
-      "noCredentials": "No Credentials Saved",
-      "noCredentialsDesc": "No credentials saved.",
-      "addFirst": "Add your first credential",
+      "saveFailed": "Failed to save credential",
+      "connectionError": "Connection error",
       "statusActive": "Active",
       "statusInactive": "Inactive",
-      "decryptionHint": "Decryption only available on usage",
-      "deleteTitle": "Delete credential?",
+      "decryptionHint": "Keys cannot be displayed for security",
+      "typeLabel": "Type",
+      "createdLabel": "Created",
+      "noCredentials": "No API Keys",
+      "noCredentialsDesc": "Add your first API key to start using integrations",
+      "addFirst": "Add First Key",
+      "deleteTitle": "Delete Credential?",
       "deleteAboutTo": "You are about to delete:",
-      "deleteWarning": "This action cannot be undone. All channels associated with this credential will stop working.",
-      "deleteConfirmButton": "Yes, delete",
-      "lastUsed": "Last used",
-      "never": "Never",
-      "telegramDesc": "Token from @BotFather on Telegram",
-      "amazonDesc": "Your Amazon Associates affiliate tag",
-      "types": {
-        "amazon": "Amazon Affiliate Tag",
-        "telegram": "Telegram Bot Token",
-        "discord": "Discord Webhook",
-        "custom": "Custom"
+      "deleteWarning": "This will remove the key from all connected channels and automations.",
+      "deleteConfirmButton": "Yes, Delete"
+    },
+    "tester": {
+      "status": {
+        "active": "You're a Beta Tester!",
+        "activeDesc": "You have full access to all features during the beta period.",
+        "inactive": "Join the Beta",
+        "inactiveDesc": "Enter your invite code to access the beta program.",
+        "since": "Beta tester since {date}"
+      },
+      "redeem": {
+        "title": "Redeem Beta Code",
+        "description": "Have you received an invite code? Enter it below to activate your beta access.",
+        "codeLabel": "Invite Code",
+        "button": "Activate"
+      },
+      "errors": {
+        "emptyCode": "Please enter a code",
+        "invalidFormat": "Invalid code format. Use: AFFLYT-XXXX-XXXX",
+        "alreadyBeta": "You're already a beta tester!",
+        "invalidCode": "Invalid code",
+        "codeInactive": "This code is no longer active",
+        "codeExpired": "This code has expired",
+        "codeUsed": "This code has already been used",
+        "wrongEmail": "This code is assigned to a different email",
+        "generic": "Error redeeming code",
+        "connection": "Connection error. Please try again."
+      },
+      "success": {
+        "redeemed": "Welcome to the beta program! Your account has been upgraded."
+      },
+      "benefits": {
+        "title": "Beta Tester Benefits",
+        "fullAccess": "Full Access",
+        "fullAccessDesc": "All PRO and BUSINESS features unlocked",
+        "prioritySupport": "Priority Support",
+        "prioritySupportDesc": "Quick responses from our team",
+        "earlyFeatures": "Early Features",
+        "earlyFeaturesDesc": "Try new features before everyone else",
+        "feedback": "Your Voice Matters",
+        "feedbackDesc": "Help shape the final product"
+      },
+      "yourCode": {
+        "title": "Your Beta Code",
+        "note": "This is the code you used to access the beta program."
+      },
+      "info": {
+        "title": "About the Beta Program",
+        "description": "The beta program is limited and may be terminated at any time. When beta ends, your plan will automatically revert to FREE unless you upgrade."
       }
     }
   },
@@ -1799,279 +1998,6 @@
       "note": "Full access to advanced analytics, custom date ranges, and AI insights"
     },
     "pro": "PRO"
-  },
-  "settings": {
-    "title": "Settings",
-    "subtitle": "Manage your account and preferences",
-    "tabs": {
-      "profile": "Profile",
-      "billing": "Billing",
-      "channels": "Channels",
-      "apiKeys": "API Keys",
-      "affiliateTags": "Affiliate Tags",
-      "templates": "Templates",
-      "notifications": "Notifications",
-      "security": "Security"
-    },
-    "hub": {
-      "memberSince": "Member since {date}",
-      "ttlUsed": "TTL Used",
-      "channels": "Channels",
-      "automations": "Automations",
-      "manage": "Manage",
-      "quickActions": "Quick Actions",
-      "descriptions": {
-        "profile": "Personal info and billing details",
-        "billing": "Plan, payments and invoices",
-        "channels": "Connected publishing channels",
-        "apiKeys": "API keys and integrations",
-        "affiliateTags": "Amazon tags for automations and analytics",
-        "templates": "Message templates",
-        "notifications": "Notification preferences",
-        "security": "Password and security settings"
-      },
-      "actions": {
-        "exportData": "Export Data",
-        "exportDataDesc": "Download all your data",
-        "downloadInvoices": "Download Invoices",
-        "downloadInvoicesDesc": "Get all invoices as PDF",
-        "contactSupport": "Contact Support",
-        "contactSupportDesc": "Get help from our team"
-      }
-    },
-    "profile": {
-      "avatarHint": "Click to upload a new avatar",
-      "personalInfo": "Personal Information",
-      "personalInfoDesc": "Your basic account information",
-      "fullName": "Full Name",
-      "email": "Email Address",
-      "emailLocked": "Email cannot be changed",
-      "language": "Language",
-      "timezone": "Timezone",
-      "billingInfo": "Billing Information",
-      "billingInfoDesc": "Used for invoices and receipts",
-      "companyName": "Company Name",
-      "companyNamePlaceholder": "Your Company SRL",
-      "vatNumber": "VAT Number",
-      "fiscalCode": "Fiscal Code",
-      "address": "Address",
-      "addressPlaceholder": "Street, Number",
-      "city": "City",
-      "postalCode": "Postal Code",
-      "pec": "PEC Email",
-      "sdiCode": "SDI Code",
-      "saveChanges": "Save Changes",
-      "saved": "Changes saved!"
-    },
-    "billing": {
-      "currentPlan": "Current Plan",
-      "month": "month",
-      "year": "year",
-      "nextRenewal": "Next renewal",
-      "paymentMethod": "Payment method",
-      "managePlan": "Manage Plan",
-      "cancelPlan": "Cancel Plan",
-      "usageThisMonth": "Usage This Month",
-      "ttlCredits": "TTL Credits",
-      "channels": "Channels",
-      "automations": "Automations",
-      "approachingLimit": "Approaching limit. Consider upgrading.",
-      "availablePlans": "Available Plans",
-      "monthly": "Monthly",
-      "yearly": "Yearly",
-      "popular": "Most Popular",
-      "ttlMonth": "TTL/month",
-      "currentPlanBtn": "Current Plan",
-      "upgrade": "Upgrade",
-      "downgrade": "Downgrade",
-      "paymentMethods": "Payment Methods",
-      "addPaymentMethod": "Add Payment Method",
-      "expires": "Expires",
-      "default": "Default",
-      "remove": "Remove",
-      "invoiceHistory": "Invoice History",
-      "viewAll": "View All",
-      "invoice": "Invoice",
-      "date": "Date",
-      "amount": "Amount",
-      "status": "Status",
-      "invoiceStatus": {
-        "paid": "Paid",
-        "pending": "Pending",
-        "failed": "Failed"
-      },
-      "plans": {
-        "free": {
-          "feature1": "100 TTL per month",
-          "feature2": "1 publishing channel",
-          "feature3": "Basic templates"
-        },
-        "pro": {
-          "feature1": "1,000 TTL per month",
-          "feature2": "10 publishing channels",
-          "feature3": "AI-powered templates",
-          "feature4": "Priority support"
-        },
-        "enterprise": {
-          "feature1": "10,000 TTL per month",
-          "feature2": "Unlimited channels",
-          "feature3": "Advanced AI features",
-          "feature4": "Dedicated support",
-          "feature5": "Custom integrations"
-        }
-      }
-    },
-    "notifications": {
-      "email": {
-        "title": "Email Notifications",
-        "description": "Choose which emails you want to receive",
-        "options": {
-          "newDeal": {
-            "title": "New Deal Published",
-            "description": "Get notified when a new deal is published"
-          },
-          "automationError": {
-            "title": "Automation Errors",
-            "description": "Receive alerts when automations fail"
-          },
-          "monthlyReport": {
-            "title": "Monthly Report",
-            "description": "Receive your monthly performance summary"
-          },
-          "weeklyDigest": {
-            "title": "Weekly Digest",
-            "description": "Weekly overview of your activity"
-          },
-          "promotional": {
-            "title": "Promotional Emails",
-            "description": "News, tips and special offers"
-          }
-        }
-      },
-      "inApp": {
-        "title": "In-App Notifications",
-        "description": "Notifications shown in the dashboard",
-        "options": {
-          "realTimeAlerts": {
-            "title": "Real-time Deal Alerts",
-            "description": "Instant notifications for new deals"
-          },
-          "ttlWarnings": {
-            "title": "TTL Limit Warnings",
-            "description": "Alert when approaching usage limits"
-          },
-          "apiKeyExpiration": {
-            "title": "API Key Expiration",
-            "description": "Reminder before keys expire"
-          }
-        }
-      },
-      "push": {
-        "title": "Push Notifications",
-        "description": "Notifications on your mobile device",
-        "enable": "Enable Push Notifications",
-        "enableDescription": "Receive notifications on your phone",
-        "notEnabled": "Push notifications are not enabled. Connect a device to receive mobile alerts.",
-        "connectDevice": "Connect Device"
-      },
-      "digest": {
-        "title": "Notification Digest",
-        "description": "Consolidated notification summary",
-        "frequency": "Frequency",
-        "frequencies": {
-          "daily": "Daily",
-          "weekly": "Weekly",
-          "never": "Never"
-        },
-        "time": "Delivery Time"
-      },
-      "saved": "Preferences saved!",
-      "saveChanges": "Save Changes"
-    },
-    "security": {
-      "password": {
-        "title": "Password",
-        "lastChanged": "Last changed: {time}",
-        "current": "Current Password",
-        "new": "New Password",
-        "confirm": "Confirm New Password",
-        "change": "Change Password",
-        "mismatch": "Passwords do not match",
-        "changed": "Password changed successfully"
-      },
-      "twoFactor": {
-        "title": "Two-Factor Authentication",
-        "description": "Add an extra layer of security to your account",
-        "status": "2FA Status",
-        "enabled": "Enabled",
-        "disabled": "Disabled",
-        "enable": "Enable 2FA",
-        "disable": "Disable 2FA",
-        "recommendation": "We recommend enabling 2FA for better security"
-      },
-      "sessions": {
-        "title": "Active Sessions",
-        "description": "Devices currently logged into your account",
-        "current": "Current",
-        "revoke": "Revoke",
-        "revokeAll": "Revoke All"
-      },
-      "danger": {
-        "title": "Danger Zone",
-        "description": "Irreversible and destructive actions",
-        "export": {
-          "title": "Export Your Data",
-          "description": "Download all your data in JSON format",
-          "button": "Request Export"
-        },
-        "delete": {
-          "title": "Delete Account",
-          "description": "Permanently delete your account and all data",
-          "button": "Delete Account",
-          "modal": {
-            "title": "Delete Account?",
-            "warning": "This action cannot be undone. This will permanently delete:",
-            "item1": "All your channels and automations",
-            "item2": "All your templates and credentials",
-            "item3": "Your subscription and billing history",
-            "final": "Are you absolutely sure?",
-            "confirm": "Yes, Delete My Account"
-          }
-        }
-      }
-    },
-    "credentials": {
-      "title": "API Keys",
-      "subtitle": "Manage your API credentials securely",
-      "addCredential": "Add API Key",
-      "secureVault": "Secure Vault",
-      "secureVaultDesc": "All credentials are encrypted with AES-256 and never exposed in plain text",
-      "types": {
-        "telegram": "Telegram Bot",
-        "amazon": "Amazon Affiliate Tag"
-      },
-      "telegramDesc": "Bot token for publishing to Telegram channels",
-      "amazonDesc": "Your Amazon Associates affiliate tag",
-      "nameLabel": "Label",
-      "namePlaceholder": "e.g., Main Bot, Production Key",
-      "valueLabel": "API Key / Token",
-      "save": "Save Securely",
-      "saving": "Saving...",
-      "saveFailed": "Failed to save credential",
-      "connectionError": "Connection error",
-      "statusActive": "Active",
-      "statusInactive": "Inactive",
-      "decryptionHint": "Keys cannot be displayed for security",
-      "typeLabel": "Type",
-      "createdLabel": "Created",
-      "noCredentials": "No API Keys",
-      "noCredentialsDesc": "Add your first API key to start using integrations",
-      "addFirst": "Add First Key",
-      "deleteTitle": "Delete Credential?",
-      "deleteAboutTo": "You are about to delete:",
-      "deleteWarning": "This will remove the key from all connected channels and automations.",
-      "deleteConfirmButton": "Yes, Delete"
-    }
   },
   "scheduler": {
     "title": "Content Scheduler",

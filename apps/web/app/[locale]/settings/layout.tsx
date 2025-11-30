@@ -7,12 +7,12 @@ import {
     User,
     CreditCard,
     Key,
-    FileText,
     Bell,
     Shield,
     ArrowLeft,
     Settings,
-    Tag
+    Tag,
+    Sparkles
 } from 'lucide-react';
 import { CommandBar } from '@/components/navigation/CommandBar';
 
@@ -36,9 +36,9 @@ export default function SettingsLayout({
         { key: 'billing', icon: CreditCard, path: `/${locale}/settings/billing` },
         { key: 'apiKeys', icon: Key, path: `/${locale}/settings/api-keys` },
         { key: 'affiliateTags', icon: Tag, path: `/${locale}/settings/affiliate-tags` },
-        { key: 'templates', icon: FileText, path: `/${locale}/settings/templates` },
         { key: 'notifications', icon: Bell, path: `/${locale}/settings/notifications` },
         { key: 'security', icon: Shield, path: `/${locale}/settings/security` },
+        { key: 'tester', icon: Sparkles, path: `/${locale}/settings/tester` },
     ];
 
     const isActive = (path: string) => pathname === path;

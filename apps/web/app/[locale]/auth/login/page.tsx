@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff, ExternalLink, AlertTriangle, FlaskConical } from 'lucide-react';
 import Image from 'next/image';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -34,6 +34,7 @@ export default function AuthPage() {
     const [resendCountdown, setResendCountdown] = useState(0);
     const [sentEmail, setSentEmail] = useState('');
     const [emailProvider, setEmailProvider] = useState<EmailProviderInfo | null>(null);
+    const [betaTestingMode, setBetaTestingMode] = useState(false);
 
     const t = useTranslations('auth');
     const tFeatures = useTranslations('auth.features');
@@ -48,6 +49,22 @@ export default function AuthPage() {
         const newPathname = pathname.replace(`/${locale}`, `/${newLocale}`);
         router.push(newPathname);
     };
+
+    // Fetch auth config (beta mode status)
+    useEffect(() => {
+        const fetchAuthConfig = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/auth/config`);
+                if (res.ok) {
+                    const config = await res.json();
+                    setBetaTestingMode(config.betaTestingMode || false);
+                }
+            } catch (error) {
+                console.error('Failed to fetch auth config:', error);
+            }
+        };
+        fetchAuthConfig();
+    }, []);
 
     // Track page view on mount
     useEffect(() => {
@@ -349,11 +366,28 @@ export default function AuthPage() {
 
                         {!emailSent ? (
                             <>
+                                {/* Beta Testing Banner */}
+                                {betaTestingMode && (
+                                    <div className="mb-6 p-4 bg-afflyt-plasma-500/10 border border-afflyt-plasma-500/30 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <FlaskConical className="w-5 h-5 text-afflyt-plasma-400 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-medium text-afflyt-plasma-300">
+                                                    {t('beta.title')}
+                                                </p>
+                                                <p className="text-xs text-afflyt-plasma-300/70 mt-0.5">
+                                                    {t('beta.description')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <h2 className="text-3xl font-bold text-white mb-2">{getTitle()}</h2>
                                 <p className="text-gray-400 mb-8">{getSubtitle()}</p>
 
-                                {/* Auth Mode Toggle - Magic Link (primary) | Password (secondary) */}
-                                {(authMode === 'login' || authMode === 'magic-link') && (
+                                {/* Auth Mode Toggle - Magic Link (primary) | Password (secondary) - Hidden in beta mode */}
+                                {!betaTestingMode && (authMode === 'login' || authMode === 'magic-link') && (
                                     <div className="flex p-1 bg-afflyt-dark-50 rounded-lg mb-6 border border-afflyt-glass-border">
                                         <button
                                             onClick={() => switchMode('magic-link')}

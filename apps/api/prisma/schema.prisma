@@ -13,6 +13,7 @@ enum PlanType {
   FREE
   PRO
   BUSINESS
+  BETA_TESTER
 }
 
 enum UserRole {
@@ -189,6 +190,16 @@ model User {
   emailVerified   Boolean   @default(false)
   emailVerifiedAt DateTime?
 
+  // Two-Factor Authentication (TOTP)
+  totpSecret    String?   // Encrypted TOTP secret
+  totpEnabled   Boolean   @default(false)
+  totpVerifiedAt DateTime?
+  backupCodes   String[]  // Hashed backup codes
+
+  // Beta Testing
+  betaInviteCodeId String?
+  betaInviteCode   BetaInviteCode? @relation(fields: [betaInviteCodeId], references: [id], onDelete: SetNull)
+
   // Account status
   isActive            Boolean   @default(true)
   lastLoginAt         DateTime?
@@ -216,9 +227,11 @@ model User {
   automations        Automation[]
   scheduledPosts     ScheduledPost[]
   affiliateTags      AffiliateTag[]
+  sessions           Session[]
 
   @@index([email])
   @@index([plan])
+  @@index([betaInviteCodeId])
 }
 
 model AuthToken {
@@ -1370,4 +1383,72 @@ model AffiliateTag {
   @@unique([userId, tag])
   @@index([userId])
   @@index([isDefault])
+}
+
+// === BETA INVITE CODES ===
+// One code per tester, format: AFFLYT-XXXX-XXXX
+
+model BetaInviteCode {
+  id String @id @default(uuid())
+
+  // Code (unique, format: AFFLYT-XXXX-XXXX)
+  code String @unique
+
+  // Optional: Pre-assign to specific email
+  assignedEmail String?
+
+  // Status
+  isActive   Boolean   @default(true)
+  usedAt     DateTime? // When the code was redeemed
+  expiresAt  DateTime? // Optional expiration date
+
+  // Metadata
+  createdBy  String?   // Admin who created the code
+  notes      String?   // Internal notes
+
+  // Relations
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([assignedEmail])
+  @@index([isActive])
+}
+
+// === ACTIVE SESSIONS ===
+// Track user login sessions for security
+
+model Session {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Session token (hashed JWT ID or session ID)
+  tokenHash String @unique
+
+  // Device info
+  userAgent   String?
+  ipAddress   String?
+  deviceType  String? // "desktop", "mobile", "tablet"
+  browser     String?
+  os          String?
+  location    String? // Approximate location from IP
+
+  // Activity tracking
+  lastActiveAt DateTime @default(now())
+  expiresAt    DateTime
+
+  // Security
+  isRevoked Boolean @default(false)
+  revokedAt DateTime?
+  revokedReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@index([isRevoked])
 }

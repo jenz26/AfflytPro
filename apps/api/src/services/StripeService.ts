@@ -32,6 +32,7 @@ const PRICE_IDS: Record<PlanType, { monthly: string; yearly: string }> = {
     monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY || 'price_business_monthly',
     yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY || 'price_business_yearly',
   },
+  BETA_TESTER: { monthly: '', yearly: '' }, // Beta testers don't pay
 };
 
 // Reverse mapping from price ID to plan

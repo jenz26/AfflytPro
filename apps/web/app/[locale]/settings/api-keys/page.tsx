@@ -11,7 +11,6 @@ import {
     Trash2,
     Shield,
     Bot,
-    ShoppingBag,
     Lock
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -132,20 +131,12 @@ export default function ApiKeysPage() {
             icon: Bot,
             description: t('telegramDesc'),
             placeholder: '123456789:ABCdefGHIjklMNOpqrsTUVwxyz...'
-        },
-        {
-            type: 'AMAZON_TAG',
-            label: t('types.amazon'),
-            icon: ShoppingBag,
-            description: t('amazonDesc'),
-            placeholder: 'mytag-21'
         }
     ];
 
     const getIcon = (provider: string) => {
         switch (provider) {
             case 'TELEGRAM_BOT': return Bot;
-            case 'AMAZON_TAG': return ShoppingBag;
             default: return Key;
         }
     };

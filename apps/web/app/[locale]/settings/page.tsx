@@ -8,13 +8,13 @@ import {
     User,
     CreditCard,
     Key,
-    FileText,
     Bell,
     Shield,
     ChevronRight,
     Zap,
     Loader2,
-    Tag
+    Tag,
+    Sparkles
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { API_BASE } from '@/lib/api/config';
@@ -192,12 +192,6 @@ export default function SettingsHubPage() {
             stat: userStats.affiliateTags.toString()
         },
         {
-            key: 'templates',
-            icon: FileText,
-            path: `/${locale}/settings/templates`,
-            color: 'from-purple-500 to-purple-600',
-        },
-        {
             key: 'notifications',
             icon: Bell,
             path: `/${locale}/settings/notifications`,
@@ -208,6 +202,12 @@ export default function SettingsHubPage() {
             icon: Shield,
             path: `/${locale}/settings/security`,
             color: 'from-red-500 to-red-600',
+        },
+        {
+            key: 'tester',
+            icon: Sparkles,
+            path: `/${locale}/settings/tester`,
+            color: 'from-purple-500 to-pink-500',
         },
     ];
 
