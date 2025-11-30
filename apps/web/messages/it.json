@@ -757,6 +757,13 @@
           "useChannelTag": "Se lasci vuoto, verrà usato il tag del canale: {tag}",
           "enterTag": "Inserisci il tag affiliato Amazon da usare per questa automazione"
         },
+        "affiliateTag": {
+          "label": "Tag Affiliato Amazon",
+          "noTags": "Nessun tag configurato",
+          "noTagsHint": "Aggiungi un tag affiliato per tracciare le performance",
+          "addTag": "Aggiungi Tag",
+          "manageTagsHint": "Gestisci i tuoi tag affiliato"
+        },
         "dealPublishMode": {
           "label": "Tipo di offerte da pubblicare",
           "discountedOnly": {
@@ -1770,6 +1777,7 @@
       "billing": "Fatturazione",
       "channels": "Canali",
       "apiKeys": "Chiavi API",
+      "affiliateTags": "Tag Affiliato",
       "templates": "Template",
       "notifications": "Notifiche",
       "security": "Sicurezza"
@@ -1786,6 +1794,7 @@
         "billing": "Piano, pagamenti e fatture",
         "channels": "Canali di pubblicazione connessi",
         "apiKeys": "Chiavi API e integrazioni",
+        "affiliateTags": "Tag Amazon per automazioni e analytics",
         "templates": "Template messaggi",
         "notifications": "Preferenze notifiche",
         "security": "Password e impostazioni sicurezza"
@@ -2145,13 +2154,44 @@
         "scheduleRequired": "La programmazione è obbligatoria",
         "invalidCron": "Espressione cron non valida",
         "bountyUrlRequired": "URL bounty richiesto",
-        "channelNoTag": "Il canale selezionato non ha un Amazon Tag configurato"
+        "channelNoTag": "Il canale selezionato non ha un Amazon Tag configurato",
+        "affiliateTagRequired": "Seleziona un tag affiliato per i post bounty"
       },
       "back": "Indietro",
       "next": "Avanti",
       "cancel": "Annulla",
       "save": "Salva",
       "create": "Crea Post"
+    }
+  },
+  "affiliateTags": {
+    "title": "Tag Affiliato Amazon",
+    "subtitle": "Gestisci i tuoi tag Amazon per tracciare le performance",
+    "addTag": "Aggiungi Tag",
+    "addNewTag": "Nuovo Tag Affiliato",
+    "createTag": "Crea Tag",
+    "infoBox": "I tag affiliato ti permettono di tracciare le performance delle tue campagne separatamente. Ogni automazione e post programmato può usare un tag diverso per analytics granulari.",
+    "form": {
+      "tag": "Tag Amazon",
+      "tagHelp": "Il tag associato del tuo account Amazon Associates",
+      "label": "Etichetta",
+      "marketplace": "Marketplace",
+      "setAsDefault": "Imposta come predefinito"
+    },
+    "empty": {
+      "title": "Nessun Tag Configurato",
+      "description": "Aggiungi il tuo primo tag Amazon per iniziare a tracciare le performance"
+    },
+    "setAsDefault": "Imposta come predefinito",
+    "delete": {
+      "title": "Elimina Tag?",
+      "aboutTo": "Stai per eliminare questo tag:",
+      "inUseWarning": "Questo tag è in uso. Rimuovilo prima dalle automazioni e post programmati.",
+      "confirmButton": "Sì, Elimina"
+    },
+    "edit": {
+      "title": "Modifica Tag",
+      "tagCantChange": "Il tag non può essere modificato"
     }
   }
 }

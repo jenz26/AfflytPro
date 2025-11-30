@@ -51,7 +51,7 @@ export interface MissionConfig {
     channelId: string;
     dealPublishMode: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
     includeKeepaChart: boolean;
-    amazonTagOverride: string;
+    affiliateTagId: string;
 
     // Step 5b: Copy Mode (LLM)
     copyMode: 'TEMPLATE' | 'LLM';
@@ -125,7 +125,7 @@ const initialMissionConfig: MissionConfig = {
     channelId: '',
     dealPublishMode: 'DISCOUNTED_ONLY',
     includeKeepaChart: false,
-    amazonTagOverride: '',
+    affiliateTagId: '',
     copyMode: 'TEMPLATE',
     messageTemplate: undefined,
     customStylePrompt: undefined,
@@ -325,13 +325,13 @@ export function CreateMissionWizard({
                         frequencyLabel={wizardConfig.planLimits.frequencyLabel}
                         dealPublishMode={mission.dealPublishMode}
                         includeKeepaChart={mission.includeKeepaChart}
-                        amazonTagOverride={mission.amazonTagOverride}
+                        affiliateTagId={mission.affiliateTagId}
                         copyMode={mission.copyMode}
                         customStylePrompt={mission.customStylePrompt || ''}
                         onChange={(channelId) => updateMission({ channelId })}
                         onDealModeChange={(dealPublishMode) => updateMission({ dealPublishMode })}
                         onKeepaChartChange={(includeKeepaChart) => updateMission({ includeKeepaChart })}
-                        onAmazonTagChange={(amazonTagOverride) => updateMission({ amazonTagOverride })}
+                        onAffiliateTagChange={(affiliateTagId) => updateMission({ affiliateTagId })}
                         onCopyModeChange={(copyMode) => updateMission({ copyMode })}
                         onStylePromptChange={(customStylePrompt) => updateMission({ customStylePrompt })}
                     />

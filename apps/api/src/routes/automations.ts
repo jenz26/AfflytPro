@@ -75,7 +75,7 @@ const createRuleSchema = z.object({
     // Deal Publish Mode
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).default('DISCOUNTED_ONLY'),
     includeKeepaChart: z.boolean().default(false),
-    amazonTagOverride: z.string().max(50).optional(),
+    affiliateTagId: z.string().uuid().optional().or(z.literal('')),
 
     // LLM Copy Generation
     copyMode: z.enum(['TEMPLATE', 'LLM']).default('TEMPLATE'),
@@ -129,7 +129,7 @@ const updateRuleSchema = z.object({
     // Deal Publish Mode (NEW)
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).optional(),
     includeKeepaChart: z.boolean().optional(),
-    amazonTagOverride: z.string().max(50).optional(),
+    affiliateTagId: z.string().uuid().optional().or(z.literal('')),
 
     // LLM Copy Generation
     copyMode: z.enum(['TEMPLATE', 'LLM']).optional(),
@@ -484,7 +484,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     // Deal Publish Mode
                     dealPublishMode: parsed.dealPublishMode,
                     includeKeepaChart: parsed.includeKeepaChart,
-                    ...(parsed.amazonTagOverride ? { amazonTagOverride: parsed.amazonTagOverride } : {}),
+                    ...(parsed.affiliateTagId && parsed.affiliateTagId.trim() !== '' ? { affiliateTagId: parsed.affiliateTagId } : {}),
 
                     // LLM Copy Generation
                     copyMode: parsed.copyMode || 'TEMPLATE',

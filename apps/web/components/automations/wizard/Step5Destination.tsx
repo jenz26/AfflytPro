@@ -17,6 +17,14 @@ interface Channel {
     amazonTag?: string | null;
 }
 
+interface AffiliateTag {
+    id: string;
+    tag: string;
+    label: string;
+    marketplace: string;
+    isDefault: boolean;
+}
+
 type DealPublishMode = 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
 type CopyMode = 'TEMPLATE' | 'LLM';
 
@@ -26,14 +34,14 @@ interface Step5DestinationProps {
     frequencyLabel: string;
     dealPublishMode?: DealPublishMode;
     includeKeepaChart?: boolean;
-    amazonTagOverride?: string;
+    affiliateTagId?: string;
     // LLM Copy props
     copyMode?: CopyMode;
     customStylePrompt?: string;
     onChange: (channelId: string) => void;
     onDealModeChange?: (mode: DealPublishMode) => void;
     onKeepaChartChange?: (include: boolean) => void;
-    onAmazonTagChange?: (tag: string) => void;
+    onAffiliateTagChange?: (tagId: string) => void;
     onCopyModeChange?: (mode: CopyMode) => void;
     onStylePromptChange?: (prompt: string) => void;
 }
@@ -44,41 +52,62 @@ export function Step5Destination({
     frequencyLabel,
     dealPublishMode = 'DISCOUNTED_ONLY',
     includeKeepaChart = false,
-    amazonTagOverride = '',
+    affiliateTagId = '',
     copyMode = 'TEMPLATE',
     customStylePrompt = '',
     onChange,
     onDealModeChange,
     onKeepaChartChange,
-    onAmazonTagChange,
+    onAffiliateTagChange,
     onCopyModeChange,
     onStylePromptChange
 }: Step5DestinationProps) {
     const t = useTranslations('automations.wizard.step5');
     const [channels, setChannels] = useState<Channel[]>([]);
+    const [affiliateTags, setAffiliateTags] = useState<AffiliateTag[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchChannels = async () => {
+        const fetchData = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/user/channels`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
 
-                if (response.ok) {
-                    const data = await response.json();
+                // Fetch channels and affiliate tags in parallel
+                const [channelsRes, tagsRes] = await Promise.all([
+                    fetch(`${API_BASE}/user/channels`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`${API_BASE}/user/affiliate-tags`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+
+                if (channelsRes.ok) {
+                    const data = await channelsRes.json();
                     setChannels(data.channels || []);
                 }
+
+                if (tagsRes.ok) {
+                    const data = await tagsRes.json();
+                    setAffiliateTags(data.tags || []);
+
+                    // Auto-select default tag if none selected
+                    if (!affiliateTagId && onAffiliateTagChange) {
+                        const defaultTag = (data.tags || []).find((t: AffiliateTag) => t.isDefault);
+                        if (defaultTag) {
+                            onAffiliateTagChange(defaultTag.id);
+                        }
+                    }
+                }
             } catch (err) {
-                setError('Failed to load channels');
+                setError('Failed to load data');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchChannels();
+        fetchData();
     }, []);
 
     const connectedChannels = channels.filter(c => c.status === 'CONNECTED');
@@ -199,28 +228,80 @@ export function Step5Destination({
                 )}
             </div>
 
-            {/* Amazon Tag Override */}
-            {channelId && (
-                <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-300">
-                        Tag Affiliato Amazon (opzionale)
-                    </label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={amazonTagOverride}
-                            onChange={(e) => onAmazonTagChange?.(e.target.value)}
-                            placeholder={selectedChannel?.amazonTag || 'es. miostore-21'}
-                            className="w-full px-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white font-mono text-sm focus:border-afflyt-cyan-500 focus:outline-none transition-colors"
-                        />
+            {/* Affiliate Tag Selection */}
+            <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">
+                    {t('affiliateTag.label')}
+                </label>
+                {affiliateTags.length === 0 ? (
+                    <GlassCard className="p-4 border-orange-500/30 bg-orange-500/5">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                <Tag className="w-5 h-5 text-orange-400" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-white">{t('affiliateTag.noTags')}</p>
+                                <p className="text-xs text-gray-400">{t('affiliateTag.noTagsHint')}</p>
+                            </div>
+                            <Link href="/settings/affiliate-tags">
+                                <CyberButton variant="secondary" className="text-xs">
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    {t('affiliateTag.addTag')}
+                                </CyberButton>
+                            </Link>
+                        </div>
+                    </GlassCard>
+                ) : (
+                    <div className="space-y-2">
+                        {affiliateTags.map((tag) => {
+                            const isSelected = affiliateTagId === tag.id;
+                            return (
+                                <button
+                                    key={tag.id}
+                                    onClick={() => onAffiliateTagChange?.(tag.id)}
+                                    className={`w-full p-4 rounded-lg border transition-all text-left ${
+                                        isSelected
+                                            ? 'bg-orange-500/10 border-orange-500/40'
+                                            : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-orange-500/30'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                            isSelected ? 'bg-orange-500/20' : 'bg-afflyt-dark-100'
+                                        }`}>
+                                            <Tag className={`w-5 h-5 ${isSelected ? 'text-orange-400' : 'text-gray-500'}`} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                                                    {tag.label}
+                                                </p>
+                                                {tag.isDefault && (
+                                                    <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 text-[10px] font-medium rounded">
+                                                        DEFAULT
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-mono">{tag.tag}</p>
+                                        </div>
+                                        {isSelected && (
+                                            <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
+                                                <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                        <Link href="/settings/affiliate-tags" className="block mt-2">
+                            <button className="w-full p-3 rounded-lg border border-dashed border-afflyt-glass-border hover:border-orange-500/30 transition-colors text-gray-400 hover:text-orange-400 text-sm flex items-center justify-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                {t('affiliateTag.manageTagsHint')}
+                            </button>
+                        </Link>
                     </div>
-                    <p className="text-xs text-gray-500">
-                        {selectedChannel?.amazonTag
-                            ? `Se lasci vuoto, verrà usato il tag del canale: ${selectedChannel.amazonTag}`
-                            : 'Inserisci il tag affiliato Amazon da usare per questa automazione'}
-                    </p>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Frequency Info */}
             <GlassCard className="p-4 bg-afflyt-dark-100/50">

@@ -109,7 +109,7 @@ export default function AutomationStudioPage() {
                         // Deal publish options
                         dealPublishMode: ruleData.dealPublishMode,
                         includeKeepaChart: ruleData.includeKeepaChart,
-                        amazonTagOverride: ruleData.amazonTagOverride || undefined,
+                        affiliateTagId: ruleData.affiliateTagId || undefined,
                         // LLM Copy options
                         copyMode: ruleData.copyMode,
                         messageTemplate: ruleData.messageTemplate,
@@ -488,7 +488,7 @@ export default function AutomationStudioPage() {
                         brandExclude: [],
                         dealPublishMode: editingRule.dealPublishMode || 'DISCOUNTED_ONLY',
                         includeKeepaChart: editingRule.includeKeepaChart || false,
-                        amazonTagOverride: '',
+                        affiliateTagId: (editingRule as any).affiliateTagId || '',
                         // LLM Copy fields
                         copyMode: (editingRule as any).copyMode || 'TEMPLATE',
                         messageTemplate: (editingRule as any).messageTemplate || undefined,

@@ -802,6 +802,13 @@
           "useChannelTag": "Leave empty to use the channel tag: {tag}",
           "enterTag": "Enter the Amazon affiliate tag to use for this automation"
         },
+        "affiliateTag": {
+          "label": "Amazon Affiliate Tag",
+          "noTags": "No tags configured",
+          "noTagsHint": "Add an affiliate tag to track performance",
+          "addTag": "Add Tag",
+          "manageTagsHint": "Manage your affiliate tags"
+        },
         "dealPublishMode": {
           "label": "Type of deals to publish",
           "discountedOnly": {
@@ -1801,6 +1808,7 @@
       "billing": "Billing",
       "channels": "Channels",
       "apiKeys": "API Keys",
+      "affiliateTags": "Affiliate Tags",
       "templates": "Templates",
       "notifications": "Notifications",
       "security": "Security"
@@ -1817,6 +1825,7 @@
         "billing": "Plan, payments and invoices",
         "channels": "Connected publishing channels",
         "apiKeys": "API keys and integrations",
+        "affiliateTags": "Amazon tags for automations and analytics",
         "templates": "Message templates",
         "notifications": "Notification preferences",
         "security": "Password and security settings"
@@ -2176,13 +2185,44 @@
         "scheduleRequired": "Schedule is required",
         "invalidCron": "Invalid cron expression",
         "bountyUrlRequired": "Bounty URL is required",
-        "channelNoTag": "Selected channel has no Amazon Tag configured"
+        "channelNoTag": "Selected channel has no Amazon Tag configured",
+        "affiliateTagRequired": "Select an affiliate tag for bounty posts"
       },
       "back": "Back",
       "next": "Next",
       "cancel": "Cancel",
       "save": "Save",
       "create": "Create Post"
+    }
+  },
+  "affiliateTags": {
+    "title": "Amazon Affiliate Tags",
+    "subtitle": "Manage your Amazon tags to track performance",
+    "addTag": "Add Tag",
+    "addNewTag": "New Affiliate Tag",
+    "createTag": "Create Tag",
+    "infoBox": "Affiliate tags allow you to track campaign performance separately. Each automation and scheduled post can use a different tag for granular analytics.",
+    "form": {
+      "tag": "Amazon Tag",
+      "tagHelp": "The associate tag from your Amazon Associates account",
+      "label": "Label",
+      "marketplace": "Marketplace",
+      "setAsDefault": "Set as default"
+    },
+    "empty": {
+      "title": "No Tags Configured",
+      "description": "Add your first Amazon tag to start tracking performance"
+    },
+    "setAsDefault": "Set as default",
+    "delete": {
+      "title": "Delete Tag?",
+      "aboutTo": "You are about to delete this tag:",
+      "inUseWarning": "This tag is in use. Remove it from automations and scheduled posts first.",
+      "confirmButton": "Yes, Delete"
+    },
+    "edit": {
+      "title": "Edit Tag",
+      "tagCantChange": "The tag cannot be modified"
     }
   }
 }

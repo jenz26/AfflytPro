@@ -11,7 +11,8 @@ import {
     Bell,
     Shield,
     ArrowLeft,
-    Settings
+    Settings,
+    Tag
 } from 'lucide-react';
 import { CommandBar } from '@/components/navigation/CommandBar';
 
@@ -34,6 +35,7 @@ export default function SettingsLayout({
         { key: 'profile', icon: User, path: `/${locale}/settings/profile` },
         { key: 'billing', icon: CreditCard, path: `/${locale}/settings/billing` },
         { key: 'apiKeys', icon: Key, path: `/${locale}/settings/api-keys` },
+        { key: 'affiliateTags', icon: Tag, path: `/${locale}/settings/affiliate-tags` },
         { key: 'templates', icon: FileText, path: `/${locale}/settings/templates` },
         { key: 'notifications', icon: Bell, path: `/${locale}/settings/notifications` },
         { key: 'security', icon: Shield, path: `/${locale}/settings/security` },

@@ -19,7 +19,7 @@ const createScheduledPostSchema = z.object({
   // Bounty-specific fields
   bountyTemplate: z.string().optional(),
   bountyUrl: z.string().url().optional().or(z.literal('')).transform(v => v || undefined),
-  affiliateTag: z.string().optional(),
+  affiliateTagId: z.string().uuid().optional().or(z.literal('')).transform(v => v || undefined),
   settings: z.record(z.string(), z.unknown()).optional(),
   conflictSettings: z.object({
     skipIfDealPending: z.boolean().default(true),
@@ -281,7 +281,6 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
         ...(data.type === 'BOUNTY' ? {
           bountyTemplate: data.bountyTemplate,
           bountyUrl: data.bountyUrl,
-          affiliateTag: data.affiliateTag,
         } : {}),
       };
 
@@ -289,6 +288,7 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
         data: {
           userId,
           channelId: data.channelId,
+          ...(data.affiliateTagId ? { affiliateTagId: data.affiliateTagId } : {}),
           type: data.type as ScheduledPostType,
           name: data.name,
           content: sanitizedContent,

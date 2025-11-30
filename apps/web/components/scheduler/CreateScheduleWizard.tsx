@@ -46,6 +46,14 @@ interface ChannelWithTag extends Channel {
   amazonTag?: string;
 }
 
+interface AffiliateTag {
+  id: string;
+  tag: string;
+  label: string;
+  marketplace: string;
+  isDefault: boolean;
+}
+
 const BOUNTY_TEMPLATES = [
   { id: 'prime', name: 'Amazon Prime', url: 'https://www.amazon.it/amazonprime', emoji: '📦' },
   { id: 'audible', name: 'Audible', url: 'https://www.amazon.it/hz/audible', emoji: '🎧' },
@@ -95,6 +103,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
   const t = useTranslations('scheduler.wizard');
   const [step, setStep] = useState(1);
   const [channels, setChannels] = useState<ChannelWithTag[]>([]);
+  const [affiliateTags, setAffiliateTags] = useState<AffiliateTag[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [showCustomCron, setShowCustomCron] = useState(false);
   const [showCustomBountyUrl, setShowCustomBountyUrl] = useState(false);
@@ -111,7 +120,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
     // Bounty-specific settings
     bountyTemplate: 'prime',
     bountyUrl: '',
-    affiliateTag: '',
+    affiliateTagId: '',
     conflictSettings: {
       skipIfDealPending: true,
       bufferMinutes: 10,
@@ -123,29 +132,47 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchChannels();
+    fetchData();
   }, []);
 
-  const fetchChannels = async () => {
+  const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/user/channels`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setChannels(data.channels || []);
+
+      // Fetch channels and affiliate tags in parallel
+      const [channelsRes, tagsRes] = await Promise.all([
+        fetch(`${API_BASE}/user/channels`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE}/user/affiliate-tags`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const channelsData = await channelsRes.json();
+      setChannels(channelsData.channels || []);
+
+      if (tagsRes.ok) {
+        const tagsData = await tagsRes.json();
+        setAffiliateTags(tagsData.tags || []);
+
+        // Auto-select default tag if none selected
+        if (!formData.affiliateTagId) {
+          const defaultTag = (tagsData.tags || []).find((t: AffiliateTag) => t.isDefault);
+          if (defaultTag) {
+            setFormData(prev => ({ ...prev, affiliateTagId: defaultTag.id }));
+          }
+        }
+      }
     } catch (error) {
-      console.error('Failed to fetch channels:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoadingChannels(false);
     }
   };
 
-  // Get the selected channel's amazon tag
-  const selectedChannel = channels.find(c => c.id === formData.channelId);
-  const channelAmazonTag = selectedChannel?.amazonTag;
+  // Get the selected affiliate tag
+  const selectedTag = affiliateTags.find(t => t.id === formData.affiliateTagId);
 
   const validateStep = (stepNum: number): boolean => {
     const newErrors: Record<string, string> = {};
@@ -159,10 +186,9 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
         if (formData.bountyTemplate === 'custom' && !formData.bountyUrl.trim()) {
           newErrors.bountyUrl = t('errors.bountyUrlRequired') || 'URL bounty richiesto';
         }
-        // Check if selected channel has amazon tag configured
-        const channel = channels.find(c => c.id === formData.channelId);
-        if (channel && !channel.amazonTag) {
-          newErrors.channelId = t('errors.channelNoTag') || 'Il canale selezionato non ha un Amazon Tag configurato';
+        // Check if affiliate tag is selected
+        if (!formData.affiliateTagId) {
+          newErrors.affiliateTagId = t('errors.affiliateTagRequired') || 'Seleziona un tag affiliato per i post bounty';
         }
       }
     }
@@ -367,21 +393,49 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                     </div>
                   )}
 
-                  {/* Show channel's amazon tag */}
-                  {formData.channelId && (
-                    <div className="flex items-center gap-2 pt-2 border-t border-purple-500/20">
-                      <span className="text-xs text-gray-400">Affiliate Tag:</span>
-                      {channelAmazonTag ? (
-                        <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-mono rounded">
-                          {channelAmazonTag}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-yellow-400">
-                          ⚠️ Nessun tag configurato per questo canale
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {/* Affiliate Tag Selection */}
+                  <div className="pt-2 border-t border-purple-500/20">
+                    <label className="block text-xs text-gray-400 mb-2">
+                      {t('fields.affiliateTag') || 'Tag Affiliato'}
+                    </label>
+                    {affiliateTags.length === 0 ? (
+                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                        <p className="text-xs text-yellow-400">
+                          ⚠️ Nessun tag configurato. <a href="/settings/affiliate-tags" className="underline hover:text-yellow-300">Aggiungi un tag</a>
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {affiliateTags.map((tag) => (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => updateFormData('affiliateTagId', tag.id)}
+                            className={`w-full p-2 rounded-lg border text-left transition-all ${
+                              formData.affiliateTagId === tag.id
+                                ? 'border-purple-500 bg-purple-500/20'
+                                : 'border-afflyt-glass-border hover:border-purple-500/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-xs font-medium text-white">{tag.label}</p>
+                                <p className="text-[10px] text-gray-400 font-mono">{tag.tag}</p>
+                              </div>
+                              {tag.isDefault && (
+                                <span className="px-1.5 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] rounded">
+                                  DEFAULT
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {errors.affiliateTagId && (
+                      <p className="text-red-400 text-xs mt-1">{errors.affiliateTagId}</p>
+                    )}
+                  </div>
                 </div>
               )}
 

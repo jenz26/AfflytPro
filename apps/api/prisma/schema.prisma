@@ -138,104 +138,105 @@ enum ActionType {
 }
 
 enum DealPublishMode {
-  DISCOUNTED_ONLY    // Solo prodotti con prezzo barrato visibile su Amazon (listPrice > currentPrice)
-  LOWEST_PRICE       // Solo prodotti al prezzo più basso storico (anche senza sconto visibile)
-  BOTH               // Entrambi i tipi di deal
+  DISCOUNTED_ONLY // Solo prodotti con prezzo barrato visibile su Amazon (listPrice > currentPrice)
+  LOWEST_PRICE // Solo prodotti al prezzo più basso storico (anche senza sconto visibile)
+  BOTH // Entrambi i tipi di deal
 }
 
 // === SCHEDULER ENUMS ===
 
 enum LinkType {
-  DEAL       // Link a prodotto da automazione
-  BOUNTY     // Link bounty (Prime, Audible, etc.)
-  SCHEDULED  // Link da scheduled post
-  MANUAL     // Link creato manualmente
+  DEAL // Link a prodotto da automazione
+  BOUNTY // Link bounty (Prime, Audible, etc.)
+  SCHEDULED // Link da scheduled post
+  MANUAL // Link creato manualmente
 }
 
 enum ScheduledPostType {
-  CUSTOM       // Testo libero programmato
-  BOUNTY       // Link bounty Amazon (Prime, Audible, Music, Kindle)
-  RECAP        // Top deals delle ultime 24h con LLM
-  CROSS_PROMO  // Promozione altri canali del network
-  WELCOME      // Benvenuto ai nuovi iscritti
-  SPONSORED    // Contenuti brand/sponsor
+  CUSTOM // Testo libero programmato
+  BOUNTY // Link bounty Amazon (Prime, Audible, Music, Kindle)
+  RECAP // Top deals delle ultime 24h con LLM
+  CROSS_PROMO // Promozione altri canali del network
+  WELCOME // Benvenuto ai nuovi iscritti
+  SPONSORED // Contenuti brand/sponsor
 }
 
 enum ExecutionStatus {
-  PENDING            // In coda
-  RUNNING            // In esecuzione
-  SUCCESS            // Completato con successo
-  FAILED             // Fallito
-  SKIPPED_CONFLICT   // Saltato per conflitto con deal
+  PENDING // In coda
+  RUNNING // In esecuzione
+  SUCCESS // Completato con successo
+  FAILED // Fallito
+  SKIPPED_CONFLICT // Saltato per conflitto con deal
   SKIPPED_RATE_LIMIT // Saltato per rate limit
-  SKIPPED_CHANNEL    // Saltato per canale disattivato
-  RETRY              // In attesa di retry
-  RESCHEDULED        // Riprogrammato per conflitto
+  SKIPPED_CHANNEL // Saltato per canale disattivato
+  RETRY // In attesa di retry
+  RESCHEDULED // Riprogrammato per conflitto
 }
 
 // === USER & AUTHENTICATION ===
 
 model User {
-  id                  String               @id @default(uuid())
-  email               String               @unique
-  name                String?
-  password            String?              // Hashed password (bcrypt)
-  role                UserRole             @default(USER)
-  plan                PlanType             @default(FREE)
-  ttl                 Int                  @default(72) // hours
-  brandId             String?
+  id       String   @id @default(uuid())
+  email    String   @unique
+  name     String?
+  password String? // Hashed password (bcrypt)
+  role     UserRole @default(USER)
+  plan     PlanType @default(FREE)
+  ttl      Int      @default(72) // hours
+  brandId  String?
 
   // Email verification
-  emailVerified       Boolean              @default(false)
-  emailVerifiedAt     DateTime?
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
 
   // Account status
-  isActive            Boolean              @default(true)
+  isActive            Boolean   @default(true)
   lastLoginAt         DateTime?
-  failedLoginAttempts Int                  @default(0)
+  failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  apiKeys             ApiKey[]
-  credentials         Credential[]
-  channels            Channel[]
-  affiliateLinks      AffiliateLink[]
-  keepaBudgets        KeepaMonthlyBudget[]
-  automationRules     AutomationRule[]
-  automationSplits    AutomationSplit[]
-  messageTemplates    MessageTemplate[]
-  onboardingProgress  OnboardingProgress?
-  achievements        Achievement[]
-  authTokens          AuthToken[]
-  authEvents          AuthEvent[]
-  notifications       Notification[]
-  subscription        Subscription?
-  automations         Automation[]
-  scheduledPosts      ScheduledPost[]
+  apiKeys            ApiKey[]
+  credentials        Credential[]
+  channels           Channel[]
+  affiliateLinks     AffiliateLink[]
+  keepaBudgets       KeepaMonthlyBudget[]
+  automationRules    AutomationRule[]
+  automationSplits   AutomationSplit[]
+  messageTemplates   MessageTemplate[]
+  onboardingProgress OnboardingProgress?
+  achievements       Achievement[]
+  authTokens         AuthToken[]
+  authEvents         AuthEvent[]
+  notifications      Notification[]
+  subscription       Subscription?
+  automations        Automation[]
+  scheduledPosts     ScheduledPost[]
+  affiliateTags      AffiliateTag[]
 
   @@index([email])
   @@index([plan])
 }
 
 model AuthToken {
-  id        String        @id @default(uuid())
-  userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  token     String        @unique // Secure random token (hashed)
-  type      AuthTokenType
+  token String        @unique // Secure random token (hashed)
+  type  AuthTokenType
 
   expiresAt DateTime
-  usedAt    DateTime?     // When the token was used (null if not used)
+  usedAt    DateTime? // When the token was used (null if not used)
 
   // Metadata for security
   ipAddress String?
   userAgent String?
 
-  createdAt DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([token])
@@ -245,23 +246,23 @@ model AuthToken {
 
 // Auth Events - Audit log for authentication activities
 model AuthEvent {
-  id        String        @id @default(uuid())
+  id String @id @default(uuid())
 
   // Event type
-  type      AuthEventType
+  type AuthEventType
 
   // User (optional - some events like failed login may not have user)
-  userId    String?
-  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email     String?       // Store email for events without user (failed login attempts)
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email  String? // Store email for events without user (failed login attempts)
 
   // Context
   ipAddress String?
   userAgent String?
-  metadata  Json?         // Additional context (e.g., failure reason, device info)
+  metadata  Json? // Additional context (e.g., failure reason, device info)
 
   // Timestamp
-  createdAt DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([email])
@@ -286,9 +287,9 @@ model Credential {
   id        String    @id @default(uuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider  String    // e.g., "OPENAI", "ANTHROPIC", "TELEGRAM_BOT"
-  key       String    // Encrypted value
-  label     String?   // User friendly name
+  provider  String // e.g., "OPENAI", "ANTHROPIC", "TELEGRAM_BOT"
+  key       String // Encrypted value
+  label     String? // User friendly name
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   channels  Channel[]
@@ -298,18 +299,18 @@ model Credential {
 }
 
 model Channel {
-  id              String           @id @default(uuid())
+  id              String               @id @default(uuid())
   userId          String
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   platform        ChannelPlatform
-  channelId       String           // e.g., "@mychannel" or "-100..."
+  channelId       String // e.g., "@mychannel" or "-100..."
   credentialId    String?
-  credential      Credential?      @relation(fields: [credentialId], references: [id], onDelete: SetNull)
-  status          ChannelStatus    @default(PENDING)
-  amazonTag       String?          // Tag Amazon specifico per questo canale (override user default)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  credential      Credential?          @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+  status          ChannelStatus        @default(PENDING)
+  amazonTag       String? // Tag Amazon specifico per questo canale (override user default)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   automationRules AutomationRule[]
   dealHistory     ChannelDealHistory[]
   scheduledPosts  ScheduledPost[]
@@ -321,15 +322,15 @@ model Channel {
 // === CHANNEL DEAL HISTORY (Deduplication) ===
 
 model ChannelDealHistory {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  channelId   String
-  channel     Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
-  asin        String
+  asin String
 
-  ruleId      String?
-  rule        AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  ruleId String?
+  rule   AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
 
   publishedAt DateTime @default(now())
   expiresAt   DateTime // Auto-cleanup: publishedAt + dedupeWindowHours
@@ -339,13 +340,13 @@ model ChannelDealHistory {
   // ═══════════════════════════════════════════════════════════════
 
   /// Testo effettivamente usato per il messaggio
-  generatedCopy     String?
+  generatedCopy String?
 
   /// Fonte del testo: TEMPLATE | LLM | LLM_CACHE | LLM_FALLBACK_TEMPLATE
-  copySource        String?
+  copySource String?
 
   /// Quando è stato generato il testo (per cache invalidation)
-  copyGeneratedAt   DateTime?
+  copyGeneratedAt DateTime?
 
   /// Prezzo al momento della generazione (per rigenerare se cambia)
   priceAtGeneration Float?
@@ -376,11 +377,11 @@ model Product {
   imageUrl         String?
   currentPrice     Float
   originalPrice    Float
-  discount         Int             // Calculated percentage
+  discount         Int // Calculated percentage
   salesRank        Int?
   rating           Float?
   reviewCount      Int?
-  scoreComponents  Json?           // Breakdown of Deal Score calculation
+  scoreComponents  Json? // Breakdown of Deal Score calculation
   lastPriceCheckAt DateTime        @default(now())
   lastKeepaRefresh DateTime        @default(now())
   keepaDataTTL     Int             @default(1440) // Minutes remaining (default 24h)
@@ -393,34 +394,34 @@ model Product {
   // ═══════════════════════════════════════════════════════════════
 
   /// Brand name string (from Keepa, denormalized for filtering)
-  brandName       String?
+  brandName String?
 
   /// Sold directly by Amazon
-  isAmazonSeller  Boolean         @default(false)
+  isAmazonSeller Boolean @default(false)
 
   /// Fulfilled by Amazon
-  isFBA           Boolean         @default(false)
+  isFBA Boolean @default(false)
 
   /// Has active coupon
-  hasCoupon       Boolean         @default(false)
+  hasCoupon Boolean @default(false)
 
   /// Coupon discount percentage (if hasCoupon is true)
-  couponPercent   Int?
+  couponPercent Int?
 
   /// Prime eligible
-  isPrime         Boolean         @default(false)
+  isPrime Boolean @default(false)
 
   /// Date product was first listed on Amazon
-  listedAt        DateTime?
+  listedAt DateTime?
 
   /// Buy Box price (may differ from currentPrice)
-  buyBoxPrice     Float?
+  buyBoxPrice Float?
 
   /// Number of FBA offers
-  fbaOfferCount   Int?
+  fbaOfferCount Int?
 
   /// Number of total new offers
-  newOfferCount   Int?
+  newOfferCount Int?
 
   /// Deal type classification
   /// - "lightning" = Lightning Deal (temporary, high confidence)
@@ -428,14 +429,14 @@ model Product {
   /// - "deal" = General deal (discount detected but not classified)
   /// - "warehouse" = Amazon Warehouse deal
   /// - null = Not classified or no deal
-  dealType        String?
+  dealType String?
 
   /// When the lightning deal ends (null if not a lightning deal)
-  lightningEndAt  DateTime?
+  lightningEndAt DateTime?
 
   /// Confidence score for the deal (0-100)
   /// Higher = more likely to be a real temporary discount vs permanent price change
-  dealConfidence  Int?
+  dealConfidence Int?
 
   @@index([asin])
   @@index([category])
@@ -454,26 +455,30 @@ model Product {
 }
 
 model AffiliateLink {
-  id             String  @id @default(uuid())
-  productId      String?  // Optional: null for BOUNTY links
+  id             String   @id @default(uuid())
+  productId      String? // Optional: null for BOUNTY links
   product        Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId         String
-  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amazonTag      String  // e.g., "contindig-21"
-  shortCode      String  @unique // Short hash for /r/:hash URLs
-  shortUrl       String  // Generated short link
-  fullUrl        String  // Full Amazon URL with tag
-  destinationUrl String  // Final Amazon product URL
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amazonTag      String // e.g., "contindig-21"
+  shortCode      String   @unique // Short hash for /r/:hash URLs
+  shortUrl       String // Generated short link
+  fullUrl        String // Full Amazon URL with tag
+  destinationUrl String // Final Amazon product URL
 
   // Link type classification
-  linkType         LinkType  @default(DEAL)
+  linkType LinkType @default(DEAL)
 
   // Optional: link to scheduled post (for BOUNTY/SCHEDULED types)
-  scheduledPostId  String?
-  scheduledPost    ScheduledPost? @relation(fields: [scheduledPostId], references: [id], onDelete: SetNull)
+  scheduledPostId String?
+  scheduledPost   ScheduledPost? @relation(fields: [scheduledPostId], references: [id], onDelete: SetNull)
 
   // Optional: channel for tracking
-  channelId        String?
+  channelId String?
+
+  // Affiliate Tag for analytics tracking
+  affiliateTagId  String?
+  affiliateTagRef AffiliateTag? @relation("AffiliateTagRef", fields: [affiliateTagId], references: [id], onDelete: SetNull)
 
   // Tracking metrics
   clicks          Int   @default(0)
@@ -498,7 +503,7 @@ model KeepaMonthlyBudget {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  month       String   // e.g., "2025-11"
+  month       String // e.g., "2025-11"
   tokensUsed  Int      @default(0)
   tokensLimit Int      @default(10000)
   resetAt     DateTime
@@ -517,7 +522,7 @@ model Click {
   link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Tracking Data (Privacy-compliant)
-  ipHash    String  // Anonymized IP hash
+  ipHash    String // Anonymized IP hash
   userAgent String?
   referer   String?
 
@@ -534,9 +539,9 @@ model Conversion {
   link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Conversion Data
-  trackingId String  @unique // External tracking ID from Amazon/affiliate network
-  revenue    Float   // Total sale amount
-  commission Float?  // Commission earned (if provided)
+  trackingId String @unique // External tracking ID from Amazon/affiliate network
+  revenue    Float // Total sale amount
+  commission Float? // Commission earned (if provided)
 
   // Metadata
   convertedAt DateTime @default(now())
@@ -548,9 +553,9 @@ model Conversion {
 // === AUTOMATION RULES ===
 
 model AutomationRule {
-  id     String   @id @default(uuid())
+  id     String @id @default(uuid())
   userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // ═══════════════════════════════════════════════════════════════
   // BASIC INFO
@@ -564,30 +569,30 @@ model AutomationRule {
   // ═══════════════════════════════════════════════════════════════
 
   /// Array of category IDs (Keepa format, e.g., ["166199011", "16427032011"])
-  categories  String[]
+  categories String[]
 
   /// Minimum deal score (0-100), default 35
   /// Soglie consigliate: 35 (default), 45 (qualità), 60 (top only)
-  minScore    Int      @default(35)
+  minScore Int @default(35)
 
   // ═══════════════════════════════════════════════════════════════
   // TIER: PRO - Advanced Filters
   // ═══════════════════════════════════════════════════════════════
 
   /// Minimum price in EUR (e.g., 10.00)
-  minPrice    Float?
+  minPrice Float?
 
   /// Maximum price in EUR (e.g., 100.00)
-  maxPrice    Float?
+  maxPrice Float?
 
   /// Minimum discount percentage (e.g., 20 for 20%)
   minDiscount Int?
 
   /// Minimum rating (0-500 scale, 400 = 4.0 stars)
-  minRating   Int?
+  minRating Int?
 
   /// Minimum number of reviews
-  minReviews  Int?
+  minReviews Int?
 
   /// Maximum sales rank (lower = more popular)
   maxSalesRank Int?
@@ -597,25 +602,25 @@ model AutomationRule {
   // ═══════════════════════════════════════════════════════════════
 
   /// Only products sold by Amazon
-  amazonOnly    Boolean  @default(false)
+  amazonOnly Boolean @default(false)
 
   /// Only FBA (Fulfilled by Amazon) offers
-  fbaOnly       Boolean  @default(false)
+  fbaOnly Boolean @default(false)
 
   /// Only products with active coupon
-  hasCoupon     Boolean  @default(false)
+  hasCoupon Boolean @default(false)
 
   /// Only Prime exclusive deals
-  primeOnly     Boolean  @default(false)
+  primeOnly Boolean @default(false)
 
   /// Include only these brands (case-insensitive)
-  brandInclude  String[]
+  brandInclude String[]
 
   /// Exclude these brands (case-insensitive)
-  brandExclude  String[]
+  brandExclude String[]
 
   /// Only products listed after this date
-  listedAfter   DateTime?
+  listedAfter DateTime?
 
   // ═══════════════════════════════════════════════════════════════
   // PUBLISHING CONFIG
@@ -636,74 +641,79 @@ model AutomationRule {
   /// DISCOUNTED_ONLY = solo con prezzo barrato visibile su Amazon
   /// LOWEST_PRICE = solo al minimo storico (anche senza sconto visibile)
   /// BOTH = entrambi
-  dealPublishMode  DealPublishMode @default(DISCOUNTED_ONLY)
+  dealPublishMode DealPublishMode @default(DISCOUNTED_ONLY)
 
   /// Includere il grafico storico prezzi Keepa nel messaggio
-  includeKeepaChart  Boolean @default(false)
+  includeKeepaChart Boolean @default(false)
 
   /// Override del tag affiliato Amazon per questa automazione (sovrascrive quello del canale)
-  amazonTagOverride  String?
+  /// DEPRECATED: Use affiliateTagId instead
+  amazonTagOverride String?
+
+  /// Affiliate Tag from Tag Pool (recommended)
+  affiliateTagId String?
+  affiliateTag   AffiliateTag? @relation(fields: [affiliateTagId], references: [id], onDelete: SetNull)
 
   // ═══════════════════════════════════════════════════════════════
   // SCHEDULING CONFIG
   // ═══════════════════════════════════════════════════════════════
 
   /// Preset: 'relaxed' | 'active' | 'intensive' | 'custom'
-  schedulePreset     String    @default("relaxed")
+  schedulePreset String @default("relaxed")
 
   /// Intervallo in minuti tra le esecuzioni
-  intervalMinutes    Int       @default(360)  // 6 ore default
+  intervalMinutes Int @default(360) // 6 ore default
 
   /// Quante offerte pubblicare per esecuzione
-  dealsPerRun        Int       @default(3)
+  dealsPerRun Int @default(3)
 
   /// Prossima esecuzione schedulata (con jitter applicato)
-  nextRunAt          DateTime?
+  nextRunAt DateTime?
 
   /// Finestra deduplicazione in ore (evita ripubblicazione stesso ASIN)
-  dedupeWindowHours  Int       @default(168)  // 7 giorni
+  dedupeWindowHours Int @default(168) // 7 giorni
 
   /// Contatore run consecutive senza pubblicare (per notifica)
-  emptyRunsCount     Int       @default(0)
+  emptyRunsCount Int @default(0)
 
   // ═══════════════════════════════════════════════════════════════
   // LLM COPY GENERATION
   // ═══════════════════════════════════════════════════════════════
 
   /// Modalità generazione testo: TEMPLATE = placeholders, LLM = AI-generated
-  copyMode          String   @default("TEMPLATE")  // TEMPLATE | LLM
+  copyMode String @default("TEMPLATE") // TEMPLATE | LLM
 
   /// Template per modalità TEMPLATE (con placeholders {title}, {price}, etc.)
-  messageTemplate   String?
+  messageTemplate String?
 
   /// Istruzioni personalizzate per lo stile LLM (es. "tono informale, niente emoji")
   customStylePrompt String?
 
   /// Modello LLM da usare (default gpt-4o-mini per costi bassi)
-  llmModel          String   @default("gpt-4o-mini")
+  llmModel String @default("gpt-4o-mini")
 
   /// Limite giornaliero post con LLM per questa rule
-  llmMaxPostsPerDay Int      @default(50)
+  llmMaxPostsPerDay Int @default(50)
 
   // ═══════════════════════════════════════════════════════════════
   // EXECUTION STATS
   // ═══════════════════════════════════════════════════════════════
 
-  lastRunAt   DateTime?
-  totalRuns   Int       @default(0)
+  lastRunAt DateTime?
+  totalRuns Int       @default(0)
 
   /// Total deals published by this rule
-  dealsPublished Int    @default(0)
+  dealsPublished Int @default(0)
 
   /// Total clicks generated by this rule
-  clicksGenerated Int   @default(0)
+  clicksGenerated Int @default(0)
 
   // ═══════════════════════════════════════════════════════════════
   // TIMESTAMPS
   // ═══════════════════════════════════════════════════════════════
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // ═══════════════════════════════════════════════════════════════
   // RELATIONS
@@ -786,9 +796,9 @@ model AutomationSplit {
 // === MESSAGE TEMPLATES ===
 
 model MessageTemplate {
-  id          String @id @default(uuid())
-  userId      String
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   name        String
   description String?
@@ -869,16 +879,16 @@ model AnalyticsEvent {
 }
 
 model AutomationTemplate {
-  id               String   @id @default(uuid())
+  id               String @id @default(uuid())
   name             String
   description      String
-  category         String   // 'popular', 'scheduled', 'premium'
-  difficulty       String   // 'easy', 'medium', 'advanced'
-  popularity       Int      @default(0)
-  estimatedRevenue String   // '€500-2000/mese'
+  category         String // 'popular', 'scheduled', 'premium'
+  difficulty       String // 'easy', 'medium', 'advanced'
+  popularity       Int    @default(0)
+  estimatedRevenue String // '€500-2000/mese'
 
   // Config template
-  schedule   String   // Cron expression
+  schedule   String // Cron expression
   minScore   Int
   categories String[] @default([])
   maxPrice   Int?
@@ -898,7 +908,7 @@ model Achievement {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type       String   // 'fast-setup', 'first-sale', 'multi-channel', 'onboarding-complete'
+  type       String // 'fast-setup', 'first-sale', 'multi-channel', 'onboarding-complete'
   unlockedAt DateTime @default(now())
 
   @@index([userId])
@@ -912,7 +922,7 @@ model UserSession {
 
   startedAt DateTime  @default(now())
   endedAt   DateTime?
-  duration  Int?      // seconds
+  duration  Int? // seconds
 
   pagesVisited String[] @default([])
   actionsCount Int      @default(0)
@@ -927,8 +937,8 @@ model UserSession {
 // === REDIRECT & FUNNEL TRACKING ===
 
 model ShortLink {
-  id        String  @id @default(cuid())
-  shortCode String  @unique
+  id        String @id @default(cuid())
+  shortCode String @unique
 
   // Product Info (denormalized for fast access)
   asin          String
@@ -956,6 +966,10 @@ model ShortLink {
   campaignId String?
   userId     String?
 
+  // Affiliate Tag for analytics tracking
+  affiliateTagId  String?
+  affiliateTagRef AffiliateTag? @relation("AffiliateTagRef", fields: [affiliateTagId], references: [id], onDelete: SetNull)
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -980,14 +994,14 @@ model RedirectFunnelEvent {
 
   // Event data
   eventType String // See FUNNEL_EVENTS enum
-  eventData Json?  // Additional event data
+  eventData Json? // Additional event data
 
   // User consent
   hasConsent  Boolean? // For auto-redirect consent tracking
-  consentType String?  // "auto" | "manual"
+  consentType String? // "auto" | "manual"
 
   // Timing
-  timeOnPage Int?     // milliseconds
+  timeOnPage Int? // milliseconds
   timestamp  DateTime @default(now())
 
   // Device info (privacy-compliant)
@@ -1004,24 +1018,24 @@ model RedirectFunnelEvent {
 // === NOTIFICATION MODEL ===
 
 model Notification {
-  id        String              @id @default(uuid())
-  userId    String
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type      NotificationType
-  channel   NotificationChannel
-  status    NotificationStatus  @default(PENDING)
+  type    NotificationType
+  channel NotificationChannel
+  status  NotificationStatus  @default(PENDING)
 
   // Content
-  title     String
-  body      String
-  data      Json?               // Additional data for the notification
+  title String
+  body  String
+  data  Json? // Additional data for the notification
 
   // Delivery tracking
-  sentAt    DateTime?
-  readAt    DateTime?
-  failedAt  DateTime?
-  error     String?
+  sentAt   DateTime?
+  readAt   DateTime?
+  failedAt DateTime?
+  error    String?
 
   // Retry logic
   attempts   Int @default(0)
@@ -1038,23 +1052,23 @@ model Notification {
 // === BILLING MODELS (Stripe-ready) ===
 
 model Subscription {
-  id                   String             @id @default(uuid())
-  userId               String             @unique
-  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Stripe IDs
-  stripeCustomerId     String?            @unique
-  stripeSubscriptionId String?            @unique
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
   stripePriceId        String?
 
   // Status
-  status               SubscriptionStatus @default(ACTIVE)
-  plan                 PlanType           @default(FREE)
+  status SubscriptionStatus @default(ACTIVE)
+  plan   PlanType           @default(FREE)
 
   // Billing cycle
-  currentPeriodStart   DateTime?
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean            @default(false)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
 
   // Trial
   trialStart DateTime?
@@ -1108,7 +1122,7 @@ model PaymentMethod {
   stripePaymentMethodId String? @unique
 
   // Card info (safe to store)
-  type     String  // "card", "sepa_debit", etc.
+  type     String // "card", "sepa_debit", etc.
   last4    String?
   brand    String? // "visa", "mastercard", etc.
   expMonth Int?
@@ -1125,13 +1139,13 @@ model PaymentMethod {
 
 model KeepaTokenLog {
   id           String   @id @default(cuid())
-  operation    String   // 'deal_search' | 'product_refresh'
+  operation    String // 'deal_search' | 'product_refresh'
   tokenCost    Int
   category     String?
   asins        String[] // Lista ASIN se product call
   jobId        String?
   success      Boolean
-  responseTime Int      // ms
+  responseTime Int // ms
   createdAt    DateTime @default(now())
 
   @@index([createdAt])
@@ -1179,30 +1193,30 @@ model Automation {
 // ═══════════════════════════════════════════════════════════════
 
 model AutomationRunStats {
-  id        String   @id @default(cuid())
-  ruleId    String
-  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  id     String         @id @default(cuid())
+  ruleId String
+  rule   AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
   // Pipeline counts
-  dealsFetched        Int  // Deals dalla Deal API
-  dealsAfterFilters   Int  // Dopo filtri base (price, brand, etc)
-  dealsAfterMode      Int  // Dopo filtro dealPublishMode
-  dealsPassingScore   Int  // Passano minScore
-  dealsPublished      Int  // Effettivamente pubblicati
+  dealsFetched      Int // Deals dalla Deal API
+  dealsAfterFilters Int // Dopo filtri base (price, brand, etc)
+  dealsAfterMode    Int // Dopo filtro dealPublishMode
+  dealsPassingScore Int // Passano minScore
+  dealsPublished    Int // Effettivamente pubblicati
 
   // Score statistics
-  avgScore    Float?  // Media score dei deals dopo filtri base
-  minScore    Float?  // Score minimo
-  maxScore    Float?  // Score massimo
-  stdDev      Float?  // Deviazione standard
+  avgScore Float? // Media score dei deals dopo filtri base
+  minScore Float? // Score minimo
+  maxScore Float? // Score massimo
+  stdDev   Float? // Deviazione standard
 
   // Thresholds used
-  minScoreThreshold   Int   // minScore usato per filtrare
-  dealPublishMode     String  // DISCOUNTED_ONLY, LOWEST_PRICE, BOTH
+  minScoreThreshold Int // minScore usato per filtrare
+  dealPublishMode   String // DISCOUNTED_ONLY, LOWEST_PRICE, BOTH
 
   // Performance
-  durationMs  Int     // Tempo esecuzione in ms
-  cacheHit    Boolean @default(false)  // Se ha usato cache
+  durationMs Int // Tempo esecuzione in ms
+  cacheHit   Boolean @default(false) // Se ha usato cache
 
   createdAt DateTime @default(now())
 
@@ -1215,44 +1229,48 @@ model AutomationRunStats {
 // ═══════════════════════════════════════════════════════════════
 
 model ScheduledPost {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channelId     String
-  channel       Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   // Type and content
-  type          ScheduledPostType
-  name          String                  // Identificative name
-  content       String                  // Message content (can include {{variables}})
-  mediaUrl      String?                 // Optional image/video URL
+  type     ScheduledPostType
+  name     String // Identificative name
+  content  String // Message content (can include {{variables}})
+  mediaUrl String? // Optional image/video URL
 
   // Scheduling
-  schedule      String                  // Cron expression (e.g., "0 9 * * *")
-  timezone      String   @default("Europe/Rome")  // IANA timezone
-  isActive      Boolean  @default(true)
+  schedule String // Cron expression (e.g., "0 9 * * *")
+  timezone String  @default("Europe/Rome") // IANA timezone
+  isActive Boolean @default(true)
 
   // Conflict detection settings (JSON)
-  conflictSettings Json?  // { skipIfDealPending, bufferMinutes, rescheduleOnConflict }
+  conflictSettings Json? // { skipIfDealPending, bufferMinutes, rescheduleOnConflict }
 
   // Type-specific settings (JSON)
-  settings      Json?    // BountySettings, RecapSettings, CrossPromoSettings, etc.
+  settings Json? // BountySettings, RecapSettings, CrossPromoSettings, etc.
+
+  // Affiliate Tag for bounty/link tracking
+  affiliateTagId String?
+  affiliateTag   AffiliateTag? @relation(fields: [affiliateTagId], references: [id], onDelete: SetNull)
 
   // Execution tracking
-  lastRunAt     DateTime?
-  nextRunAt     DateTime?
-  runCount      Int      @default(0)
-  failCount     Int      @default(0)    // Consecutive failures
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  runCount  Int       @default(0)
+  failCount Int       @default(0) // Consecutive failures
 
   // Performance aggregate
-  totalClicks   Int      @default(0)
+  totalClicks Int @default(0)
 
   // Timestamps
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  executions    ScheduledPostExecution[]
+  executions     ScheduledPostExecution[]
   affiliateLinks AffiliateLink[]
 
   @@index([userId])
@@ -1263,32 +1281,32 @@ model ScheduledPost {
 }
 
 model ScheduledPostExecution {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   scheduledPostId String
   scheduledPost   ScheduledPost @relation(fields: [scheduledPostId], references: [id], onDelete: Cascade)
 
   // Execution details
-  executedAt      DateTime @default(now())
-  status          ExecutionStatus
+  executedAt DateTime        @default(now())
+  status     ExecutionStatus
 
   // Telegram response
-  messageId       String?              // Telegram message ID
-  chatId          String?              // Telegram chat ID
+  messageId String? // Telegram message ID
+  chatId    String? // Telegram chat ID
 
   // Error tracking
-  error           String?              // Error message if failed
-  errorCode       String?              // Error code for categorization
-  retryCount      Int      @default(0)
+  error      String? // Error message if failed
+  errorCode  String? // Error code for categorization
+  retryCount Int     @default(0)
 
   // Performance metrics (populated async)
-  clicks          Int      @default(0)
+  clicks Int @default(0)
 
   // Content snapshot (for debugging)
-  contentSnapshot String?              // Content that was sent
+  contentSnapshot String? // Content that was sent
 
   // Conflict info (if skipped)
-  conflictReason  String?              // RECENT_DEAL, PENDING_DEAL, etc.
-  rescheduledTo   DateTime?            // If rescheduled, when
+  conflictReason String? // RECENT_DEAL, PENDING_DEAL, etc.
+  rescheduledTo  DateTime? // If rescheduled, when
 
   @@index([scheduledPostId])
   @@index([executedAt])
@@ -1296,32 +1314,60 @@ model ScheduledPostExecution {
 }
 
 model BountyTemplate {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Template info
-  name        String               // e.g., "Amazon Prime IT"
-  bountyType  String               // PRIME, AUDIBLE, MUSIC, KINDLE
-  locale      String   @default("it")  // Template language
+  name       String // e.g., "Amazon Prime IT"
+  bountyType String // PRIME, AUDIBLE, MUSIC, KINDLE
+  locale     String @default("it") // Template language
 
   // URLs
-  baseUrl     String               // URL without tag
-  tagParam    String   @default("tag")  // Tag parameter name
+  baseUrl  String // URL without tag
+  tagParam String @default("tag") // Tag parameter name
 
   // Default content per style
-  casualCopy      String?          // Casual style copy
-  professionalCopy String?         // Professional style copy
-  urgentCopy      String?          // Urgent style copy
+  casualCopy       String? // Casual style copy
+  professionalCopy String? // Professional style copy
+  urgentCopy       String? // Urgent style copy
 
   // Emoji
-  emoji       String?              // Suggested emoji
+  emoji String? // Suggested emoji
 
   // Metadata
-  avgCommission Float?             // Estimated average commission
-  isActive    Boolean  @default(true)
+  avgCommission Float? // Estimated average commission
+  isActive      Boolean @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([bountyType])
   @@index([locale])
+}
+
+// === AFFILIATE TAG POOL ===
+// Gestione centralizzata dei tag Amazon per analytics granulari
+
+model AffiliateTag {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tag         String // Amazon tag (e.g., "afflyt-21")
+  label       String // User-friendly label (e.g., "Tag Principale", "Tag Tech")
+  marketplace String @default("IT") // IT, DE, FR, ES, UK, US
+
+  isDefault Boolean @default(false) // Default tag for new automations
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations for analytics tracking
+  automationRules AutomationRule[]
+  scheduledPosts  ScheduledPost[]
+  affiliateLinks  AffiliateLink[]  @relation("AffiliateTagRef")
+  shortLinks      ShortLink[]      @relation("AffiliateTagRef")
+
+  @@unique([userId, tag])
+  @@index([userId])
+  @@index([isDefault])
 }

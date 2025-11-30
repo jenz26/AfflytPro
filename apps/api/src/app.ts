@@ -34,6 +34,7 @@ import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
 import { schedulerRoutes } from './routes/scheduler';
 import { bountyTemplateRoutes } from './routes/bounty-templates';
+import { affiliateTagRoutes } from './routes/affiliate-tags';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
 
 // ==================== SENTRY INITIALIZATION ====================
@@ -132,6 +133,7 @@ app.register(billingRoutes, { prefix: '/api' });
 app.register(notificationRoutes, { prefix: '/api' });
 app.register(schedulerRoutes, { prefix: '/api/scheduler' });
 app.register(bountyTemplateRoutes, { prefix: '/api/bounty-templates' });
+app.register(affiliateTagRoutes, { prefix: '/user/affiliate-tags' });
 
 // Health check
 app.get('/health', async () => {

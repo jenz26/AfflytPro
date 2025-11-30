@@ -13,7 +13,8 @@ import {
     Shield,
     ChevronRight,
     Zap,
-    Loader2
+    Loader2,
+    Tag
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { API_BASE } from '@/lib/api/config';
@@ -39,6 +40,7 @@ interface UserStats {
     channels: number;
     automations: number;
     credentials: number;
+    affiliateTags: number;
 }
 
 export default function SettingsHubPage() {
@@ -53,6 +55,7 @@ export default function SettingsHubPage() {
         channels: 0,
         automations: 0,
         credentials: 0,
+        affiliateTags: 0,
     });
 
     useEffect(() => {
@@ -116,6 +119,22 @@ export default function SettingsHubPage() {
                     console.error('Failed to fetch credentials', e);
                 }
 
+                // Fetch affiliate tags count
+                try {
+                    const tagsRes = await fetch(`${API_BASE}/user/affiliate-tags`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                    });
+                    if (tagsRes.ok) {
+                        const tagsData = await tagsRes.json();
+                        setUserStats(prev => ({
+                            ...prev,
+                            affiliateTags: Array.isArray(tagsData) ? tagsData.length : 0,
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch affiliate tags', e);
+                }
+
             } catch (error) {
                 console.error('Error fetching user data:', error);
             } finally {
@@ -164,6 +183,13 @@ export default function SettingsHubPage() {
             path: `/${locale}/settings/api-keys`,
             color: 'from-yellow-500 to-orange-500',
             stat: userStats.credentials.toString()
+        },
+        {
+            key: 'affiliateTags',
+            icon: Tag,
+            path: `/${locale}/settings/affiliate-tags`,
+            color: 'from-orange-500 to-amber-500',
+            stat: userStats.affiliateTags.toString()
         },
         {
             key: 'templates',
