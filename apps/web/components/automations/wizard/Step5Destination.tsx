@@ -143,7 +143,7 @@ export function Step5Destination({
                         <AlertCircle className="w-12 h-12 text-yellow-400 mx-auto mb-3" />
                         <p className="text-white font-medium mb-2">{t('noChannels')}</p>
                         <p className="text-sm text-gray-400 mb-4">{t('noChannelsHint')}</p>
-                        <Link href="/dashboard/settings/channels">
+                        <Link href="/settings/channels">
                             <CyberButton variant="secondary">
                                 <Plus className="w-4 h-4 mr-2" />
                                 {t('connectChannel')}
@@ -318,7 +318,7 @@ export function Step5Destination({
                     <div className="text-right">
                         <p className="text-lg font-bold text-afflyt-cyan-400">{frequencyLabel}</p>
                         {userPlan === 'FREE' && (
-                            <Link href="/dashboard/settings/billing" className="text-xs text-gray-500 hover:text-afflyt-cyan-400">
+                            <Link href="/settings/billing" className="text-xs text-gray-500 hover:text-afflyt-cyan-400">
                                 {t('frequency.upgradeHint')}
                             </Link>
                         )}

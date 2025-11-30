@@ -18,7 +18,7 @@ export function LockedFilterBadge({ requiredPlan }: LockedFilterBadgeProps) {
 
     return (
         <Link
-            href="/dashboard/settings/billing"
+            href="/settings/billing"
             className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border ${colors[requiredPlan]} hover:opacity-80 transition-opacity`}
         >
             <Lock className="w-3 h-3" />

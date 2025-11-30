@@ -37,7 +37,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
             completed: progress.channelConnected,
             action: {
                 label: tSteps('connectChannel.button'),
-                path: '/dashboard/settings/channels'
+                path: '/settings/channels'
             },
             details: [
                 tSteps('connectChannel.step1'),
@@ -54,7 +54,7 @@ export const OnboardingFlow = ({ progress, onProgressUpdate }: OnboardingFlowPro
             completed: progress.credentialsSet,
             action: {
                 label: tSteps('credentials.button'),
-                path: '/dashboard/settings/credentials'
+                path: '/settings/api-keys'
             },
             details: [
                 tSteps('credentials.step1'),

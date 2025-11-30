@@ -120,7 +120,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             label: t('navigation.channels.label'),
             description: t('navigation.channels.description'),
             icon: Send,
-            action: () => router.push('/dashboard/settings/channels'),
+            action: () => router.push('/settings/channels'),
             shortcut: `${modKey}C`,
             keywords: ['telegram', 'discord', 'publish', 'pubblica']
         },
@@ -130,7 +130,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             label: t('navigation.settings.label'),
             description: t('navigation.settings.description'),
             icon: Settings,
-            action: () => router.push('/dashboard/settings'),
+            action: () => router.push('/settings'),
             shortcut: `${modKey},`,
             keywords: ['impostazioni', 'config', 'setup']
         }
@@ -154,7 +154,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             label: t('actions.connectChannel.label'),
             description: t('actions.connectChannel.description'),
             icon: Bot,
-            action: () => router.push('/dashboard/settings/channels?action=new&type=telegram'),
+            action: () => router.push('/settings/channels?action=new&type=telegram'),
             keywords: ['telegram', 'bot', 'connect', 'collega']
         },
         {
@@ -163,7 +163,7 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             label: t('actions.addCredentials.label'),
             description: t('actions.addCredentials.description'),
             icon: Plus,
-            action: () => router.push('/dashboard/settings/credentials?action=new'),
+            action: () => router.push('/settings/api-keys?action=new'),
             keywords: ['api', 'key', 'amazon', 'credentials', 'tag']
         }
     ];
