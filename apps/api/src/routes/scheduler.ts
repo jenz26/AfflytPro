@@ -13,9 +13,13 @@ const createScheduledPostSchema = z.object({
   channelId: z.string().min(1, 'Channel is required'),
   type: z.enum(['CUSTOM', 'BOUNTY', 'RECAP', 'CROSS_PROMO', 'WELCOME', 'SPONSORED']),
   content: z.string().min(1, 'Content is required').max(4096, 'Content too long (max 4096)'),
-  mediaUrl: z.string().url().optional().nullable(),
+  mediaUrl: z.string().url().optional().nullable().or(z.literal('')).transform(v => v || null),
   schedule: z.string().min(1, 'Schedule is required'), // Cron expression
   timezone: z.string().default('Europe/Rome'),
+  // Bounty-specific fields
+  bountyTemplate: z.string().optional(),
+  bountyUrl: z.string().url().optional().or(z.literal('')).transform(v => v || undefined),
+  affiliateTag: z.string().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
   conflictSettings: z.object({
     skipIfDealPending: z.boolean().default(true),
@@ -271,6 +275,16 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
       // Calculate next run time
       const nextRunAt = calculateNextRunAt(data.schedule, data.timezone);
 
+      // Merge bounty settings into settings object
+      const mergedSettings = {
+        ...(data.settings || {}),
+        ...(data.type === 'BOUNTY' ? {
+          bountyTemplate: data.bountyTemplate,
+          bountyUrl: data.bountyUrl,
+          affiliateTag: data.affiliateTag,
+        } : {}),
+      };
+
       const post = await prisma.scheduledPost.create({
         data: {
           userId,
@@ -281,7 +295,7 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
           mediaUrl: data.mediaUrl,
           schedule: data.schedule,
           timezone: data.timezone,
-          settings: (data.settings || {}) as Prisma.InputJsonValue,
+          settings: mergedSettings as Prisma.InputJsonValue,
           conflictSettings: (data.conflictSettings || {
             skipIfDealPending: true,
             bufferMinutes: 10,

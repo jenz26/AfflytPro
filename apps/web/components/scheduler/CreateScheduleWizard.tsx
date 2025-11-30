@@ -42,6 +42,19 @@ interface Channel {
   channelId: string;
 }
 
+interface ChannelWithTag extends Channel {
+  amazonTag?: string;
+}
+
+const BOUNTY_TEMPLATES = [
+  { id: 'prime', name: 'Amazon Prime', url: 'https://www.amazon.it/amazonprime', emoji: '📦' },
+  { id: 'audible', name: 'Audible', url: 'https://www.amazon.it/hz/audible', emoji: '🎧' },
+  { id: 'kindle', name: 'Kindle Unlimited', url: 'https://www.amazon.it/kindle-unlimited', emoji: '📚' },
+  { id: 'music', name: 'Amazon Music', url: 'https://www.amazon.it/music/unlimited', emoji: '🎵' },
+  { id: 'kids', name: 'Kids+', url: 'https://www.amazon.it/amazonkidsplus', emoji: '👶' },
+  { id: 'custom', name: 'URL Personalizzato', url: '', emoji: '🔗' },
+];
+
 interface CreateScheduleWizardProps {
   editingPost: ScheduledPost | null;
   onComplete: (data: any) => void;
@@ -81,9 +94,10 @@ const TIMEZONES = [
 export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: CreateScheduleWizardProps) {
   const t = useTranslations('scheduler.wizard');
   const [step, setStep] = useState(1);
-  const [channels, setChannels] = useState<Channel[]>([]);
+  const [channels, setChannels] = useState<ChannelWithTag[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [showCustomCron, setShowCustomCron] = useState(false);
+  const [showCustomBountyUrl, setShowCustomBountyUrl] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -94,6 +108,10 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
     mediaUrl: editingPost?.mediaUrl || '',
     schedule: editingPost?.schedule || '0 9 * * *',
     timezone: editingPost?.timezone || 'Europe/Rome',
+    // Bounty-specific settings
+    bountyTemplate: 'prime',
+    bountyUrl: '',
+    affiliateTag: '',
     conflictSettings: {
       skipIfDealPending: true,
       bufferMinutes: 10,
@@ -125,6 +143,10 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
     }
   };
 
+  // Get the selected channel's amazon tag
+  const selectedChannel = channels.find(c => c.id === formData.channelId);
+  const channelAmazonTag = selectedChannel?.amazonTag;
+
   const validateStep = (stepNum: number): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -132,6 +154,17 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
       if (!formData.name.trim()) newErrors.name = t('errors.nameRequired');
       if (!formData.type) newErrors.type = t('errors.typeRequired');
       if (!formData.channelId) newErrors.channelId = t('errors.channelRequired');
+      // Bounty-specific validation
+      if (formData.type === 'BOUNTY') {
+        if (formData.bountyTemplate === 'custom' && !formData.bountyUrl.trim()) {
+          newErrors.bountyUrl = t('errors.bountyUrlRequired') || 'URL bounty richiesto';
+        }
+        // Check if selected channel has amazon tag configured
+        const channel = channels.find(c => c.id === formData.channelId);
+        if (channel && !channel.amazonTag) {
+          newErrors.channelId = t('errors.channelNoTag') || 'Il canale selezionato non ha un Amazon Tag configurato';
+        }
+      }
     }
 
     if (stepNum === 2) {
@@ -277,6 +310,81 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                 {errors.type && <p className="text-red-400 text-sm mt-1">{errors.type}</p>}
               </div>
 
+              {/* Bounty Settings - only shown when BOUNTY type is selected */}
+              {formData.type === 'BOUNTY' && (
+                <div className="p-4 bg-purple-500/5 border border-purple-500/20 rounded-lg space-y-4">
+                  <p className="text-sm font-medium text-purple-300">💎 Configurazione Bounty</p>
+
+                  {/* Bounty Template Selection */}
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-2">
+                      {t('fields.bountyTemplate') || 'Seleziona Bounty'}
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {BOUNTY_TEMPLATES.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => {
+                            updateFormData('bountyTemplate', template.id);
+                            if (template.id !== 'custom') {
+                              updateFormData('bountyUrl', template.url);
+                              setShowCustomBountyUrl(false);
+                            } else {
+                              updateFormData('bountyUrl', '');
+                              setShowCustomBountyUrl(true);
+                            }
+                          }}
+                          className={`p-2 rounded-lg border text-center transition-all ${
+                            formData.bountyTemplate === template.id
+                              ? 'border-purple-500 bg-purple-500/20'
+                              : 'border-afflyt-glass-border hover:border-purple-500/50'
+                          }`}
+                        >
+                          <span className="text-lg">{template.emoji}</span>
+                          <p className="text-xs text-white mt-1">{template.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom URL input */}
+                  {showCustomBountyUrl && (
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">
+                        URL Personalizzato
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.bountyUrl}
+                        onChange={(e) => updateFormData('bountyUrl', e.target.value)}
+                        placeholder="https://www.amazon.it/..."
+                        className={`w-full px-3 py-2 bg-afflyt-dark-100 border rounded-lg text-white text-sm placeholder:text-gray-600 focus:outline-none ${
+                          errors.bountyUrl ? 'border-red-500' : 'border-afflyt-glass-border focus:border-purple-500'
+                        }`}
+                      />
+                      {errors.bountyUrl && <p className="text-red-400 text-xs mt-1">{errors.bountyUrl}</p>}
+                    </div>
+                  )}
+
+                  {/* Show channel's amazon tag */}
+                  {formData.channelId && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-purple-500/20">
+                      <span className="text-xs text-gray-400">Affiliate Tag:</span>
+                      {channelAmazonTag ? (
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-mono rounded">
+                          {channelAmazonTag}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-yellow-400">
+                          ⚠️ Nessun tag configurato per questo canale
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Channel */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -290,20 +398,40 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                     <p className="text-gray-400">{t('noChannels')}</p>
                   </div>
                 ) : (
-                  <select
-                    value={formData.channelId}
-                    onChange={(e) => updateFormData('channelId', e.target.value)}
-                    className={`w-full px-4 py-3 bg-afflyt-glass-white border rounded-lg text-white focus:outline-none ${
-                      errors.channelId ? 'border-red-500' : 'border-afflyt-glass-border focus:border-afflyt-cyan-500'
-                    }`}
-                  >
-                    <option value="">{t('placeholders.selectChannel')}</option>
+                  <div className="space-y-2">
                     {channels.map((channel) => (
-                      <option key={channel.id} value={channel.id}>
-                        {channel.name} ({channel.platform})
-                      </option>
+                      <button
+                        key={channel.id}
+                        type="button"
+                        onClick={() => updateFormData('channelId', channel.id)}
+                        className={`w-full flex items-center gap-3 p-4 rounded-lg border text-left transition-all ${
+                          formData.channelId === channel.id
+                            ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
+                            : 'border-afflyt-glass-border hover:border-gray-500 bg-afflyt-glass-white'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          channel.platform === 'TELEGRAM'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {channel.platform === 'TELEGRAM' ? '📢' : '📱'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium truncate">{channel.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-gray-500 font-mono truncate">{channel.channelId}</p>
+                            {channel.amazonTag && (
+                              <span className="text-xs text-purple-400 font-mono">#{channel.amazonTag}</span>
+                            )}
+                          </div>
+                        </div>
+                        {formData.channelId === channel.id && (
+                          <Check className="w-5 h-5 text-afflyt-cyan-400 flex-shrink-0" />
+                        )}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 )}
                 {errors.channelId && <p className="text-red-400 text-sm mt-1">{errors.channelId}</p>}
               </div>
@@ -313,6 +441,25 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
           {/* Step 2: Content */}
           {step === 2 && (
             <div className="space-y-6">
+              {/* Type-specific instructions */}
+              {formData.type === 'BOUNTY' && (
+                <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                  <p className="text-sm font-medium text-purple-300 mb-2">💎 Bounty Link</p>
+                  <p className="text-xs text-gray-400">
+                    {t('bountyHelp') || 'Scrivi il messaggio per il tuo bounty link. Il link affiliato verrà generato automaticamente con il tuo tag quando il post viene pubblicato. Usa {{link}} per posizionare il link.'}
+                  </p>
+                </div>
+              )}
+
+              {formData.type === 'RECAP' && (
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-sm font-medium text-blue-300 mb-2">📊 Daily Recap</p>
+                  <p className="text-xs text-gray-400">
+                    {t('recapHelp') || 'Il recap giornaliero includerà automaticamente i top deals delle ultime 24h. Puoi personalizzare intro e outro.'}
+                  </p>
+                </div>
+              )}
+
               {/* Content */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -321,7 +468,13 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                 <textarea
                   value={formData.content}
                   onChange={(e) => updateFormData('content', e.target.value)}
-                  placeholder={t('placeholders.content')}
+                  placeholder={
+                    formData.type === 'BOUNTY'
+                      ? '🎁 Prova gratis Amazon Prime!\n\n30 giorni di spedizioni gratuite, Prime Video e molto altro.\n\n👉 {{link}}'
+                      : formData.type === 'RECAP'
+                      ? '📊 Top Deals di oggi {{date}}\n\nEcco le migliori offerte trovate oggi:\n\n{{deals}}'
+                      : t('placeholders.content')
+                  }
                   rows={8}
                   className={`w-full px-4 py-3 bg-afflyt-glass-white border rounded-lg text-white placeholder:text-gray-600 focus:outline-none resize-none ${
                     errors.content ? 'border-red-500' : 'border-afflyt-glass-border focus:border-afflyt-cyan-500'
@@ -362,8 +515,18 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel }: Crea
                   <span className="text-gray-400">{t('variables.time')}</span>
                   <code className="text-afflyt-cyan-400">{'{{channelName}}'}</code>
                   <span className="text-gray-400">{t('variables.channelName')}</span>
-                  <code className="text-afflyt-cyan-400">{'{{link}}'}</code>
-                  <span className="text-gray-400">{t('variables.link')}</span>
+                  {formData.type === 'BOUNTY' && (
+                    <>
+                      <code className="text-purple-400">{'{{link}}'}</code>
+                      <span className="text-gray-400">{t('variables.bountyLink') || 'Link affiliato bounty'}</span>
+                    </>
+                  )}
+                  {formData.type === 'RECAP' && (
+                    <>
+                      <code className="text-blue-400">{'{{deals}}'}</code>
+                      <span className="text-gray-400">{t('variables.deals') || 'Lista top deals'}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
