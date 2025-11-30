@@ -37,6 +37,7 @@ import { bountyTemplateRoutes } from './routes/bounty-templates';
 import { affiliateTagRoutes } from './routes/affiliate-tags';
 import { betaRoutes } from './routes/beta';
 import { securityRoutes } from './routes/security';
+import adminRoutes from './routes/admin';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
 
 // ==================== SENTRY INITIALIZATION ====================
@@ -138,6 +139,7 @@ app.register(bountyTemplateRoutes, { prefix: '/api/bounty-templates' });
 app.register(affiliateTagRoutes, { prefix: '/user/affiliate-tags' });
 app.register(betaRoutes, { prefix: '/beta' });
 app.register(securityRoutes, { prefix: '/security' });
+app.register(adminRoutes, { prefix: '/admin' });
 
 // Health check
 app.get('/health', async () => {

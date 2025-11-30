@@ -555,6 +555,8 @@ export async function authRoutes(fastify: FastifyInstance) {
           id: user.id,
           email: user.email,
           brandId: user.brandId,
+          plan: user.plan,
+          role: user.role,
         });
 
         // Create session record for device tracking
@@ -771,6 +773,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           brandId: user.brandId,
           plan: user.plan,
+          role: user.role,
         });
 
         // Create session record for device tracking
@@ -1086,6 +1089,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           brandId: user.brandId,
           plan: user.plan,
+          role: user.role,
         });
 
         // Create session record for device tracking
