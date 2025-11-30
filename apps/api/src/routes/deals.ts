@@ -54,8 +54,9 @@ function calculateDealScore(product: any): number {
 }
 
 export default async function dealsRoutes(fastify: FastifyInstance) {
-  // Search deals with filters
+  // Search deals with filters (requires authentication)
   fastify.post('/deals/search', {
+    onRequest: [fastify.authenticate],
     schema: {
       body: {
         type: 'object',
@@ -190,8 +191,10 @@ export default async function dealsRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get deal statistics
-  fastify.get('/deals/stats', async (request, reply) => {
+  // Get deal statistics (requires authentication)
+  fastify.get('/deals/stats', {
+    onRequest: [fastify.authenticate]
+  }, async (request, reply) => {
     try {
       // This would typically query your database for aggregated stats
       // For now, return mock stats

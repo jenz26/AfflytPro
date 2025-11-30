@@ -7,7 +7,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import {
     LayoutDashboard,
-    TrendingUp,
     BarChart3,
     Zap,
     Send,
@@ -18,7 +17,6 @@ import {
     Bell,
     HelpCircle,
     ChevronDown,
-    Flame,
     User,
     LogOut,
     CreditCard,
@@ -146,14 +144,6 @@ export const CommandBar = () => {
             shortcut: '⌘Y'
         },
         {
-            icon: TrendingUp,
-            label: t('dealFinder'),
-            path: `/${locale}/dashboard/deals`,
-            shortcut: '⌘F',
-            hot: true,
-            badge: '12'
-        },
-        {
             icon: Zap,
             label: t('automations'),
             path: `/${locale}/dashboard/automations`,
@@ -259,10 +249,6 @@ export const CommandBar = () => {
                                     <div className="flex items-center gap-2">
                                         <item.icon className="w-4 h-4" />
                                         <span className="text-sm font-medium">{item.label}</span>
-
-                                        {item.hot && (
-                                            <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-                                        )}
 
                                         {item.badge && (
                                             <span className="px-1.5 py-0.5 bg-afflyt-cyan-500/20 text-afflyt-cyan-300 text-[10px] font-mono rounded">

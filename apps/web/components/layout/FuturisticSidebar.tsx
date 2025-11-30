@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
     BarChart3,
-    Search,
     Settings,
     CreditCard,
     Zap,
@@ -32,7 +31,6 @@ export const FuturisticSidebar = () => {
     const navItems = [
         { icon: BarChart3, label: t('dashboard'), path: '/dashboard' },
         { icon: PieChart, label: t('analytics'), path: '/dashboard/analytics' },
-        { icon: Search, label: t('dealFinder'), path: '/deals' },
         { icon: Zap, label: t('automations'), path: '/automations' },
         { icon: Calendar, label: t('scheduler'), path: '/dashboard/scheduler' },
         { icon: CreditCard, label: t('billing'), path: '/billing' },

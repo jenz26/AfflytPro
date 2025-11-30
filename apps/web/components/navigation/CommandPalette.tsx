@@ -7,20 +7,16 @@ import {
     Search,
     X,
     LayoutDashboard,
-    TrendingUp,
     Zap,
     Send,
     Settings,
     Plus,
-    Link2,
     Bot,
     Package,
     DollarSign,
     BarChart3,
     Clock,
     Sparkles,
-    Filter,
-    Flame,
     Calendar
 } from 'lucide-react';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
@@ -99,17 +95,6 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             keywords: ['home', 'overview', 'panoramica']
         },
         {
-            id: 'nav-deals',
-            type: 'navigation',
-            label: t('navigation.deals.label'),
-            description: t('navigation.deals.description'),
-            icon: TrendingUp,
-            action: () => router.push('/dashboard/deals'),
-            shortcut: `${modKey}F`,
-            keywords: ['offerte', 'deals', 'cerca', 'find'],
-            hot: true
-        },
-        {
             id: 'nav-automations',
             type: 'navigation',
             label: t('navigation.automations.label'),
@@ -180,15 +165,6 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             icon: Plus,
             action: () => router.push('/dashboard/settings/credentials?action=new'),
             keywords: ['api', 'key', 'amazon', 'credentials', 'tag']
-        },
-        {
-            id: 'action-generate-link',
-            type: 'action',
-            label: t('actions.generateLink.label'),
-            description: t('actions.generateLink.description'),
-            icon: Link2,
-            action: () => router.push('/dashboard/deals?action=generate-link'),
-            keywords: ['link', 'affiliate', 'amazon', 'genera']
         }
     ];
 
@@ -225,27 +201,6 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
 
     // Contextual suggestions based on current page
     const getContextualSuggestions = (): CommandItem[] => {
-        if (pathname === '/dashboard/deals') {
-            return [
-                {
-                    id: 'context-filter-hot',
-                    type: 'action',
-                    label: t('context.filterHotDeals'),
-                    icon: Flame,
-                    action: () => { },
-                    keywords: ['filter', 'hot']
-                },
-                {
-                    id: 'context-filter-category',
-                    type: 'action',
-                    label: t('context.filterByCategory'),
-                    icon: Filter,
-                    action: () => { },
-                    keywords: ['filter', 'category']
-                }
-            ];
-        }
-
         if (pathname === '/dashboard') {
             return [
                 {
@@ -263,30 +218,10 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
         return [];
     };
 
-    // Search for deals (simulated)
+    // Clear search results when search changes (no longer doing deal search)
     useEffect(() => {
-        if (search.startsWith('B0') || search.match(/^[A-Z0-9]{10}$/)) {
-            setLoading(true);
-            setTimeout(() => {
-                setSearchResults([
-                    {
-                        id: `deal-${search}`,
-                        type: 'search',
-                        label: `Echo Dot (4ª gen) - ${search}`,
-                        description: t('search.resultDescription', { score: 92, discount: 67 }),
-                        icon: Package,
-                        score: 92,
-                        hot: true,
-                        action: () => router.push(`/dashboard/deals/${search}`),
-                        keywords: []
-                    }
-                ]);
-                setLoading(false);
-            }, 500);
-        } else {
-            setSearchResults([]);
-        }
-    }, [search, router, t]);
+        setSearchResults([]);
+    }, [search]);
 
     // Combine all commands
     const allCommands = [
