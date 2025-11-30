@@ -58,9 +58,11 @@ export default function MagicLinkPage() {
                             plan: data.user.plan,
                         });
                     }
-                    // Redirect after short delay - new users go to onboarding
+                    // Redirect after short delay
                     setTimeout(() => {
-                        if (data.isNewUser) {
+                        if (data.user?.role === 'ADMIN') {
+                            router.push(`/${locale}/admin`);
+                        } else if (data.isNewUser) {
                             router.push(`/${locale}/onboarding`);
                         } else {
                             router.push(`/${locale}/dashboard`);
