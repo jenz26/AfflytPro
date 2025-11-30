@@ -17,7 +17,6 @@ import {
   Type,
   Link as LinkIcon,
   Image,
-  Hash,
   Loader2,
   Send,
 } from 'lucide-react';
@@ -80,10 +79,19 @@ interface CreateScheduleWizardProps {
 
 // Content Variables for click-to-insert
 const CONTENT_VARIABLES = [
-  { key: '{{date}}', label: 'Data', icon: Calendar },
-  { key: '{{time}}', label: 'Ora', icon: Clock },
-  { key: '{{channelName}}', label: 'Nome canale', icon: Hash },
+  { key: '{{date}}', label: 'Data corrente', icon: Calendar },
+  { key: '{{time}}', label: 'Ora corrente', icon: Clock },
 ];
+
+// Default content templates for each bounty type
+const BOUNTY_CONTENT_TEMPLATES: Record<string, string> = {
+  'prime': '📦 *Prova Amazon Prime GRATIS per 30 giorni!*\n\n✅ Spedizioni illimitate in 1 giorno\n✅ Prime Video incluso\n✅ Amazon Music\n✅ Prime Reading\n\n👉 Attiva ora: {{link}}\n\n_Offerta riservata ai nuovi iscritti_',
+  'audible': '🎧 *Prova Audible GRATIS per 30 giorni!*\n\n📚 1 audiolibro gratis a scelta\n🎁 Accesso a migliaia di podcast\n📱 Ascolta ovunque, anche offline\n\n👉 Inizia ora: {{link}}\n\n_Puoi disdire quando vuoi_',
+  'kindle': '📚 *Kindle Unlimited - 30 giorni GRATIS!*\n\n📖 Oltre 1 milione di eBook\n🎧 Migliaia di audiolibri\n📰 Riviste incluse\n\n👉 Prova gratis: {{link}}\n\n_Leggi senza limiti_',
+  'music': '🎵 *Amazon Music Unlimited GRATIS!*\n\n🎶 100 milioni di brani HD\n📱 Ascolta offline\n🔊 Audio spaziale e HD\n\n👉 Prova 30 giorni gratis: {{link}}\n\n_Cancella quando vuoi_',
+  'kids': '👶 *Amazon Kids+ - Prova GRATUITA!*\n\n📚 Migliaia di libri per bambini\n🎮 App e giochi educativi\n🎬 Video per tutte le età\n👨‍👩‍👧‍👦 Controllo genitori incluso\n\n👉 Attiva ora: {{link}}',
+  'custom': '🎁 *Offerta speciale!*\n\n👉 {{link}}',
+};
 
 const POST_TYPES = [
   { value: 'CUSTOM', label: 'Custom Content', description: 'Testo libero programmato' },
@@ -277,13 +285,19 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
 
   // Reset content to default template based on type
   const resetContent = () => {
+    // For BOUNTY type, use the selected bounty template
+    if (formData.type === 'BOUNTY') {
+      const bountyContent = BOUNTY_CONTENT_TEMPLATES[formData.bountyTemplate] || BOUNTY_CONTENT_TEMPLATES['custom'];
+      updateFormData('content', bountyContent);
+      return;
+    }
+
     const defaults: Record<string, string> = {
       'CUSTOM': '',
-      'BOUNTY': '🎁 Prova gratis Amazon Prime!\n\n30 giorni di spedizioni gratuite, Prime Video e molto altro.\n\n👉 {{link}}',
-      'RECAP': '📊 Top Deals di oggi {{date}}\n\nEcco le migliori offerte trovate oggi:\n\n{{deals}}',
-      'CROSS_PROMO': '📢 Seguici anche su:\n\n{{channelName}}',
-      'WELCOME': '👋 Benvenuto nel canale!\n\nQui troverai le migliori offerte ogni giorno.',
-      'SPONSORED': '📌 Contenuto sponsorizzato\n\n[Inserisci il tuo messaggio qui]',
+      'RECAP': '📊 *Top Deals di oggi {{date}}*\n\nEcco le migliori offerte trovate oggi:\n\n{{deals}}\n\n_Prezzi soggetti a variazione_',
+      'CROSS_PROMO': '📢 *Ti consiglio questo canale!*\n\n[Inserisci nome e link del canale da promuovere]\n\n_Ci trovi sempre offerte pazzesche!_',
+      'WELCOME': '👋 *Benvenuto nel canale!*\n\n🎯 Qui troverai le migliori offerte Amazon ogni giorno\n💰 Sconti verificati e aggiornati\n🔔 Attiva le notifiche per non perdere nulla!\n\n_Buon risparmio!_',
+      'SPONSORED': '📌 *Contenuto sponsorizzato*\n\n[Inserisci il tuo messaggio qui]\n\n_#Ad #Sponsorizzato_',
     };
     updateFormData('content', defaults[formData.type] || '');
   };
@@ -422,6 +436,11 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
                             } else {
                               updateFormData('bountyUrl', '');
                               setShowCustomBountyUrl(true);
+                            }
+                            // Auto-populate content with template
+                            const contentTemplate = BOUNTY_CONTENT_TEMPLATES[template.id];
+                            if (contentTemplate) {
+                              updateFormData('content', contentTemplate);
                             }
                           }}
                           className={`p-2 rounded-lg border text-center transition-all ${
