@@ -17,7 +17,8 @@ import {
     Package,
     CalendarClock,
     Brain,
-    Lock
+    Lock,
+    Users
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import {
@@ -30,7 +31,9 @@ import {
     ChannelDeepDive,
     ProductAnalytics,
     AIInsights,
-    ExportDropdown
+    ExportDropdown,
+    AudienceAnalytics,
+    type AudienceData
 } from '@/components/analytics';
 import { API_BASE } from '@/lib/api/config';
 
@@ -163,6 +166,7 @@ export default function AnalyticsPage() {
     // Tab definitions (dynamic based on tier)
     const tabs = [
         { id: 'overview', label: t('tabs.overview'), icon: LayoutDashboard, locked: false },
+        { id: 'audience', label: t('tabs.audience'), icon: Users, locked: false },
         { id: 'channels', label: t('tabs.channels'), icon: Radio, locked: false },
         { id: 'products', label: t('tabs.products'), icon: Package, locked: false },
         { id: 'time', label: t('tabs.time'), icon: CalendarClock, locked: false },
@@ -177,6 +181,8 @@ export default function AnalyticsPage() {
     const [heatmapData, setHeatmapData] = useState<HeatmapData | null>(null);
     const [productsData, setProductsData] = useState<ProductsData | null>(null);
     const [insightsData, setInsightsData] = useState<InsightsData | null>(null);
+    const [audienceData, setAudienceData] = useState<AudienceData | null>(null);
+    const [audienceLoading, setAudienceLoading] = useState(false);
 
     // Fetch all analytics data
     const fetchAnalytics = async () => {
@@ -263,6 +269,27 @@ export default function AnalyticsPage() {
         }
     };
 
+    // Fetch Audience Analytics
+    const fetchAudienceData = async () => {
+        setAudienceLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const res = await fetch(`${API_BASE}/analytics/audience?period=${period}`, { headers });
+
+            if (res.ok) {
+                const data = await res.json();
+                setAudienceData(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch audience data:', err);
+        } finally {
+            setAudienceLoading(false);
+        }
+    };
+
     // Fetch on mount and when period changes
     useEffect(() => {
         fetchAnalytics();
@@ -274,6 +301,13 @@ export default function AnalyticsPage() {
             fetchInsights();
         }
     }, [activeTab, isPro, period]);
+
+    // Fetch audience data when tab changes to audience
+    useEffect(() => {
+        if (activeTab === 'audience' && !audienceData) {
+            fetchAudienceData();
+        }
+    }, [activeTab, period]);
 
     // Generate insight based on data
     const generateInsight = () => {
@@ -518,6 +552,14 @@ export default function AnalyticsPage() {
                 </div>
             )}
                 </>
+            )}
+
+            {/* Tab: Audience Analytics */}
+            {activeTab === 'audience' && (
+                <AudienceAnalytics
+                    data={audienceData}
+                    loading={audienceLoading}
+                />
             )}
 
             {/* Tab: Channels Deep Dive */}

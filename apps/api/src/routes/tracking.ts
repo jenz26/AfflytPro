@@ -4,6 +4,125 @@ import { IPAnonymizer } from '../services/IPAnonymizer';
 
 const prisma = new PrismaClient();
 
+// ===================== TRACKING DATA INTERFACES =====================
+
+interface ClickTrackingData {
+    // Device & Browser
+    deviceType?: 'mobile' | 'tablet' | 'desktop';
+    browser?: string;
+    browserVersion?: string;
+    os?: string;
+    osVersion?: string;
+
+    // Screen & Display
+    screenWidth?: number;
+    screenHeight?: number;
+    viewportWidth?: number;
+    viewportHeight?: number;
+    pixelRatio?: number;
+    touchEnabled?: boolean;
+
+    // Locale & Time
+    language?: string;
+    timezone?: string;
+
+    // Connection
+    connectionType?: string;
+    connectionSpeed?: string;
+
+    // UTM Tracking
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmTerm?: string;
+    utmContent?: string;
+
+    // Visitor Tracking
+    visitorId?: string;
+    sessionId?: string;
+}
+
+interface GeoIPResponse {
+    status: string;
+    country?: string;
+    countryCode?: string;
+    region?: string;
+    regionName?: string;
+    city?: string;
+}
+
+// ===================== BOT DETECTION =====================
+
+const BOT_USER_AGENT_PATTERNS = [
+    /bot/i,
+    /crawler/i,
+    /spider/i,
+    /slurp/i,
+    /googlebot/i,
+    /bingbot/i,
+    /yandex/i,
+    /baiduspider/i,
+    /duckduckbot/i,
+    /facebookexternalhit/i,
+    /twitterbot/i,
+    /linkedinbot/i,
+    /whatsapp/i,
+    /telegrambot/i,
+    /discordbot/i,
+    /slackbot/i,
+    /applebot/i,
+    /ia_archiver/i,
+    /mediapartners-google/i,
+    /adsbot-google/i,
+    /feedfetcher/i,
+    /python-requests/i,
+    /python-urllib/i,
+    /curl/i,
+    /wget/i,
+    /postman/i,
+    /insomnia/i,
+    /scrapy/i,
+    /headless/i,
+    /phantom/i,
+    /selenium/i,
+    /puppeteer/i,
+    /playwright/i,
+    /lighthouse/i,
+    /pagespeed/i,
+    /gtmetrix/i,
+];
+
+function isBot(userAgent: string | null | undefined): boolean {
+    if (!userAgent) return false;
+    return BOT_USER_AGENT_PATTERNS.some(pattern => pattern.test(userAgent));
+}
+
+// ===================== GEO IP LOOKUP =====================
+
+async function lookupGeoIP(ip: string): Promise<GeoIPResponse | null> {
+    try {
+        // Skip localhost/private IPs
+        if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+            return null;
+        }
+
+        const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,countryCode,region,regionName,city`, {
+            signal: AbortSignal.timeout(2000) // 2 second timeout
+        });
+
+        if (!response.ok) return null;
+
+        const data: GeoIPResponse = await response.json();
+
+        if (data.status !== 'success') return null;
+
+        return data;
+    } catch (error) {
+        // Silent fail - geo lookup is not critical
+        return null;
+    }
+}
+
 // Rate limit for tracking endpoints - more permissive but still protected
 const trackingRateLimitConfig = {
     max: 30,          // 30 requests per minute (reasonable for normal user behavior)
@@ -22,15 +141,25 @@ const trackingRoutes: FastifyPluginAsync = async (fastify) => {
      * Public endpoint to track clicks and return redirect URL
      * No authentication required - this is called by end users
      * Rate limited: 30 per minute per IP
+     *
+     * Receives enriched tracking data from client:
+     * - Device & Browser info
+     * - Screen dimensions
+     * - Locale & Timezone
+     * - Connection type
+     * - UTM parameters
+     * - Visitor/Session IDs
      */
     fastify.post<{
         Params: { hash: string };
+        Body: ClickTrackingData;
     }>('/r/:hash/clickout', {
         config: {
             rateLimit: trackingRateLimitConfig
         }
     }, async (request, reply) => {
         const { hash } = request.params;
+        const trackingData = request.body || {};
 
         try {
             // Find link by short code
@@ -45,29 +174,95 @@ const trackingRoutes: FastifyPluginAsync = async (fastify) => {
                 });
             }
 
-            // Anonymize IP address (GDPR compliance)
+            // Get client IP and user agent
             const clientIp = request.ip;
+            const userAgent = request.headers['user-agent'] || null;
+
+            // Anonymize IP address (GDPR compliance)
             const ipHash = IPAnonymizer.process(clientIp);
 
             // Get referer header (handle array case)
             const refererHeader = request.headers['referer'] || request.headers['referrer'];
             const referer = Array.isArray(refererHeader) ? refererHeader[0] : refererHeader;
 
-            // Record click with anonymized data
+            // Bot detection
+            const isBotRequest = isBot(userAgent);
+
+            // GeoIP lookup (non-blocking, don't fail if it errors)
+            const geoData = await lookupGeoIP(clientIp);
+
+            // Check if this is a unique visitor for this link
+            let isUniqueVisitor = false;
+            if (trackingData.visitorId) {
+                const existingClick = await prisma.click.findFirst({
+                    where: {
+                        linkId: link.id,
+                        visitorId: trackingData.visitorId
+                    }
+                });
+                isUniqueVisitor = !existingClick;
+            }
+
+            // Record click with all enriched data
             await prisma.click.create({
                 data: {
                     linkId: link.id,
                     ipHash,
-                    userAgent: request.headers['user-agent'] || null,
-                    referer: referer || null
+                    userAgent,
+                    referer: referer || null,
+
+                    // Device & Browser (from client)
+                    deviceType: trackingData.deviceType || null,
+                    browser: trackingData.browser || null,
+                    browserVersion: trackingData.browserVersion || null,
+                    os: trackingData.os || null,
+                    osVersion: trackingData.osVersion || null,
+
+                    // Screen & Display (from client)
+                    screenWidth: trackingData.screenWidth || null,
+                    screenHeight: trackingData.screenHeight || null,
+                    viewportWidth: trackingData.viewportWidth || null,
+                    viewportHeight: trackingData.viewportHeight || null,
+                    pixelRatio: trackingData.pixelRatio || null,
+                    touchEnabled: trackingData.touchEnabled ?? null,
+
+                    // Locale & Time (from client)
+                    language: trackingData.language || null,
+                    timezone: trackingData.timezone || null,
+
+                    // Connection (from client)
+                    connectionType: trackingData.connectionType || null,
+                    connectionSpeed: trackingData.connectionSpeed || null,
+
+                    // GeoIP (from server-side lookup)
+                    country: geoData?.countryCode || null,
+                    countryName: geoData?.country || null,
+                    region: geoData?.regionName || null,
+                    city: geoData?.city || null,
+
+                    // UTM Tracking (from client URL params)
+                    utmSource: trackingData.utmSource || null,
+                    utmMedium: trackingData.utmMedium || null,
+                    utmCampaign: trackingData.utmCampaign || null,
+                    utmTerm: trackingData.utmTerm || null,
+                    utmContent: trackingData.utmContent || null,
+
+                    // Visitor Tracking
+                    visitorId: trackingData.visitorId || null,
+                    sessionId: trackingData.sessionId || null,
+                    isUniqueVisitor,
+                    isBot: isBotRequest,
                 }
             });
 
             // Increment click counter (atomic operation)
-            await prisma.affiliateLink.update({
-                where: { id: link.id },
-                data: { clicks: { increment: 1 } }
-            });
+            // Only count non-bot clicks
+            if (!isBotRequest) {
+                await prisma.affiliateLink.update({
+                    where: { id: link.id },
+                    data: { clicks: { increment: 1 } }
+                });
+            }
 
             // Return redirect URL and tracking ID
             return reply.send({

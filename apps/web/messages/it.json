@@ -1959,6 +1959,7 @@
     "noData": "Inizia a generare link affiliati e condividerli per vedere le tue analytics qui!",
     "tabs": {
       "overview": "Panoramica",
+      "audience": "Audience",
       "channels": "Canali",
       "products": "Prodotti",
       "time": "Analisi Temporale",
@@ -2010,7 +2011,44 @@
       "upgrade": "Passa a PRO - €49/mese",
       "note": "Accesso completo ad analytics avanzate, intervalli di date personalizzati e AI insights"
     },
-    "pro": "PRO"
+    "pro": "PRO",
+    "audience": {
+      "noData": "Nessun dato audience disponibile. I dati appariranno quando i tuoi link riceveranno click.",
+      "stats": {
+        "totalClicks": "Click Totali",
+        "uniqueVisitors": "Visitatori Unici",
+        "ofTotal": "del totale",
+        "returningVisitors": "Visitatori di Ritorno",
+        "botClicks": "Click Bot",
+        "filtered": "Filtrati dalle statistiche"
+      },
+      "devices": {
+        "title": "Dispositivi"
+      },
+      "geography": {
+        "title": "Distribuzione Geografica",
+        "noData": "Nessun dato geografico disponibile"
+      },
+      "browsers": {
+        "title": "Browser",
+        "noData": "Nessun dato browser disponibile"
+      },
+      "os": {
+        "title": "Sistemi Operativi",
+        "noData": "Nessun dato OS disponibile"
+      },
+      "languages": {
+        "title": "Lingue",
+        "noData": "Nessun dato lingua disponibile"
+      },
+      "cities": {
+        "title": "Top Città",
+        "noData": "Nessun dato città disponibile"
+      },
+      "connections": {
+        "title": "Tipo Connessione"
+      }
+    }
   },
   "scheduler": {
     "title": "Programmazione Contenuti",

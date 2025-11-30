@@ -1948,6 +1948,7 @@
     "noData": "Start generating affiliate links and sharing them to see your analytics here!",
     "tabs": {
       "overview": "Overview",
+      "audience": "Audience",
       "channels": "Channels",
       "products": "Products",
       "time": "Time Analysis",
@@ -1999,7 +2000,44 @@
       "upgrade": "Upgrade to PRO - €49/month",
       "note": "Full access to advanced analytics, custom date ranges, and AI insights"
     },
-    "pro": "PRO"
+    "pro": "PRO",
+    "audience": {
+      "noData": "No audience data available. Data will appear when your links receive clicks.",
+      "stats": {
+        "totalClicks": "Total Clicks",
+        "uniqueVisitors": "Unique Visitors",
+        "ofTotal": "of total",
+        "returningVisitors": "Returning Visitors",
+        "botClicks": "Bot Clicks",
+        "filtered": "Filtered from stats"
+      },
+      "devices": {
+        "title": "Devices"
+      },
+      "geography": {
+        "title": "Geographic Distribution",
+        "noData": "No geographic data available"
+      },
+      "browsers": {
+        "title": "Browsers",
+        "noData": "No browser data available"
+      },
+      "os": {
+        "title": "Operating Systems",
+        "noData": "No OS data available"
+      },
+      "languages": {
+        "title": "Languages",
+        "noData": "No language data available"
+      },
+      "cities": {
+        "title": "Top Cities",
+        "noData": "No city data available"
+      },
+      "connections": {
+        "title": "Connection Type"
+      }
+    }
   },
   "scheduler": {
     "title": "Content Scheduler",

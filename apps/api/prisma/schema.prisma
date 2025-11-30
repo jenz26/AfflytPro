@@ -535,15 +535,62 @@ model Click {
   link   AffiliateLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   // Tracking Data (Privacy-compliant)
-  ipHash    String // Anonymized IP hash
+  ipHash    String  // Anonymized IP hash
   userAgent String?
   referer   String?
+
+  // Device & Browser (parsed from userAgent + client data)
+  deviceType String? // "mobile", "tablet", "desktop"
+  browser    String? // "Chrome", "Safari", "Firefox"...
+  browserVersion String?
+  os         String? // "iOS", "Android", "Windows", "macOS"...
+  osVersion  String?
+
+  // Screen & Display
+  screenWidth  Int?
+  screenHeight Int?
+  viewportWidth  Int?
+  viewportHeight Int?
+  pixelRatio   Float? // Device pixel ratio (retina displays)
+  touchEnabled Boolean?
+
+  // Locale & Time
+  language String? // "it-IT", "en-US"
+  timezone String? // "Europe/Rome", "America/New_York"
+
+  // Connection
+  connectionType String? // "4g", "wifi", "3g", "slow-2g"
+  connectionSpeed String? // "slow", "fast" (effective type)
+
+  // GeoIP (looked up server-side)
+  country     String? // "IT", "US", "DE"
+  countryName String? // "Italy", "United States"
+  region      String? // "Lombardia", "California"
+  city        String? // "Milano", "Los Angeles"
+
+  // UTM Tracking (from query params)
+  utmSource   String? // utm_source
+  utmMedium   String? // utm_medium
+  utmCampaign String? // utm_campaign
+  utmTerm     String? // utm_term
+  utmContent  String? // utm_content
+
+  // Visitor Tracking
+  visitorId  String? // Persistent visitor ID (cookie-based)
+  sessionId  String? // Session ID for this visit
+  isUniqueVisitor Boolean @default(false) // First click from this visitor on this link
+  isBot      Boolean @default(false) // Detected as bot/crawler
 
   // Metadata
   clickedAt DateTime @default(now())
 
   @@index([linkId])
   @@index([clickedAt])
+  @@index([deviceType])
+  @@index([country])
+  @@index([utmSource])
+  @@index([visitorId])
+  @@index([isBot])
 }
 
 model Conversion {

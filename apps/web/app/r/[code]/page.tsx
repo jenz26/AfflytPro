@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { API_BASE } from '@/lib/api/config';
+import { collectClickTrackingData, type ClickTrackingData } from '@/lib/analytics/click-tracking';
 
 interface TrackingResponse {
     redirectUrl: string;
@@ -26,8 +27,15 @@ export default function RedirectPage() {
         // Track the click and get redirect URL
         const trackClick = async () => {
             try {
+                // Collect all client-side tracking data
+                const trackingData: ClickTrackingData = collectClickTrackingData();
+
                 const response = await fetch(`${API_BASE}/track/r/${code}/clickout`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(trackingData),
                 });
 
                 if (!response.ok) {

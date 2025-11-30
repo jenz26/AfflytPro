@@ -348,7 +348,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
 
   /**
    * GET /analytics/channels
-   * Returns performance breakdown by channel/source
+   * Returns performance breakdown by channel/source (UTM-based)
    */
   app.get('/channels', {
     onRequest: [app.authenticate]
@@ -359,63 +359,97 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get ShortLinks with source tracking
-    const shortLinks = await prisma.shortLink.findMany({
+    // Get user's links
+    const userLinks = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: { id: true }
+    });
+    const linkIds = userLinks.map(l => l.id);
+
+    if (linkIds.length === 0) {
+      return {
+        channels: [],
+        totals: { clicks: 0, revenue: 0 },
+        period: periodDays
+      };
+    }
+
+    // Get clicks with UTM data
+    const clicks = await prisma.click.findMany({
       where: {
-        userId,
-        createdAt: { gte: startDate }
+        linkId: { in: linkIds },
+        clickedAt: { gte: startDate },
+        isBot: false // Exclude bot clicks
       },
       select: {
-        source: true,
-        clicks: true,
-        conversions: true
+        utmSource: true,
+        utmMedium: true,
+        linkId: true
       }
     });
 
-    // Group by source
-    const channelMap = new Map<string, { clicks: number; conversions: number; links: number }>();
-
-    shortLinks.forEach(link => {
-      const source = link.source || 'direct';
-      const entry = channelMap.get(source) || { clicks: 0, conversions: 0, links: 0 };
-      entry.clicks += link.clicks;
-      entry.conversions += link.conversions;
-      entry.links++;
-      channelMap.set(source, entry);
+    // Get conversions for revenue calculation
+    const conversions = await prisma.conversion.findMany({
+      where: {
+        linkId: { in: linkIds },
+        convertedAt: { gte: startDate }
+      },
+      select: {
+        linkId: true,
+        revenue: true,
+        commission: true
+      }
     });
 
-    // Also get from AffiliateLinks (which track through Click/Conversion models)
-    const affiliateLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
-      include: {
-        clickRecords: {
-          where: { clickedAt: { gte: startDate } }
-        },
-        conversions: {
-          where: { convertedAt: { gte: startDate } },
-          select: { revenue: true, commission: true }
+    // Group clicks by UTM source (or 'direct' if no UTM)
+    const channelMap = new Map<string, { clicks: number; conversions: number; revenue: number; linkIds: Set<string> }>();
+
+    clicks.forEach(click => {
+      // Use UTM source, or medium, or 'direct'
+      const channel = click.utmSource || click.utmMedium || 'direct';
+      const entry = channelMap.get(channel) || { clicks: 0, conversions: 0, revenue: 0, linkIds: new Set() };
+      entry.clicks++;
+      entry.linkIds.add(click.linkId);
+      channelMap.set(channel, entry);
+    });
+
+    // Add conversion data
+    conversions.forEach(conv => {
+      // Find which channel this conversion belongs to (by linkId)
+      // For simplicity, attribute to 'direct' if we can't determine
+      let attributed = false;
+      channelMap.forEach((data, channel) => {
+        if (data.linkIds.has(conv.linkId)) {
+          data.conversions++;
+          data.revenue += conv.commission || conv.revenue * 0.05;
+          attributed = true;
         }
+      });
+      // If not attributed, add to direct
+      if (!attributed) {
+        const direct = channelMap.get('direct') || { clicks: 0, conversions: 0, revenue: 0, linkIds: new Set() };
+        direct.conversions++;
+        direct.revenue += conv.commission || conv.revenue * 0.05;
+        channelMap.set('direct', direct);
       }
     });
 
-    // Calculate totals for percentage
+    // Calculate totals
     let totalClicks = 0;
     let totalRevenue = 0;
 
     const channels = Array.from(channelMap.entries()).map(([channel, data]) => {
-      // Estimate revenue (would need to join with conversions properly in production)
-      const estimatedRevenue = data.conversions * 15; // Assume €15 avg commission
       totalClicks += data.clicks;
-      totalRevenue += estimatedRevenue;
+      totalRevenue += data.revenue;
 
       return {
         channel,
         clicks: data.clicks,
         conversions: data.conversions,
-        revenue: estimatedRevenue,
-        links: data.links,
+        revenue: Math.round(data.revenue * 100) / 100,
+        links: data.linkIds.size,
         cvr: data.clicks > 0 ? Math.round((data.conversions / data.clicks) * 1000) / 10 : 0,
-        epc: data.clicks > 0 ? Math.round((estimatedRevenue / data.clicks) * 100) / 100 : 0
+        epc: data.clicks > 0 ? Math.round((data.revenue / data.clicks) * 100) / 100 : 0
       };
     });
 
@@ -552,7 +586,10 @@ export default async function analyticsRoutes(app: FastifyInstance) {
           }
         },
         clickRecords: {
-          where: { clickedAt: { gte: startDate } },
+          where: {
+            clickedAt: { gte: startDate },
+            isBot: false // Exclude bot clicks
+          },
           select: { id: true }
         },
         conversions: {
@@ -562,25 +599,30 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       }
     });
 
-    // Calculate metrics per link
-    const productMetrics = links.map(link => {
-      const clicks = link.clickRecords.length;
-      const conversions = link.conversions.length;
-      const revenue = link.conversions.reduce((sum, c) => sum + (c.commission || c.revenue * 0.05), 0);
+    // Calculate metrics per link (include all links with clicks, even without product)
+    const productMetrics = links
+      .filter(link => link.clickRecords.length > 0 || link.conversions.length > 0)
+      .map(link => {
+        const clicks = link.clickRecords.length;
+        const conversions = link.conversions.length;
+        const revenue = link.conversions.reduce((sum, c) => sum + (c.commission || c.revenue * 0.05), 0);
 
-      return {
-        asin: link.product?.asin || '',
-        title: link.product?.title || 'Unknown',
-        category: link.product?.category || 'Other',
-        price: link.product?.currentPrice || 0,
-        imageUrl: link.product?.imageUrl,
-        clicks,
-        conversions,
-        revenue: Math.round(revenue * 100) / 100,
-        cvr: clicks > 0 ? Math.round((conversions / clicks) * 1000) / 10 : 0,
-        epc: clicks > 0 ? Math.round((revenue / clicks) * 100) / 100 : 0
-      };
-    }).filter(p => p.clicks > 0 || p.conversions > 0);
+        // Use link title/shortCode if no product
+        const title = link.product?.title || link.shortCode || 'Direct Link';
+
+        return {
+          asin: link.product?.asin || link.shortCode || '',
+          title,
+          category: link.product?.category || 'Uncategorized',
+          price: link.product?.currentPrice || 0,
+          imageUrl: link.product?.imageUrl,
+          clicks,
+          conversions,
+          revenue: Math.round(revenue * 100) / 100,
+          cvr: clicks > 0 ? Math.round((conversions / clicks) * 1000) / 10 : 0,
+          epc: clicks > 0 ? Math.round((revenue / clicks) * 100) / 100 : 0
+        };
+      });
 
     // Group by category
     const categoryMap = new Map<string, { clicks: number; conversions: number; revenue: number; products: number }>();
@@ -918,6 +960,270 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         totalConversions: currentConversions,
         totalRevenue: Math.round(currentRevenue * 100) / 100,
         cvr: Math.round(currentCvr * 100) / 100
+      },
+      period: periodDays
+    };
+  });
+
+  /**
+   * GET /analytics/audience
+   * Returns audience analytics: device breakdown, geo distribution, browser/OS stats
+   * Based on Click tracking data
+   */
+  app.get('/audience', {
+    onRequest: [app.authenticate]
+  }, async (req, reply) => {
+    const userId = (req.user as any).userId;
+    const { period = '7d' } = req.query as { period?: string };
+
+    const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
+    const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+
+    // Get user's links
+    const userLinks = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: { id: true }
+    });
+    const linkIds = userLinks.map(l => l.id);
+
+    if (linkIds.length === 0) {
+      return {
+        devices: [],
+        browsers: [],
+        operatingSystems: [],
+        countries: [],
+        languages: [],
+        connections: [],
+        visitors: { total: 0, unique: 0, returning: 0, botClicks: 0 },
+        screens: { mobile: 0, tablet: 0, desktop: 0 },
+        period: periodDays
+      };
+    }
+
+    // Get all clicks with tracking data
+    const clicks = await prisma.click.findMany({
+      where: {
+        linkId: { in: linkIds },
+        clickedAt: { gte: startDate }
+      },
+      select: {
+        deviceType: true,
+        browser: true,
+        browserVersion: true,
+        os: true,
+        osVersion: true,
+        screenWidth: true,
+        screenHeight: true,
+        country: true,
+        countryName: true,
+        region: true,
+        city: true,
+        language: true,
+        timezone: true,
+        connectionType: true,
+        connectionSpeed: true,
+        visitorId: true,
+        isUniqueVisitor: true,
+        isBot: true
+      }
+    });
+
+    const totalClicks = clicks.length;
+
+    // Filter out bot clicks for accurate stats
+    const humanClicks = clicks.filter(c => !c.isBot);
+    const botClicks = clicks.filter(c => c.isBot).length;
+
+    // Device Type Distribution
+    const deviceMap = new Map<string, number>();
+    humanClicks.forEach(c => {
+      const device = c.deviceType || 'unknown';
+      deviceMap.set(device, (deviceMap.get(device) || 0) + 1);
+    });
+
+    const devices = Array.from(deviceMap.entries())
+      .map(([device, count]) => ({
+        device,
+        count,
+        percent: humanClicks.length > 0 ? Math.round((count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Browser Distribution
+    const browserMap = new Map<string, number>();
+    humanClicks.forEach(c => {
+      const browser = c.browser || 'unknown';
+      browserMap.set(browser, (browserMap.get(browser) || 0) + 1);
+    });
+
+    const browsers = Array.from(browserMap.entries())
+      .map(([browser, count]) => ({
+        browser,
+        count,
+        percent: humanClicks.length > 0 ? Math.round((count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10
+
+    // OS Distribution
+    const osMap = new Map<string, number>();
+    humanClicks.forEach(c => {
+      const os = c.os || 'unknown';
+      osMap.set(os, (osMap.get(os) || 0) + 1);
+    });
+
+    const operatingSystems = Array.from(osMap.entries())
+      .map(([os, count]) => ({
+        os,
+        count,
+        percent: humanClicks.length > 0 ? Math.round((count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10
+
+    // Country Distribution
+    const countryMap = new Map<string, { count: number; name: string }>();
+    humanClicks.forEach(c => {
+      if (c.country) {
+        const entry = countryMap.get(c.country) || { count: 0, name: c.countryName || c.country };
+        entry.count++;
+        countryMap.set(c.country, entry);
+      }
+    });
+
+    const countries = Array.from(countryMap.entries())
+      .map(([code, data]) => ({
+        code,
+        name: data.name,
+        count: data.count,
+        percent: humanClicks.length > 0 ? Math.round((data.count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15); // Top 15
+
+    // Language Distribution
+    const langMap = new Map<string, number>();
+    humanClicks.forEach(c => {
+      if (c.language) {
+        // Extract base language (e.g., "it" from "it-IT")
+        const baseLang = c.language.split('-')[0];
+        langMap.set(baseLang, (langMap.get(baseLang) || 0) + 1);
+      }
+    });
+
+    const languages = Array.from(langMap.entries())
+      .map(([language, count]) => ({
+        language,
+        count,
+        percent: humanClicks.length > 0 ? Math.round((count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10
+
+    // Connection Type Distribution
+    const connMap = new Map<string, number>();
+    humanClicks.forEach(c => {
+      if (c.connectionType) {
+        connMap.set(c.connectionType, (connMap.get(c.connectionType) || 0) + 1);
+      }
+    });
+
+    const connections = Array.from(connMap.entries())
+      .map(([type, count]) => ({
+        type,
+        count,
+        percent: humanClicks.length > 0 ? Math.round((count / humanClicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Visitor Stats
+    const uniqueVisitors = new Set(humanClicks.map(c => c.visitorId).filter(Boolean)).size;
+    const uniqueClickCount = humanClicks.filter(c => c.isUniqueVisitor).length;
+
+    // Screen Size Categories
+    const screenCategories = { mobile: 0, tablet: 0, desktop: 0, unknown: 0 };
+    humanClicks.forEach(c => {
+      if (c.screenWidth) {
+        if (c.screenWidth < 768) screenCategories.mobile++;
+        else if (c.screenWidth < 1024) screenCategories.tablet++;
+        else screenCategories.desktop++;
+      } else {
+        // Fallback to deviceType
+        if (c.deviceType === 'mobile') screenCategories.mobile++;
+        else if (c.deviceType === 'tablet') screenCategories.tablet++;
+        else if (c.deviceType === 'desktop') screenCategories.desktop++;
+        else screenCategories.unknown++;
+      }
+    });
+
+    // Top Regions (within countries)
+    const regionMap = new Map<string, { count: number; country: string }>();
+    humanClicks.forEach(c => {
+      if (c.region && c.country) {
+        const key = `${c.country}:${c.region}`;
+        const entry = regionMap.get(key) || { count: 0, country: c.country };
+        entry.count++;
+        regionMap.set(key, entry);
+      }
+    });
+
+    const regions = Array.from(regionMap.entries())
+      .map(([key, data]) => {
+        const [country, region] = key.split(':');
+        return {
+          region,
+          country,
+          count: data.count,
+          percent: humanClicks.length > 0 ? Math.round((data.count / humanClicks.length) * 1000) / 10 : 0
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10
+
+    // Top Cities
+    const cityMap = new Map<string, { count: number; country: string; region: string }>();
+    humanClicks.forEach(c => {
+      if (c.city && c.country) {
+        const key = `${c.country}:${c.city}`;
+        const entry = cityMap.get(key) || { count: 0, country: c.country, region: c.region || '' };
+        entry.count++;
+        cityMap.set(key, entry);
+      }
+    });
+
+    const cities = Array.from(cityMap.entries())
+      .map(([key, data]) => {
+        const [country, city] = key.split(':');
+        return {
+          city,
+          country,
+          region: data.region,
+          count: data.count,
+          percent: humanClicks.length > 0 ? Math.round((data.count / humanClicks.length) * 1000) / 10 : 0
+        };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10
+
+    return {
+      devices,
+      browsers,
+      operatingSystems,
+      countries,
+      regions,
+      cities,
+      languages,
+      connections,
+      visitors: {
+        total: humanClicks.length,
+        unique: uniqueVisitors,
+        returning: humanClicks.length - uniqueClickCount,
+        botClicks
+      },
+      screens: {
+        mobile: screenCategories.mobile,
+        tablet: screenCategories.tablet,
+        desktop: screenCategories.desktop
       },
       period: periodDays
     };
