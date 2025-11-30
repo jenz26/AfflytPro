@@ -20,7 +20,6 @@ import {
   Loader2,
   Send,
 } from 'lucide-react';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
 
@@ -318,8 +317,8 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <GlassCard className="max-w-2xl w-full my-auto max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full max-h-[90vh] flex flex-col bg-afflyt-dark-50 border border-afflyt-glass-border rounded-xl shadow-2xl">
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between p-4 border-b border-afflyt-glass-border">
           <div className="flex items-center gap-3">
@@ -949,7 +948,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
             )}
           </div>
         </div>
-      </GlassCard>
+      </div>
     </div>
   );
 }
