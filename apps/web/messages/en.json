@@ -2132,7 +2132,9 @@
         "content": "Message Content",
         "mediaUrl": "Image/Media URL",
         "schedule": "Schedule",
-        "timezone": "Timezone"
+        "timezone": "Timezone",
+        "bountyTemplate": "Select Bounty",
+        "affiliateTag": "Affiliate Tag"
       },
       "placeholders": {
         "name": "E.g.: Prime Day Reminder",
@@ -2148,8 +2150,12 @@
         "date": "Current date",
         "time": "Current time",
         "channelName": "Channel name",
-        "link": "Tracked link (for bounty)"
+        "link": "Tracked link (for bounty)",
+        "bountyLink": "Bounty affiliate link",
+        "deals": "Top deals list"
       },
+      "bountyHelp": "Write the message for your bounty link. The affiliate link will be automatically generated with your tag when the post is published. Use {{link}} to position the link.",
+      "recapHelp": "The daily recap will automatically include the top deals from the last 24 hours. You can customize the intro and outro.",
       "customCronLabel": "Custom Cron expression:",
       "cronHelp": "Format: minute hour day month weekday",
       "conflictSettings": {
@@ -2168,7 +2174,9 @@
         "contentRequired": "Content is required",
         "contentTooLong": "Content is too long (max 4096 characters)",
         "scheduleRequired": "Schedule is required",
-        "invalidCron": "Invalid cron expression"
+        "invalidCron": "Invalid cron expression",
+        "bountyUrlRequired": "Bounty URL is required",
+        "channelNoTag": "Selected channel has no Amazon Tag configured"
       },
       "back": "Back",
       "next": "Next",
