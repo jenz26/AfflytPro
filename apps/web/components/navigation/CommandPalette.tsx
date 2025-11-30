@@ -20,7 +20,8 @@ import {
     Clock,
     Sparkles,
     Filter,
-    Flame
+    Flame,
+    Calendar
 } from 'lucide-react';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
 import { useTranslations } from 'next-intl';
@@ -117,6 +118,16 @@ export const CommandPalette = ({ onClose }: CommandPaletteProps) => {
             action: () => router.push('/dashboard/automations'),
             shortcut: `${modKey}A`,
             keywords: ['automation', 'auto', 'regole', 'rules']
+        },
+        {
+            id: 'nav-scheduler',
+            type: 'navigation',
+            label: t('navigation.scheduler.label') || 'Scheduler',
+            description: t('navigation.scheduler.description') || 'Programma post automatici',
+            icon: Calendar,
+            action: () => router.push('/dashboard/scheduler'),
+            shortcut: `${modKey}S`,
+            keywords: ['scheduler', 'programma', 'schedule', 'bounty', 'post']
         },
         {
             id: 'nav-channels',

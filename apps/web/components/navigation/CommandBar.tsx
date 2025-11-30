@@ -22,7 +22,8 @@ import {
     User,
     LogOut,
     CreditCard,
-    Sparkles
+    Sparkles,
+    Calendar
 } from 'lucide-react';
 import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -158,6 +159,12 @@ export const CommandBar = () => {
             path: `/${locale}/dashboard/automations`,
             shortcut: '⌘A',
             badge: '3'
+        },
+        {
+            icon: Calendar,
+            label: t('scheduler'),
+            path: `/${locale}/dashboard/scheduler`,
+            shortcut: '⌘S'
         },
         {
             icon: Send,
