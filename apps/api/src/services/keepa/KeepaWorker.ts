@@ -733,7 +733,10 @@ export class KeepaWorker {
           hasVisibleDiscount: deal.hasVisibleDiscount,
           isLowestEver: deal.isHistoricalLow,
           includeKeepaChart: rule.includeKeepaChart,
-          customCopy: copyResult.text // Pass LLM-generated copy
+          customCopy: copyResult.text, // Pass LLM-generated copy
+          // V3: Price source for message formatting
+          priceSource: deal.priceSource,
+          avgPrice30: deal.avgPrice30
         },
         channel.user.id,
         amazonTag

@@ -136,6 +136,12 @@ export interface Deal {
   priceType?: 'amazon' | 'buybox' | 'new';  // Source of the price
   hasVisibleDiscount?: boolean;   // Has strikethrough price on Amazon
   isHistoricalLow?: boolean;      // Is at historical low price
+
+  // V3: Historical average price for reliable discount calculation
+  avgPrice30?: number;            // 30-day average price (more reliable than LIST_PRICE)
+  avgPrice90?: number;            // 90-day average price
+  discountVsAvg?: number;         // Discount % vs 30-day average
+  priceSource?: 'list_price' | 'avg30' | 'historical';  // Source of originalPrice
 }
 
 /**

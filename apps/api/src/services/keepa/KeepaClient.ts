@@ -270,6 +270,12 @@ export class KeepaClient {
 
   /**
    * Enrich a deal with data from Product API
+   *
+   * Price calculation strategy:
+   * 1. Get avg30 (30-day average) as reliable reference price
+   * 2. Get LIST_PRICE (Amazon's strikethrough price)
+   * 3. If LIST_PRICE seems inflated (>85% discount or >3x avg30), use avg30 instead
+   * 4. Show "rispetto alla media" when using avg30
    */
   private enrichDealWithProductData(deal: Deal, product: KeepaProduct): Deal {
     const stats = product.stats;
@@ -284,23 +290,67 @@ export class KeepaClient {
       : deal.currentPrice;
 
     // Get LIST_PRICE from stats.current[4] - this is the strikethrough price on Amazon
-    // Fallback to buyBoxSavingBasis or stats.listPrice (all in cents)
     const listPriceCents = stats.current?.[PRICE_TYPE.LIST_PRICE] ??
                            stats.buyBoxSavingBasis ??
                            stats.listPrice ?? 0;
     const listPrice = listPriceCents > 0 ? listPriceCents / 100 : 0;
 
-    // Determine if there's a VISIBLE discount on Amazon
-    // Amazon shows strikethrough price when listPrice > currentPrice
-    const hasVisibleDiscount = listPrice > 0 && listPrice > buyBoxPrice;
+    // Get 30-day average price (more reliable reference)
+    // avg30 is indexed by price type: [0]=Amazon, [1]=New, [18]=BuyBox
+    const avg30Cents = stats.avg30?.[PRICE_TYPE.BUY_BOX] ??
+                       stats.avg30?.[PRICE_TYPE.AMAZON] ??
+                       stats.avg30?.[PRICE_TYPE.NEW] ?? 0;
+    const avgPrice30 = avg30Cents > 0 ? avg30Cents / 100 : 0;
 
-    // Calculate accurate discount based on listPrice (visible) or keep original (historical)
-    let discountPercent = deal.discountPercent;
+    // Get 90-day average for additional context
+    const avg90Cents = stats.avg90?.[PRICE_TYPE.BUY_BOX] ??
+                       stats.avg90?.[PRICE_TYPE.AMAZON] ??
+                       stats.avg90?.[PRICE_TYPE.NEW] ?? 0;
+    const avgPrice90 = avg90Cents > 0 ? avg90Cents / 100 : 0;
+
+    // Determine if LIST_PRICE seems inflated/unreliable
+    // Signs of inflated LIST_PRICE:
+    // 1. Discount > 85% (very suspicious)
+    // 2. LIST_PRICE > 3x the 30-day average
+    // 3. LIST_PRICE > 2x the 90-day average
+    const listPriceDiscount = listPrice > 0 ? Math.round(((listPrice - buyBoxPrice) / listPrice) * 100) : 0;
+    const listPriceVsAvg30Ratio = avgPrice30 > 0 && listPrice > 0 ? listPrice / avgPrice30 : 1;
+    const listPriceVsAvg90Ratio = avgPrice90 > 0 && listPrice > 0 ? listPrice / avgPrice90 : 1;
+
+    const isListPriceInflated = listPriceDiscount > 85 ||
+                                 listPriceVsAvg30Ratio > 3 ||
+                                 listPriceVsAvg90Ratio > 2.5;
+
+    // Determine the best reference price to use
     let originalPrice = deal.originalPrice;
-    if (hasVisibleDiscount) {
-      discountPercent = Math.round(((listPrice - buyBoxPrice) / listPrice) * 100);
+    let discountPercent = deal.discountPercent;
+    let priceSource: 'list_price' | 'avg30' | 'historical' = 'historical';
+    let hasVisibleDiscount = listPrice > 0 && listPrice > buyBoxPrice;
+
+    if (hasVisibleDiscount && !isListPriceInflated) {
+      // LIST_PRICE is trustworthy - use it
+      discountPercent = listPriceDiscount;
       originalPrice = listPrice;
+      priceSource = 'list_price';
+    } else if (avgPrice30 > 0 && avgPrice30 > buyBoxPrice) {
+      // Use 30-day average as reference (more reliable)
+      discountPercent = Math.round(((avgPrice30 - buyBoxPrice) / avgPrice30) * 100);
+      originalPrice = avgPrice30;
+      priceSource = 'avg30';
+      // If LIST_PRICE was inflated, still show we have a discount but vs avg
+      hasVisibleDiscount = true;
+    } else if (avgPrice90 > 0 && avgPrice90 > buyBoxPrice) {
+      // Fallback to 90-day average
+      discountPercent = Math.round(((avgPrice90 - buyBoxPrice) / avgPrice90) * 100);
+      originalPrice = avgPrice90;
+      priceSource = 'avg30'; // Still mark as avg for message formatting
+      hasVisibleDiscount = true;
     }
+
+    // Calculate discount vs 30-day average (always, for reference)
+    const discountVsAvg = avgPrice30 > 0 && avgPrice30 > buyBoxPrice
+      ? Math.round(((avgPrice30 - buyBoxPrice) / avgPrice30) * 100)
+      : 0;
 
     // Check if at historical low (for "minimo storico" deals)
     const minPrices = stats.min;
@@ -322,7 +372,12 @@ export class KeepaClient {
       isVerified: true,
       rating: product.rating ? product.rating / 10 : deal.rating,
       reviewCount: product.reviewCount ?? deal.reviewCount,
-      isPrime: stats.buyBoxIsFBA ?? false
+      isPrime: stats.buyBoxIsFBA ?? false,
+      // V3: Historical average data
+      avgPrice30,
+      avgPrice90,
+      discountVsAvg,
+      priceSource
     };
   }
 
@@ -528,6 +583,29 @@ export class KeepaClient {
       imageUrl = `https://m.media-amazon.com/images/I/${raw.image}`;
     }
 
+    // Extract avg prices from raw deal if available
+    // avg is indexed as: avg[priceType][timeRange] where timeRange: 0=day, 1=week, 2=month, 3=90days
+    let avgPrice30: number | undefined;
+    let avgPrice90: number | undefined;
+    if (raw.avg && Array.isArray(raw.avg)) {
+      // 30-day average (index 2 = month)
+      const avg30Cents = raw.avg[PRICE_TYPE.BUY_BOX]?.[2] ??
+                         raw.avg[PRICE_TYPE.AMAZON]?.[2] ??
+                         raw.avg[PRICE_TYPE.NEW]?.[2] ?? 0;
+      avgPrice30 = avg30Cents > 0 ? avg30Cents / 100 : undefined;
+
+      // 90-day average (index 3 = 90 days)
+      const avg90Cents = raw.avg[PRICE_TYPE.BUY_BOX]?.[3] ??
+                         raw.avg[PRICE_TYPE.AMAZON]?.[3] ??
+                         raw.avg[PRICE_TYPE.NEW]?.[3] ?? 0;
+      avgPrice90 = avg90Cents > 0 ? avg90Cents / 100 : undefined;
+    }
+
+    // Calculate discount vs avg30 if available
+    const discountVsAvg = avgPrice30 && avgPrice30 > currentPrice
+      ? Math.round(((avgPrice30 - currentPrice) / avgPrice30) * 100)
+      : undefined;
+
     return {
       asin: raw.asin,
       title: raw.title || `Product ${raw.asin}`,
@@ -546,7 +624,12 @@ export class KeepaClient {
       fetchedAt: new Date(),
       isVerified: false,
       hasVisibleDiscount,          // TRUE only if listPrice > currentPrice (Amazon shows strikethrough)
-      isHistoricalLow: undefined   // Will be set by Product API verification
+      isHistoricalLow: undefined,  // Will be set by Product API verification
+      // V3: Historical average data (may be updated by Product API)
+      avgPrice30,
+      avgPrice90,
+      discountVsAvg,
+      priceSource: hasVisibleDiscount ? 'list_price' : 'historical'
     };
   }
 

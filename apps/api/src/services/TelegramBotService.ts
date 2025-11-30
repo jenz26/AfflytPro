@@ -171,6 +171,9 @@ export class TelegramBotService {
       includeKeepaChart?: boolean;
       // LLM-generated custom copy
       customCopy?: string;
+      // V3: Price source for message formatting
+      priceSource?: 'list_price' | 'avg30' | 'historical';
+      avgPrice30?: number;
     },
     userId?: string,
     amazonTag?: string
@@ -256,6 +259,10 @@ export class TelegramBotService {
           header = '📉 *PREZZO MINIMO STORICO\\!*';
           priceSection = `💰 *Prezzo:* €${safePrice}
 📊 _Al minimo storico \\- Non troverai di meglio\\!_`;
+        } else if (deal.priceSource === 'avg30') {
+          // Discount calculated vs 30-day average (more reliable than inflated LIST_PRICE)
+          priceSection = `💰 *Prezzo:* €${safePrice}
+📉 *\\-${discountPercent}%* rispetto alla media degli ultimi 30 giorni \\(€${safeOriginalPrice}\\)`;
         } else {
           // Regular discounted deal - use strikethrough ~~ for original price
           priceSection = `💰 *Prezzo:* €${safePrice} ~€${safeOriginalPrice}~

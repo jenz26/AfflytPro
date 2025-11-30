@@ -651,7 +651,9 @@ export class RuleExecutor {
                             dealType: deal.dealType,
                             hasVisibleDiscount: deal.hasVisibleDiscount,
                             isLowestEver: deal.isLowestEver,
-                            includeKeepaChart: rule.includeKeepaChart
+                            includeKeepaChart: rule.includeKeepaChart,
+                            // V3: priceSource (list_price for legacy RuleExecutor)
+                            priceSource: 'list_price'
                         },
                         rule.userId,
                         userAmazonTag
