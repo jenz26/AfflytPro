@@ -416,6 +416,31 @@ export async function adminRoutes(fastify: FastifyInstance) {
   });
 
   /**
+   * PATCH /admin/beta-codes/:id
+   * Update beta code (assign email, notes, active status)
+   */
+  fastify.patch('/beta-codes/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const { assignedEmail, notes, isActive } = request.body as {
+      assignedEmail?: string | null;
+      notes?: string | null;
+      isActive?: boolean;
+    };
+
+    const updateData: Record<string, unknown> = {};
+    if (assignedEmail !== undefined) updateData.assignedEmail = assignedEmail || null;
+    if (notes !== undefined) updateData.notes = notes || null;
+    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+
+    const code = await prisma.betaInviteCode.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return code;
+  });
+
+  /**
    * DELETE /admin/beta-codes/:id
    * Delete a beta code
    */

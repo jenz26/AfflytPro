@@ -79,6 +79,7 @@ interface BetaCode {
   isActive: boolean;
   usedAt?: string;
   notes?: string;
+  assignedEmail?: string;
   createdAt: string;
   users: Array<{ id: string; email: string; name?: string }>;
 }
@@ -112,6 +113,9 @@ export default function AdminDashboard() {
   const [generating, setGenerating] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
   const [triggeringPrefetch, setTriggeringPrefetch] = useState(false);
+  const [editingCodeId, setEditingCodeId] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState('');
+  const [deletingCodeId, setDeletingCodeId] = useState<string | null>(null);
 
   const getToken = () => {
     if (typeof window !== 'undefined') {
@@ -253,6 +257,51 @@ export default function AdminDashboard() {
       console.error('Failed to generate codes:', err);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Update beta code (assign email)
+  const updateBetaCode = async (id: string, assignedEmail: string | null) => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/beta-codes/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ assignedEmail })
+      });
+
+      if (res.ok) {
+        await fetchBetaCodes();
+        setEditingCodeId(null);
+        setEditingEmail('');
+      }
+    } catch (err) {
+      console.error('Failed to update code:', err);
+    }
+  };
+
+  // Delete beta code
+  const deleteBetaCode = async (id: string) => {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/admin/beta-codes/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        await fetchBetaCodes();
+        setDeletingCodeId(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete code:', err);
     }
   };
 
@@ -650,8 +699,8 @@ export default function AdminDashboard() {
                   <tr>
                     <th className="text-left p-4 text-gray-400 font-medium">Codice</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Status</th>
+                    <th className="text-left p-4 text-gray-400 font-medium">Assegnato a</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Usato da</th>
-                    <th className="text-left p-4 text-gray-400 font-medium">Note</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Creato</th>
                     <th className="text-right p-4 text-gray-400 font-medium">Azioni</th>
                   </tr>
@@ -674,24 +723,92 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td className="p-4">
+                        {editingCodeId === code.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="email"
+                              value={editingEmail}
+                              onChange={(e) => setEditingEmail(e.target.value)}
+                              placeholder="email@esempio.com"
+                              className="px-2 py-1 text-sm bg-white/10 border border-white/20 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary w-48"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => updateBetaCode(code.id, editingEmail || null)}
+                              className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                              title="Salva"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => { setEditingCodeId(null); setEditingEmail(''); }}
+                              className="p-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                              title="Annulla"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className={code.assignedEmail ? 'text-cyan-400' : 'text-gray-500'}>
+                              {code.assignedEmail || '-'}
+                            </span>
+                            {!code.usedAt && (
+                              <button
+                                onClick={() => { setEditingCodeId(code.id); setEditingEmail(code.assignedEmail || ''); }}
+                                className="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white"
+                                title="Modifica email assegnata"
+                              >
+                                <Settings className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4">
                         {code.users.length > 0 ? (
                           <span className="text-white">{code.users[0].email}</span>
                         ) : (
                           <span className="text-gray-500">-</span>
                         )}
                       </td>
-                      <td className="p-4 text-gray-400 text-sm">{code.notes || '-'}</td>
                       <td className="p-4 text-gray-400 text-sm">
                         {new Date(code.createdAt).toLocaleDateString('it-IT')}
                       </td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => copyToClipboard(code.code)}
-                          className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                          title="Copia codice"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => copyToClipboard(code.code)}
+                            className="p-2 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                            title="Copia codice"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          {deletingCodeId === code.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => deleteBetaCode(code.id)}
+                                className="px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"
+                              >
+                                Conferma
+                              </button>
+                              <button
+                                onClick={() => setDeletingCodeId(null)}
+                                className="px-2 py-1 rounded bg-white/10 text-gray-400 hover:bg-white/20 text-xs"
+                              >
+                                Annulla
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setDeletingCodeId(code.id)}
+                              className="p-2 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                              title="Elimina codice"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
