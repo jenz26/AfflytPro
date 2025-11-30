@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff, ExternalLink, AlertTriangle, FlaskConical } from 'lucide-react';
+import { Mail, Lock, Sparkles, Globe, ArrowRight, User, AlertCircle, CheckCircle2, Eye, EyeOff, ExternalLink, AlertTriangle, FlaskConical, Ticket } from 'lucide-react';
 import Image from 'next/image';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -35,6 +35,7 @@ export default function AuthPage() {
     const [sentEmail, setSentEmail] = useState('');
     const [emailProvider, setEmailProvider] = useState<EmailProviderInfo | null>(null);
     const [betaTestingMode, setBetaTestingMode] = useState(false);
+    const [betaCode, setBetaCode] = useState('');
 
     const t = useTranslations('auth');
     const tFeatures = useTranslations('auth.features');
@@ -182,10 +183,15 @@ export default function AuthPage() {
         setAlert(null);
 
         try {
+            const payload: { email: string; locale: string; betaCode?: string } = { email, locale };
+            if (betaTestingMode && betaCode) {
+                payload.betaCode = betaCode;
+            }
+
             const res = await fetch(`${API_BASE}/auth/magic-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, locale })
+                body: JSON.stringify(payload)
             });
 
             const data = await res.json();
@@ -427,6 +433,29 @@ export default function AuthPage() {
                                                     className="w-full pl-12 pr-4 py-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-cyan-500 focus:ring-1 focus:ring-afflyt-cyan-500/50 transition-all"
                                                 />
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {/* Beta Code field (only in beta mode for magic-link) */}
+                                    {betaTestingMode && authMode === 'magic-link' && (
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                {t('beta.codeLabel')}
+                                            </label>
+                                            <div className="relative">
+                                                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-afflyt-plasma-400/50" />
+                                                <input
+                                                    type="text"
+                                                    value={betaCode}
+                                                    onChange={(e) => setBetaCode(e.target.value.toUpperCase())}
+                                                    placeholder="AFFLYT-XXXX-XXXX"
+                                                    required
+                                                    className="w-full pl-12 pr-4 py-3 bg-afflyt-dark-50 border border-afflyt-plasma-500/30 rounded-lg text-white placeholder:text-gray-600 focus:outline-none focus:border-afflyt-plasma-500 focus:ring-1 focus:ring-afflyt-plasma-500/50 transition-all font-mono uppercase tracking-wider"
+                                                />
+                                            </div>
+                                            <p className="mt-1 text-xs text-afflyt-plasma-300/70">
+                                                {t('beta.codeHint')}
+                                            </p>
                                         </div>
                                     )}
 

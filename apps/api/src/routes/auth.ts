@@ -35,6 +35,7 @@ const loginSchema = z.object({
 const magicLinkRequestSchema = z.object({
   email: z.string().email('Formato email non valido'),
   locale: z.string().optional(), // 'it' or 'en'
+  betaCode: z.string().optional(), // Beta invite code (required in beta mode)
 });
 
 const forgotPasswordSchema = z.object({
@@ -810,12 +811,111 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const { email, locale } = magicLinkRequestSchema.parse(request.body);
+        const { email, locale, betaCode } = magicLinkRequestSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         const successMessage = locale === 'en'
           ? 'Check your email for the access link.'
           : 'Controlla la tua email per il link di accesso.';
+
+        // In beta testing mode, validate beta invite code
+        if (BETA_TESTING_MODE) {
+          if (!betaCode) {
+            return reply.code(400).send({
+              error: 'beta_code_required',
+              message: locale === 'en'
+                ? 'Beta invite code is required during beta testing.'
+                : 'Il codice invito beta è richiesto durante la fase di beta testing.',
+            });
+          }
+
+          // Normalize beta code (uppercase, trim)
+          const normalizedBetaCode = betaCode.toUpperCase().trim();
+
+          // Validate beta code format (AFFLYT-XXXX-XXXX)
+          const betaCodeRegex = /^AFFLYT-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+          if (!betaCodeRegex.test(normalizedBetaCode)) {
+            return reply.code(400).send({
+              error: 'invalid_beta_code_format',
+              message: locale === 'en'
+                ? 'Invalid beta code format. Expected: AFFLYT-XXXX-XXXX'
+                : 'Formato codice beta non valido. Formato atteso: AFFLYT-XXXX-XXXX',
+            });
+          }
+
+          // Find the beta invite code in database
+          const betaInvite = await prisma.betaInviteCode.findUnique({
+            where: { code: normalizedBetaCode },
+          });
+
+          if (!betaInvite) {
+            return reply.code(400).send({
+              error: 'invalid_beta_code',
+              message: locale === 'en'
+                ? 'Invalid beta invite code.'
+                : 'Codice invito beta non valido.',
+            });
+          }
+
+          // Check if code is active
+          if (!betaInvite.isActive) {
+            return reply.code(400).send({
+              error: 'beta_code_inactive',
+              message: locale === 'en'
+                ? 'This beta code has been deactivated.'
+                : 'Questo codice beta è stato disattivato.',
+            });
+          }
+
+          // Check if code has expired
+          if (betaInvite.expiresAt && betaInvite.expiresAt < new Date()) {
+            return reply.code(400).send({
+              error: 'beta_code_expired',
+              message: locale === 'en'
+                ? 'This beta code has expired.'
+                : 'Questo codice beta è scaduto.',
+            });
+          }
+
+          // Check if code is assigned to a specific email
+          if (betaInvite.assignedEmail && betaInvite.assignedEmail.toLowerCase() !== normalizedEmail) {
+            return reply.code(400).send({
+              error: 'beta_code_email_mismatch',
+              message: locale === 'en'
+                ? 'This beta code is not assigned to your email address.'
+                : 'Questo codice beta non è assegnato al tuo indirizzo email.',
+            });
+          }
+
+          // Check if code was already used by someone else
+          if (betaInvite.usedAt) {
+            // Check if it was used by this same user (allow re-login)
+            const existingUser = await prisma.user.findFirst({
+              where: {
+                email: normalizedEmail,
+                betaInviteCodeId: betaInvite.id,
+              },
+            });
+
+            if (!existingUser) {
+              return reply.code(400).send({
+                error: 'beta_code_already_used',
+                message: locale === 'en'
+                  ? 'This beta code has already been used.'
+                  : 'Questo codice beta è già stato utilizzato.',
+              });
+            }
+          }
+
+          console.log(`[Auth] Beta code validated: ${normalizedBetaCode} for ${normalizedEmail}`);
+        }
+
+        // Get validated beta invite for later use (if in beta mode)
+        const validatedBetaInvite = BETA_TESTING_MODE && betaCode
+          ? await prisma.betaInviteCode.findUnique({
+              where: { code: betaCode.toUpperCase().trim() },
+            })
+          : null;
 
         // Check email-based rate limit: max 3 magic links per hour per email
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -857,15 +957,33 @@ export async function authRoutes(fastify: FastifyInstance) {
             });
           }
 
+          // In beta mode, connect user to beta invite code and set plan
+          const userData: any = {
+            email: normalizedEmail,
+            password: null, // Passwordless account
+            emailVerified: false,
+          };
+
+          if (validatedBetaInvite) {
+            userData.betaInviteCodeId = validatedBetaInvite.id;
+            userData.plan = 'BETA_TESTER';
+          }
+
           user = await prisma.user.create({
-            data: {
-              email: normalizedEmail,
-              password: null, // Passwordless account
-              emailVerified: false,
-            },
+            data: userData,
           });
           isNewUser = true;
-          console.log('[MagicLink] New passwordless user created:', normalizedEmail);
+
+          // Mark beta code as used (if new user with beta code)
+          if (validatedBetaInvite && !validatedBetaInvite.usedAt) {
+            await prisma.betaInviteCode.update({
+              where: { id: validatedBetaInvite.id },
+              data: { usedAt: new Date() },
+            });
+            console.log(`[Auth] Beta code ${validatedBetaInvite.code} marked as used`);
+          }
+
+          console.log('[MagicLink] New beta tester user created:', normalizedEmail);
         }
 
         // Check if account is active (for existing users)

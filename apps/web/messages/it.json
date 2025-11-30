@@ -152,7 +152,9 @@
     },
     "beta": {
       "title": "Modalità Beta Testing",
-      "description": "Durante la beta, è disponibile solo il login con Magic Link per maggiore sicurezza."
+      "description": "Durante la beta, è disponibile solo il login con Magic Link per maggiore sicurezza.",
+      "codeLabel": "Codice Invito Beta",
+      "codeHint": "Inserisci il codice che ti abbiamo fornito"
     }
   },
   "common": {

@@ -152,7 +152,9 @@
     },
     "beta": {
       "title": "Beta Testing Mode",
-      "description": "During beta, only Magic Link login is available for enhanced security."
+      "description": "During beta, only Magic Link login is available for enhanced security.",
+      "codeLabel": "Beta Invite Code",
+      "codeHint": "Enter the code we provided you"
     }
   },
   "common": {
