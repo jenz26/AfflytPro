@@ -533,6 +533,15 @@
           "label": "Discord",
           "description": "Server e canali"
         },
+        "facebook": {
+          "label": "Facebook",
+          "description": "Gruppi e pagine"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Canali broadcast"
+        },
+        "comingSoon": "Prossimamente",
         "selectedChannels": "Canali selezionati:",
         "none": "Nessuno",
         "configureNext": "Configureremo questi canali nei prossimi passaggi",
@@ -1406,11 +1415,18 @@
     },
     "errors": {
       "tokenTooShort": "Il token deve essere di almeno 30 caratteri",
-      "invalidToken": "Token non valido",
-      "connectionError": "Errore di connessione al server",
+      "invalidToken": "Token non valido. Verifica di aver copiato correttamente il token da @BotFather",
+      "tokenUnauthorized": "Token non autorizzato. Il token potrebbe essere stato revocato o non è mai stato attivo. Crea un nuovo bot su @BotFather",
+      "tokenNotFound": "Bot non trovato. Assicurati di aver copiato il token corretto da @BotFather",
+      "tokenTimeout": "Timeout durante la verifica. Riprova tra qualche secondo",
+      "connectionError": "Errore di connessione al server. Controlla la tua connessione internet e riprova",
       "enterChannelId": "Inserisci un Channel ID o username",
-      "cantPost": "Il bot non può postare in questo canale",
-      "messageFailed": "Invio messaggio fallito"
+      "cantPost": "Il bot non può postare in questo canale. Assicurati che sia amministratore",
+      "channelUnauthorized": "Accesso negato al canale. Verifica che il bot sia stato aggiunto come amministratore",
+      "channelBadRequest": "ID canale non valido. Per canali pubblici usa @username, per privati usa l'ID numerico (-100...)",
+      "channelNotFound": "Canale non trovato. Verifica che l'ID o username sia corretto e che il bot sia stato aggiunto",
+      "channelNoRights": "Il bot non ha i permessi necessari. Assicurati che abbia i diritti di \"Pubblicare messaggi\"",
+      "messageFailed": "Invio messaggio fallito. Verifica che il bot abbia i permessi di pubblicazione"
     }
   },
   "progressDashboard": {
@@ -1629,9 +1645,13 @@
     },
     "errors": {
       "apiKeyTooShort": "La chiave API deve essere di almeno 10 caratteri",
-      "invalidApiKey": "Chiave API non valida",
-      "connectionError": "Errore di connessione al server",
-      "emailSendFailed": "Invio email fallito"
+      "invalidApiKey": "Chiave API non valida. Verifica di aver copiato la chiave correttamente",
+      "apiKeyUnauthorized": "Chiave API non autorizzata. La chiave potrebbe essere stata revocata o non è più attiva. Genera una nuova chiave dal dashboard del provider",
+      "apiKeyForbidden": "Accesso negato. Verifica che la chiave API abbia i permessi necessari per l'invio email",
+      "apiKeyInvalidFormat": "Formato chiave API non valido. Assicurati di aver copiato l'intera chiave, incluso il prefisso",
+      "apiKeyTimeout": "Timeout durante la verifica. Riprova tra qualche secondo",
+      "connectionError": "Errore di connessione al server. Controlla la tua connessione internet e riprova",
+      "emailSendFailed": "Invio email fallito. Verifica le impostazioni del mittente e riprova"
     }
   },
   "templates": {

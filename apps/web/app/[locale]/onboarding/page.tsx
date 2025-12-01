@@ -11,14 +11,12 @@ import {
     ProgressDashboard,
     OnboardingLayout,
     ProgressTracker,
-    ContextPreview,
-    PlanSelector,
-    PlanType
+    ContextPreview
 } from '@/components/onboarding';
 import { API_BASE } from '@/lib/api/config';
 import { Analytics } from '@/components/analytics/PostHogProvider';
 
-type OnboardingStep = 'welcome' | 'plan' | 'telegram' | 'email' | 'automation' | 'complete';
+type OnboardingStep = 'welcome' | 'telegram' | 'email' | 'automation' | 'complete';
 
 interface SurveyData {
     goal: string | null;
@@ -35,10 +33,8 @@ interface OnboardingState {
     currentStep: OnboardingStep;
     surveyData: SurveyData | null;
     selectedChannels: string[];
-    selectedPlan: PlanType | null;
     progress: {
         welcomeSurveyCompleted: boolean;
-        planSelected: boolean;
         channelsSelected: string[];
         telegramSetupCompleted: boolean;
         emailSetupCompleted: boolean;
@@ -113,7 +109,7 @@ const calculatePersonaType = (data: SurveyData): PersonaType => {
 
 // Get personalized step order based on persona
 const getPersonalizedStepFlow = (persona: PersonaType, channels: string[], hasAmazonAssociates: boolean): OnboardingStep[] => {
-    const steps: OnboardingStep[] = ['welcome', 'plan'];
+    const steps: OnboardingStep[] = ['welcome'];
 
     // Add channel setup steps based on selection
     if (channels.includes('telegram')) steps.push('telegram');
@@ -138,11 +134,9 @@ export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
     const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
-    const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
     const [personaType, setPersonaType] = useState<PersonaType | null>(null);
     const [progress, setProgress] = useState({
         welcomeSurveyCompleted: false,
-        planSelected: false,
         channelsSelected: [] as string[],
         telegramSetupCompleted: false,
         emailSetupCompleted: false,
@@ -155,10 +149,14 @@ export default function OnboardingPage() {
     useEffect(() => {
         const savedState = loadOnboardingState();
         if (savedState) {
-            setCurrentStep(savedState.currentStep);
+            // Handle legacy state with 'plan' step - redirect to telegram
+            let step = savedState.currentStep;
+            if (step === 'plan' as any) {
+                step = savedState.selectedChannels?.includes('telegram') ? 'telegram' : 'automation';
+            }
+            setCurrentStep(step);
             setSurveyData(savedState.surveyData);
             setSelectedChannels(savedState.selectedChannels);
-            setSelectedPlan(savedState.selectedPlan);
             setProgress(savedState.progress);
         }
         setIsInitialized(true);
@@ -171,15 +169,14 @@ export default function OnboardingPage() {
             currentStep,
             surveyData,
             selectedChannels,
-            selectedPlan,
             progress
         });
-    }, [isInitialized, currentStep, surveyData, selectedChannels, selectedPlan, progress]);
+    }, [isInitialized, currentStep, surveyData, selectedChannels, progress]);
 
     // Track onboarding step changes
     useEffect(() => {
         if (!isInitialized) return;
-        const stepIndex = ['welcome', 'plan', 'telegram', 'email', 'automation', 'complete'].indexOf(currentStep);
+        const stepIndex = ['welcome', 'telegram', 'email', 'automation', 'complete'].indexOf(currentStep);
         Analytics.trackOnboardingStep(stepIndex + 1, currentStep);
 
         // Track completion
@@ -238,53 +235,10 @@ export default function OnboardingPage() {
             console.error('Error initiating persona save:', error);
         }
 
-        // Go to plan selection
-        setCurrentStep('plan');
-    };
-
-    const handlePlanSelect = (plan: PlanType) => {
-        console.log('Plan selected:', plan);
-        setSelectedPlan(plan);
-        setProgress(prev => ({ ...prev, planSelected: true }));
-
-        // Personalized routing based on persona type
-        const persona = personaType || 'beginner';
-        console.log('Routing for persona:', persona);
-
-        // Power User: Already has Amazon Associates, skip to first channel or automation
-        // They're experienced and ready to go fast
-        if (persona === 'power_user') {
-            console.log('Power User path - fast track');
-            if (selectedChannels.includes('telegram')) {
-                setCurrentStep('telegram');
-            } else if (selectedChannels.includes('email')) {
-                setCurrentStep('email');
-            } else {
-                // Skip directly to automation - they know what they're doing
-                setCurrentStep('automation');
-            }
-            return;
-        }
-
-        // Monetizer: Has audience, wants to monetize
-        // Also fast track, focus on getting automation set up
-        if (persona === 'monetizer') {
-            console.log('Monetizer path - focus on monetization');
-            if (selectedChannels.includes('telegram')) {
-                setCurrentStep('telegram');
-            } else if (selectedChannels.includes('email')) {
-                setCurrentStep('email');
-            } else {
-                setCurrentStep('automation');
-            }
-            return;
-        }
-
-        // Creator & Beginner: Full guided path
-        console.log('Guided path for:', persona);
-        if (selectedChannels.includes('telegram')) {
+        // Go directly to channel setup (skip plan selection)
+        if (data.channels.includes('telegram')) {
             setCurrentStep('telegram');
-        } else if (selectedChannels.includes('email')) {
+        } else if (data.channels.includes('email')) {
             setCurrentStep('email');
         } else {
             setCurrentStep('automation');
@@ -492,20 +446,12 @@ export default function OnboardingPage() {
                 locked: false
             },
             {
-                id: 'plan',
-                label: tSteps('plan.label'),
-                description: tSteps('plan.description'),
-                completed: progress.planSelected,
-                current: currentStep === 'plan',
-                locked: !progress.welcomeSurveyCompleted
-            },
-            {
                 id: 'channels',
                 label: tSteps('channels.label'),
                 description: tSteps('channels.description'),
                 completed: progress.telegramSetupCompleted || progress.emailSetupCompleted,
                 current: currentStep === 'telegram' || currentStep === 'email',
-                locked: !progress.planSelected
+                locked: !progress.welcomeSurveyCompleted
             },
             {
                 id: 'automation',
@@ -513,7 +459,7 @@ export default function OnboardingPage() {
                 description: tSteps('automation.description'),
                 completed: progress.firstAutomationCreated,
                 current: currentStep === 'automation',
-                locked: !progress.planSelected
+                locked: !progress.welcomeSurveyCompleted
             }
         ];
         return steps;
@@ -523,11 +469,10 @@ export default function OnboardingPage() {
     const getCurrentStepNumber = () => {
         const stepMap: Record<OnboardingStep, number> = {
             welcome: 1,
-            plan: 2,
-            telegram: 3,
-            email: 3,
-            automation: 4,
-            complete: 4
+            telegram: 2,
+            email: 2,
+            automation: 3,
+            complete: 3
         };
         return stepMap[currentStep] || 1;
     };
@@ -543,7 +488,6 @@ export default function OnboardingPage() {
     // Get context for preview
     const getPreviewContext = (): 'welcome' | 'telegram' | 'email' | 'automation' => {
         if (currentStep === 'complete') return 'automation';
-        if (currentStep === 'plan') return 'welcome'; // Show welcome context during plan selection
         return currentStep as 'welcome' | 'telegram' | 'email' | 'automation';
     };
 
@@ -600,7 +544,7 @@ export default function OnboardingPage() {
     return (
         <OnboardingLayout
             currentStep={getCurrentStepNumber()}
-            totalSteps={4}
+            totalSteps={3}
             onExit={() => router.push(`/${locale}/dashboard`)}
             leftSidebar={
                 <ProgressTracker
@@ -619,24 +563,6 @@ export default function OnboardingPage() {
                 <WelcomeFlow
                     onComplete={handleWelcomeComplete}
                     onSkip={() => router.push(`/${locale}/dashboard`)}
-                />
-            )}
-
-            {currentStep === 'plan' && (
-                <PlanSelector
-                    onSelect={handlePlanSelect}
-                    onSkip={() => {
-                        setSelectedPlan('FREE');
-                        setProgress(prev => ({ ...prev, planSelected: true }));
-                        if (selectedChannels.includes('telegram')) {
-                            setCurrentStep('telegram');
-                        } else if (selectedChannels.includes('email')) {
-                            setCurrentStep('email');
-                        } else {
-                            setCurrentStep('automation');
-                        }
-                    }}
-                    selectedPlan={selectedPlan || undefined}
                 />
             )}
 

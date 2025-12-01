@@ -19,7 +19,10 @@ import {
     Lightbulb,
     AlertCircle,
     ShoppingBag,
-    X
+    X,
+    Facebook,
+    Phone,
+    Clock
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -60,12 +63,15 @@ const AUDIENCE_SIZE_RANGES = {
 
 const EXPERIENCE_IDS = ['beginner', 'intermediate', 'advanced'] as const;
 
-const CHANNEL_IDS = ['telegram', 'email', 'discord'] as const;
-const CHANNEL_ICONS = {
+const CHANNEL_IDS = ['telegram', 'email', 'discord', 'facebook', 'whatsapp'] as const;
+const CHANNEL_ICONS: Record<string, any> = {
     telegram: Send,
     email: Mail,
-    discord: MessageSquare
+    discord: MessageSquare,
+    facebook: Facebook,
+    whatsapp: Phone
 };
+const DISABLED_CHANNELS = ['email', 'discord', 'facebook', 'whatsapp'];
 
 export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
     const t = useTranslations('onboarding.welcomeFlow');
@@ -535,31 +541,49 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                     >
                         <h2 className="text-xl font-bold text-white mb-1">{t('channels.title')}</h2>
                         <p className="text-sm text-gray-400 mb-4">{t('channels.helpText')}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
                             {CHANNEL_IDS.map((channelId) => {
                                 const Icon = CHANNEL_ICONS[channelId];
+                                const isDisabled = DISABLED_CHANNELS.includes(channelId);
+                                const isSelected = surveyData.channels.includes(channelId);
                                 return (
                                 <button
                                     key={channelId}
-                                    onClick={() => toggleChannel(channelId)}
-                                    className={`p-4 rounded-xl border-2 transition-all ${surveyData.channels.includes(channelId)
-                                        ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
-                                        : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
+                                    onClick={() => !isDisabled && toggleChannel(channelId)}
+                                    disabled={isDisabled}
+                                    className={`p-4 rounded-xl border-2 transition-all relative ${
+                                        isDisabled
+                                            ? 'border-afflyt-glass-border bg-afflyt-dark-50/50 opacity-60 cursor-not-allowed'
+                                            : isSelected
+                                                ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
+                                                : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
                                         }`}
                                 >
+                                    {isDisabled && (
+                                        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-afflyt-plasma-500/20 border border-afflyt-plasma-500/40 rounded-full flex items-center gap-1">
+                                            <Clock className="w-3 h-3 text-afflyt-plasma-400" />
+                                            <span className="text-[10px] font-medium text-afflyt-plasma-400">{t('channels.comingSoon')}</span>
+                                        </div>
+                                    )}
                                     <div className="text-center">
-                                        <div className={`w-12 h-12 mx-auto mb-2 rounded-lg flex items-center justify-center ${surveyData.channels.includes(channelId)
-                                            ? 'bg-afflyt-cyan-500'
-                                            : 'bg-afflyt-dark-100'
+                                        <div className={`w-12 h-12 mx-auto mb-2 rounded-lg flex items-center justify-center ${
+                                            isDisabled
+                                                ? 'bg-afflyt-dark-100/50'
+                                                : isSelected
+                                                    ? 'bg-afflyt-cyan-500'
+                                                    : 'bg-afflyt-dark-100'
                                             }`}>
-                                            <Icon className={`w-6 h-6 ${surveyData.channels.includes(channelId)
-                                                ? 'text-white'
-                                                : 'text-gray-500'
+                                            <Icon className={`w-6 h-6 ${
+                                                isDisabled
+                                                    ? 'text-gray-600'
+                                                    : isSelected
+                                                        ? 'text-white'
+                                                        : 'text-gray-500'
                                                 }`} />
                                         </div>
-                                        <h3 className="text-base font-semibold text-white mb-0.5">{t(`channels.${channelId}.label`)}</h3>
+                                        <h3 className={`text-base font-semibold mb-0.5 ${isDisabled ? 'text-gray-500' : 'text-white'}`}>{t(`channels.${channelId}.label`)}</h3>
                                         <p className="text-xs text-gray-400">{t(`channels.${channelId}.description`)}</p>
-                                        {surveyData.channels.includes(channelId) && (
+                                        {isSelected && !isDisabled && (
                                             <div className="mt-2 flex items-center justify-center gap-1 text-afflyt-cyan-400">
                                                 <Check className="w-3 h-3" />
                                                 <span className="text-xs font-medium">{t('selected')}</span>

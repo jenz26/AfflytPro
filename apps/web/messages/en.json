@@ -533,6 +533,15 @@
           "label": "Discord",
           "description": "Servers and channels"
         },
+        "facebook": {
+          "label": "Facebook",
+          "description": "Groups and pages"
+        },
+        "whatsapp": {
+          "label": "WhatsApp",
+          "description": "Broadcast channels"
+        },
+        "comingSoon": "Coming Soon",
         "selectedChannels": "Selected channels:",
         "none": "None",
         "configureNext": "We'll configure these channels in the next steps",
@@ -1395,11 +1404,18 @@
     },
     "errors": {
       "tokenTooShort": "Token must be at least 30 characters",
-      "invalidToken": "Invalid token",
-      "connectionError": "Server connection error",
+      "invalidToken": "Invalid token. Make sure you copied the token correctly from @BotFather",
+      "tokenUnauthorized": "Unauthorized token. The token may have been revoked or was never active. Create a new bot on @BotFather",
+      "tokenNotFound": "Bot not found. Make sure you copied the correct token from @BotFather",
+      "tokenTimeout": "Verification timeout. Try again in a few seconds",
+      "connectionError": "Server connection error. Check your internet connection and try again",
       "enterChannelId": "Enter a Channel ID or username",
-      "cantPost": "The bot cannot post to this channel",
-      "messageFailed": "Message send failed"
+      "cantPost": "The bot cannot post to this channel. Make sure it is an administrator",
+      "channelUnauthorized": "Channel access denied. Verify the bot has been added as an administrator",
+      "channelBadRequest": "Invalid channel ID. For public channels use @username, for private use numeric ID (-100...)",
+      "channelNotFound": "Channel not found. Verify the ID or username is correct and the bot has been added",
+      "channelNoRights": "The bot doesn't have required permissions. Make sure it has \"Post messages\" rights",
+      "messageFailed": "Message send failed. Verify the bot has posting permissions"
     }
   },
   "progressDashboard": {
@@ -1618,9 +1634,13 @@
     },
     "errors": {
       "apiKeyTooShort": "API key must be at least 10 characters",
-      "invalidApiKey": "Invalid API key",
-      "connectionError": "Server connection error",
-      "emailSendFailed": "Email send failed"
+      "invalidApiKey": "Invalid API key. Make sure you copied the key correctly",
+      "apiKeyUnauthorized": "Unauthorized API key. The key may have been revoked or is no longer active. Generate a new key from the provider dashboard",
+      "apiKeyForbidden": "Access denied. Verify the API key has the required permissions for sending email",
+      "apiKeyInvalidFormat": "Invalid API key format. Make sure you copied the entire key, including the prefix",
+      "apiKeyTimeout": "Verification timeout. Try again in a few seconds",
+      "connectionError": "Server connection error. Check your internet connection and try again",
+      "emailSendFailed": "Email send failed. Verify sender settings and try again"
     }
   },
   "templates": {

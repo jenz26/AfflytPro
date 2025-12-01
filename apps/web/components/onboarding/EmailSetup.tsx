@@ -100,7 +100,19 @@ export const EmailSetup = ({ onComplete, onSkip }: EmailSetupProps) => {
                 track('email_api_key_validated', 'onboarding', { provider: prov });
             } else {
                 setApiKeyValidation('invalid');
-                setValidationError(data.error || t('errors.invalidApiKey'));
+                // Parse error for better UX
+                const errorMsg = data.error || '';
+                if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+                    setValidationError(t('errors.apiKeyUnauthorized'));
+                } else if (errorMsg.includes('403') || errorMsg.includes('Forbidden')) {
+                    setValidationError(t('errors.apiKeyForbidden'));
+                } else if (errorMsg.includes('invalid') || errorMsg.includes('Invalid')) {
+                    setValidationError(t('errors.apiKeyInvalidFormat'));
+                } else if (errorMsg.includes('timeout') || errorMsg.includes('TIMEOUT')) {
+                    setValidationError(t('errors.apiKeyTimeout'));
+                } else {
+                    setValidationError(data.error || t('errors.invalidApiKey'));
+                }
             }
         } catch (error) {
             setApiKeyValidation('invalid');

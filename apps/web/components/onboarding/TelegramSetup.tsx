@@ -84,7 +84,17 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                 track('telegram_token_validated', 'onboarding', { botUsername: data.botInfo.username });
             } else {
                 setBotValidation('invalid');
-                setValidationError(data.error || t('errors.invalidToken'));
+                // Parse error for better UX
+                const errorMsg = data.error || '';
+                if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+                    setValidationError(t('errors.tokenUnauthorized'));
+                } else if (errorMsg.includes('404') || errorMsg.includes('Not Found')) {
+                    setValidationError(t('errors.tokenNotFound'));
+                } else if (errorMsg.includes('timeout') || errorMsg.includes('TIMEOUT')) {
+                    setValidationError(t('errors.tokenTimeout'));
+                } else {
+                    setValidationError(data.error || t('errors.invalidToken'));
+                }
             }
         } catch (error) {
             setBotValidation('invalid');
@@ -117,7 +127,19 @@ export const TelegramSetup = ({ onComplete, onSkip }: TelegramSetupProps) => {
                 track('telegram_channel_validated', 'onboarding', { channelId });
             } else {
                 setChannelValidation('invalid');
-                setValidationError(data.error || t('errors.cantPost'));
+                // Parse error for better UX
+                const errorMsg = data.error || '';
+                if (errorMsg.includes('401') || errorMsg.includes('Unauthorized')) {
+                    setValidationError(t('errors.channelUnauthorized'));
+                } else if (errorMsg.includes('400') || errorMsg.includes('Bad Request')) {
+                    setValidationError(t('errors.channelBadRequest'));
+                } else if (errorMsg.includes('not found') || errorMsg.includes('chat not found')) {
+                    setValidationError(t('errors.channelNotFound'));
+                } else if (errorMsg.includes('not enough rights') || errorMsg.includes('administrator')) {
+                    setValidationError(t('errors.channelNoRights'));
+                } else {
+                    setValidationError(data.error || t('errors.cantPost'));
+                }
             }
         } catch (error) {
             setChannelValidation('invalid');

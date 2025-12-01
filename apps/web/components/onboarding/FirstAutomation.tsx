@@ -133,6 +133,35 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
         );
     }
 
+    // If no templates available, show skip option
+    if (templates.length === 0) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-afflyt-dark-100 to-afflyt-dark-50 flex items-center justify-center p-6">
+                <GlassCard className="max-w-md text-center p-8">
+                    <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-cyan-600 rounded-xl flex items-center justify-center">
+                        <Sparkles className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-4">
+                        Nessun template disponibile
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                        Non ci sono template di automazione disponibili al momento.
+                        Potrai creare la tua prima automazione dalla dashboard.
+                    </p>
+                    {onSkip && (
+                        <CyberButton
+                            variant="primary"
+                            onClick={onSkip}
+                            className="w-full justify-center"
+                        >
+                            Vai alla Dashboard
+                        </CyberButton>
+                    )}
+                </GlassCard>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-afflyt-dark-100 to-afflyt-dark-50 p-6">
             {/* Background Animation */}
@@ -167,8 +196,20 @@ export const FirstAutomation: React.FC<FirstAutomationProps> = ({ onComplete, on
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
                     {templates.map((template, index) => {
                         const Icon = getIconForCategory(template.category);
-                        const parsedCategories = JSON.parse(template.categories);
-                        const parsedSuccessStories = JSON.parse(template.successStories);
+                        let parsedCategories: string[] = [];
+                        let parsedSuccessStories: { user: string; value: string }[] = [];
+
+                        try {
+                            parsedCategories = template.categories ? JSON.parse(template.categories) : [];
+                        } catch (e) {
+                            console.warn('Failed to parse categories for template:', template.id);
+                        }
+
+                        try {
+                            parsedSuccessStories = template.successStories ? JSON.parse(template.successStories) : [];
+                        } catch (e) {
+                            console.warn('Failed to parse successStories for template:', template.id);
+                        }
 
                         return (
                             <motion.div
