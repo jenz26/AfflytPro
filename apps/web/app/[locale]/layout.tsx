@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { TawkChat } from '@/components/support/TawkChat';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
+import { FeedbackWidgetWrapper } from '@/components/feedback/FeedbackWidgetWrapper';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -55,6 +56,7 @@ export default async function LocaleLayout({
           <PostHogProvider>
             {children}
             <TawkChat />
+            <FeedbackWidgetWrapper />
           </PostHogProvider>
         </NextIntlClientProvider>
       </body>

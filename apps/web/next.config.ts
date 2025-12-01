@@ -5,7 +5,19 @@ import { withSentryConfig } from '@sentry/nextjs';
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // PostHog reverse proxy to avoid ad blockers
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://eu-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://eu.i.posthog.com/:path*',
+      },
+    ];
+  },
 };
 
 // Sentry configuration options

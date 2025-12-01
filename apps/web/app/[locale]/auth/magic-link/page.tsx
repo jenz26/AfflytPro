@@ -50,7 +50,26 @@ export default function MagicLinkPage() {
                     // Track magic link success and set user context across all services
                     Analytics.trackMagicLinkClicked();
                     Analytics.trackLoginSuccess('magic_link');
+
+                    // Track signup vs login
+                    if (data.isNewUser) {
+                        Analytics.trackUserSignedUp('magic_link', data.user?.betaCode);
+                    }
+
+                    // Full user identification for PostHog
                     if (data.user?.id) {
+                        Analytics.identifyUser({
+                            id: data.user.id,
+                            email: data.user.email,
+                            name: data.user.name,
+                            plan: data.user.plan,
+                            personaType: data.user.personaType,
+                            createdAt: data.user.createdAt,
+                            channelsCount: data.user._count?.channels || 0,
+                            automationsCount: data.user._count?.automationRules || 0,
+                        });
+
+                        // Sentry user context
                         setMonitoringUser({
                             id: data.user.id,
                             email: data.user.email,

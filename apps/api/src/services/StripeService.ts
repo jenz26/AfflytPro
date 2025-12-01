@@ -1,5 +1,6 @@
 import { PrismaClient, PlanType, SubscriptionStatus, NotificationType } from '@prisma/client';
 import { NotificationService } from './NotificationService';
+import { ServerAnalytics } from '../lib/posthog';
 
 const prisma = new PrismaClient();
 
@@ -332,6 +333,16 @@ export class StripeService {
       plan,
     });
 
+    // Track subscription activated (server-side analytics)
+    const priceAmount = stripeSubscription.items.data[0]?.price?.unit_amount || 0;
+    const billingCycle = stripeSubscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+    ServerAnalytics.trackSubscriptionActivated(
+      subscription.userId,
+      plan,
+      priceAmount / 100,
+      billingCycle
+    );
+
     console.log(`[StripeService] Subscription activated for user ${subscription.userId}: ${plan}`);
   }
 
@@ -416,6 +427,16 @@ export class StripeService {
     });
 
     await NotificationService.send(subscription.userId, NotificationType.SUBSCRIPTION_CANCELED, {});
+
+    // Track subscription canceled (server-side analytics)
+    const tenureDays = subscription.currentPeriodStart
+      ? Math.floor((Date.now() - subscription.currentPeriodStart.getTime()) / (1000 * 60 * 60 * 24))
+      : 0;
+    ServerAnalytics.trackSubscriptionCanceled(
+      subscription.userId,
+      subscription.plan,
+      tenureDays
+    );
   }
 
   /**
@@ -456,6 +477,13 @@ export class StripeService {
       invoiceUrl: invoice.hosted_invoice_url,
       nextBillingDate: subscription.currentPeriodEnd?.toLocaleDateString(),
     });
+
+    // Track payment received (server-side analytics)
+    ServerAnalytics.trackPaymentReceived(
+      subscription.userId,
+      invoice.amount_paid / 100,
+      subscription.plan
+    );
   }
 
   /**
@@ -497,6 +525,13 @@ export class StripeService {
     await NotificationService.send(subscription.userId, NotificationType.PAYMENT_FAILED, {
       amount: (invoice.amount_due / 100).toFixed(2),
     });
+
+    // Track payment failed (server-side analytics)
+    ServerAnalytics.trackPaymentFailed(
+      subscription.userId,
+      subscription.plan,
+      invoice.last_payment_error?.type || 'unknown'
+    );
   }
 
   /**

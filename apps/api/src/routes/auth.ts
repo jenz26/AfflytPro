@@ -1080,13 +1080,21 @@ export async function authRoutes(fastify: FastifyInstance) {
           });
         }
 
-        // Get user and update last login
+        // Get user and update last login (include counts for analytics)
         const user = await prisma.user.update({
           where: { id: verification.userId },
           data: {
             lastLoginAt: new Date(),
             emailVerified: true, // Magic link also verifies email
             emailVerifiedAt: new Date(),
+          },
+          include: {
+            _count: {
+              select: {
+                channels: true,
+                automationRules: true,
+              },
+            },
           },
         });
 

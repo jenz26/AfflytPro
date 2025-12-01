@@ -6,23 +6,25 @@ import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
-const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com';
 
 /**
  * Initialize PostHog
+ * - Uses reverse proxy (/ingest) to avoid ad blockers
+ * - Session recording disabled by default, enabled for beta users via enableSessionRecording()
  */
 if (typeof window !== 'undefined' && POSTHOG_KEY) {
   posthog.init(POSTHOG_KEY, {
-    api_host: POSTHOG_HOST,
-    // Capture pageviews automatically
-    capture_pageview: false, // We'll handle this manually for Next.js
-    // Session recording
+    // Use reverse proxy to avoid ad blockers
+    api_host: '/ingest',
+    ui_host: 'https://eu.i.posthog.com',
+    // Capture pageviews - we handle manually for Next.js App Router
+    capture_pageview: false,
     capture_pageleave: true,
+    // Session recording - disabled by default, enable for beta users
+    disable_session_recording: true,
     // Privacy settings
     persistence: 'localStorage+cookie',
-    // Respect Do Not Track
     respect_dnt: true,
-    // Disable in development (optional - remove if you want to test)
     loaded: (posthog) => {
       if (process.env.NODE_ENV === 'development') {
         // Uncomment to disable in dev:
@@ -103,6 +105,54 @@ export const Analytics = {
   setUserProperties: (properties: Record<string, any>) => {
     if (posthog) {
       posthog.people.set(properties);
+    }
+  },
+
+  /**
+   * Enable session recording for beta users (10% sampling)
+   */
+  enableSessionRecordingForBeta: () => {
+    if (posthog) {
+      // 10% sampling for beta users
+      if (Math.random() < 0.1) {
+        posthog.startSessionRecording();
+      }
+    }
+  },
+
+  /**
+   * Full user identification with all properties (call after login)
+   */
+  identifyUser: (user: {
+    id: string;
+    email: string;
+    name?: string;
+    plan: string;
+    personaType?: string;
+    createdAt: string;
+    channelsCount?: number;
+    automationsCount?: number;
+    totalRevenue?: number;
+  }) => {
+    if (posthog) {
+      const isBetaUser = user.plan === 'BETA_TESTER';
+
+      posthog.identify(user.id, {
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        persona_type: user.personaType,
+        signup_date: user.createdAt,
+        channels_count: user.channelsCount || 0,
+        automations_count: user.automationsCount || 0,
+        total_revenue: user.totalRevenue || 0,
+        is_beta_user: isBetaUser,
+      });
+
+      // Enable session recording for beta users with 10% sampling
+      if (isBetaUser) {
+        Analytics.enableSessionRecordingForBeta();
+      }
     }
   },
 
@@ -199,6 +249,76 @@ export const Analytics = {
    */
   trackSupportOpened: (context: string) => {
     Analytics.track('support_chat_opened', { context });
+  },
+
+  // ==================== ADDITIONAL CORE EVENTS ====================
+
+  /**
+   * Track user signed up
+   */
+  trackUserSignedUp: (method: 'magic_link' | 'password', betaCode?: string) => {
+    Analytics.track('user_signed_up', {
+      method,
+      beta_code: betaCode,
+    });
+  },
+
+  /**
+   * Track user logged out
+   */
+  trackUserLoggedOut: () => {
+    Analytics.track('user_logged_out');
+    Analytics.reset();
+  },
+
+  /**
+   * Track automation toggled (on/off)
+   */
+  trackAutomationToggled: (automationId: string, newState: boolean) => {
+    Analytics.track('automation_toggled', {
+      automation_id: automationId,
+      new_state: newState ? 'active' : 'paused',
+    });
+  },
+
+  /**
+   * Track dashboard viewed
+   */
+  trackDashboardViewed: (section?: string) => {
+    Analytics.track('dashboard_viewed', { section });
+  },
+
+  /**
+   * Track analytics viewed
+   */
+  trackAnalyticsViewed: (period: string) => {
+    Analytics.track('analytics_viewed', { period });
+  },
+
+  // ==================== FEEDBACK EVENTS ====================
+
+  /**
+   * Track feedback submitted
+   */
+  trackFeedbackSubmitted: (type: 'bug' | 'idea' | 'question', rating?: number) => {
+    Analytics.track('feedback_submitted', {
+      type,
+      rating,
+    });
+  },
+
+  /**
+   * Track feature requested
+   */
+  trackFeatureRequested: (featureName: string) => {
+    Analytics.track('feature_requested', { feature_name: featureName });
+  },
+
+  /**
+   * Track bug reported
+   */
+  trackBugReported: (context: string) => {
+    Analytics.track('bug_reported', { context });
   },
 };
 

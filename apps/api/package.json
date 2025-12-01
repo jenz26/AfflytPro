@@ -33,6 +33,7 @@
         "openai": "^6.9.1",
         "otplib": "^12.0.1",
         "pg": "^8.16.3",
+        "posthog-node": "^5.14.1",
         "resend": "^6.5.2",
         "telegraf": "^4.16.3",
         "ua-parser-js": "^2.0.6",
