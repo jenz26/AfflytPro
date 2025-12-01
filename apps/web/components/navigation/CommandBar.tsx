@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { CommandPalette } from './CommandPalette';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { NotificationCenter } from '@/components/notifications';
 import { useOperatingSystem, getModifierKey } from '@/hooks/useOperatingSystem';
 import { API_BASE } from '@/lib/api/config';
 import { removeAuthToken } from '@/lib/auth';
@@ -190,11 +191,6 @@ export const CommandBar = () => {
         return userProfile.email.split('@')[0];
     };
 
-    // Live account data
-    const accountStatus = {
-        notifications: 2
-    };
-
     return (
         <>
             {/* Desktop Navigation Bar */}
@@ -281,14 +277,7 @@ export const CommandBar = () => {
                         </button>
 
                         {/* Notifications */}
-                        <button className="relative p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors">
-                            <Bell className="w-4 h-4 text-gray-400" />
-                            {accountStatus.notifications > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-afflyt-cyan-500 text-afflyt-dark-100 text-[10px] font-bold rounded-full flex items-center justify-center">
-                                    {accountStatus.notifications}
-                                </span>
-                            )}
-                        </button>
+                        <NotificationCenter />
 
                         {/* Language Switcher */}
                         <LanguageSwitcher />

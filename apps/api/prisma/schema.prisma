@@ -102,6 +102,21 @@ enum NotificationStatus {
   SENT
   FAILED
   READ
+  DISMISSED
+}
+
+enum NotificationCategory {
+  SYSTEM // Account, billing, security
+  AUTOMATION // Deal published, automation error
+  ANALYTICS // Reports, insights
+  PRODUCT // New features, updates
+}
+
+enum NotificationPriority {
+  LOW // Can wait, batched
+  MEDIUM // Show soon, non-urgent
+  HIGH // Show immediately, important
+  CRITICAL // Interrupt user, requires action
 }
 
 // === BILLING ===
@@ -1091,30 +1106,46 @@ model Notification {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type    NotificationType
-  channel NotificationChannel
-  status  NotificationStatus  @default(PENDING)
+  type     NotificationType
+  channel  NotificationChannel
+  status   NotificationStatus   @default(PENDING)
+  category NotificationCategory @default(SYSTEM)
+  priority NotificationPriority @default(MEDIUM)
 
   // Content
   title String
   body  String
+  icon  String? // Lucide icon name (e.g., "Bell", "AlertTriangle")
   data  Json? // Additional data for the notification
 
+  // Action
+  actionUrl   String? // URL to navigate on click
+  actionLabel String? // Button/link text
+
   // Delivery tracking
-  sentAt   DateTime?
-  readAt   DateTime?
-  failedAt DateTime?
-  error    String?
+  sentAt      DateTime?
+  readAt      DateTime?
+  dismissedAt DateTime?
+  failedAt    DateTime?
+  error       String?
 
   // Retry logic
   attempts   Int @default(0)
   maxRetries Int @default(3)
 
+  // Auto-dismiss (milliseconds, null = manual)
+  autoDismissMs Int?
+
   createdAt DateTime @default(now())
+  expiresAt DateTime? // Optional expiration
 
   @@index([userId])
+  @@index([userId, status])
+  @@index([userId, createdAt])
   @@index([type])
   @@index([status])
+  @@index([category])
+  @@index([priority])
   @@index([createdAt])
 }
 

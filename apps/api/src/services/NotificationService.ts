@@ -398,11 +398,28 @@ export class NotificationService {
     return prisma.notification.findMany({
       where: {
         userId,
+        status: { not: 'DISMISSED' }, // Exclude dismissed
         ...(unreadOnly ? { readAt: null } : {}),
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
+      select: {
+        id: true,
+        type: true,
+        category: true,
+        priority: true,
+        status: true,
+        title: true,
+        body: true,
+        icon: true,
+        actionUrl: true,
+        actionLabel: true,
+        autoDismissMs: true,
+        createdAt: true,
+        readAt: true,
+        dismissedAt: true,
+      }
     });
   }
 
@@ -431,7 +448,56 @@ export class NotificationService {
    */
   static async getUnreadCount(userId: string): Promise<number> {
     return prisma.notification.count({
-      where: { userId, readAt: null },
+      where: { userId, readAt: null, status: { notIn: ['DISMISSED'] } },
+    });
+  }
+
+  /**
+   * Dismiss (soft delete) a notification
+   */
+  static async dismissNotification(notificationId: string, userId: string) {
+    return prisma.notification.updateMany({
+      where: { id: notificationId, userId },
+      data: {
+        status: NotificationStatus.DISMISSED,
+        dismissedAt: new Date()
+      },
+    });
+  }
+
+  /**
+   * Create an in-app notification (without sending email)
+   */
+  static async createInApp(
+    userId: string,
+    type: NotificationType,
+    data: {
+      title: string;
+      body: string;
+      icon?: string;
+      actionUrl?: string;
+      actionLabel?: string;
+      priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+      category?: 'SYSTEM' | 'AUTOMATION' | 'ANALYTICS' | 'PRODUCT';
+      autoDismissMs?: number;
+    }
+  ) {
+    return prisma.notification.create({
+      data: {
+        userId,
+        type,
+        channel: NotificationChannel.IN_APP,
+        status: NotificationStatus.SENT,
+        title: data.title,
+        body: data.body,
+        icon: data.icon,
+        actionUrl: data.actionUrl,
+        actionLabel: data.actionLabel,
+        priority: data.priority || 'MEDIUM',
+        category: data.category || 'SYSTEM',
+        autoDismissMs: data.autoDismissMs,
+        sentAt: new Date(),
+      },
     });
   }
 

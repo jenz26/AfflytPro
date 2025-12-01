@@ -58,6 +58,20 @@ export async function notificationRoutes(fastify: FastifyInstance) {
       return { success: true };
     }
   );
+
+  // Dismiss/delete a notification
+  fastify.delete(
+    '/notifications/:id',
+    { preHandler: [fastify.authenticate] },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const userId = (request as any).user.id;
+      const params = request.params as { id: string };
+      const { id } = params;
+
+      await NotificationService.dismissNotification(id, userId);
+      return { success: true };
+    }
+  );
 }
 
 export default notificationRoutes;
