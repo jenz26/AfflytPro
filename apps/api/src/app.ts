@@ -29,6 +29,8 @@ import { DEFAULT_CONFIG } from './types/keepa';
 import { connectRedis } from './lib/redis';
 // Scheduler Queue System (BullMQ-based, separate from Keepa)
 import { SchedulerQueue, SchedulerCron, setSchedulerCronInstance } from './services/scheduler';
+// Email Report Cron (Weekly/Daily reports)
+import { EmailReportCron } from './services/EmailReportCron';
 import prisma from './lib/prisma';
 import billingRoutes from './routes/billing';
 import notificationRoutes from './routes/notifications';
@@ -278,6 +280,27 @@ const start = async () => {
             process.on('SIGINT', extendedShutdown);
 
             console.log('[Scheduler] Scheduled posts queue started successfully');
+
+            // ==================== EMAIL REPORT CRON ====================
+            // Start the email report scheduler (Weekly/Daily reports)
+            console.log('[EmailReport] Starting email report scheduler...');
+            const emailReportCron = new EmailReportCron(prisma);
+            emailReportCron.start();
+
+            // Extend graceful shutdown for email reports
+            const schedulerShutdown = extendedShutdown;
+            const emailShutdown = async () => {
+                console.log('[EmailReport] Shutting down...');
+                emailReportCron.stop();
+                await schedulerShutdown();
+            };
+
+            process.removeListener('SIGTERM', extendedShutdown);
+            process.removeListener('SIGINT', extendedShutdown);
+            process.on('SIGTERM', emailShutdown);
+            process.on('SIGINT', emailShutdown);
+
+            console.log('[EmailReport] Email report scheduler started successfully');
         } else {
             if (!process.env.REDIS_URL) {
                 console.log('[Keepa v2] REDIS_URL not configured, queue system disabled');

@@ -230,6 +230,16 @@ model User {
   hasAmazonAssociates Boolean   @default(false)
   onboardingCompletedAt DateTime?
 
+  // Email Preferences
+  emailPrefs_weeklyReport     Boolean @default(true)  // Weekly performance summary
+  emailPrefs_dailyDigest      Boolean @default(false) // Daily stats digest
+  emailPrefs_automationAlerts Boolean @default(true)  // Automation errors/warnings
+  emailPrefs_dealDigest       String  @default("off") // 'realtime' | 'hourly' | 'daily' | 'off'
+  emailPrefs_marketing        Boolean @default(true)  // Product updates, tips
+  emailPrefs_timezone         String  @default("Europe/Rome")
+  lastWeeklyReportAt          DateTime?
+  lastDailyDigestAt           DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

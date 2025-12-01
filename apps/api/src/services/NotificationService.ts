@@ -272,6 +272,41 @@ const EMAIL_TEMPLATES: Partial<Record<NotificationType, NotificationTemplate>> =
       ? `Canale "${data.channelName}" disconnesso. Riconnettilo per riprendere le pubblicazioni.`
       : `Channel "${data.channelName}" disconnected. Reconnect it to resume publishing.`,
   },
+
+  // === WEEKLY & DAILY REPORTS ===
+  WEEKLY_REPORT: {
+    subject: (data, locale) => locale === 'it'
+      ? `📊 Report Settimanale - ${data.weekRange}`
+      : `📊 Weekly Report - ${data.weekRange}`,
+    html: (data, locale) => generateWeeklyReportEmailHTML({
+      locale,
+      weekRange: data.weekRange,
+      stats: data.stats,
+      topDeals: data.topDeals,
+      channelBreakdown: data.channelBreakdown,
+      insight: data.insight,
+      comparison: data.comparison,
+    }),
+    text: (data, locale) => locale === 'it'
+      ? `Report settimanale ${data.weekRange}: ${data.stats?.revenue || 0}€ guadagnati, ${data.stats?.clicks || 0} click, ${data.stats?.conversions || 0} conversioni.`
+      : `Weekly report ${data.weekRange}: €${data.stats?.revenue || 0} earned, ${data.stats?.clicks || 0} clicks, ${data.stats?.conversions || 0} conversions.`,
+  },
+
+  DAILY_REPORT: {
+    subject: (data, locale) => locale === 'it'
+      ? `📈 Riepilogo Giornaliero - ${data.date}`
+      : `📈 Daily Summary - ${data.date}`,
+    html: (data, locale) => generateDailySummaryEmailHTML({
+      locale,
+      date: data.date,
+      stats: data.stats,
+      topLink: data.topLink,
+      insight: data.insight,
+    }),
+    text: (data, locale) => locale === 'it'
+      ? `Riepilogo ${data.date}: ${data.stats?.revenue || 0}€ guadagnati, ${data.stats?.clicks || 0} click.`
+      : `Summary ${data.date}: €${data.stats?.revenue || 0} earned, ${data.stats?.clicks || 0} clicks.`,
+  },
 };
 
 /**
@@ -780,6 +815,186 @@ function generateAutomationEmailHTML(opts: {
           </tr>
         </table>
         ` : ''}
+      </td>
+    </tr>
+  `, opts.locale);
+}
+
+function generateWeeklyReportEmailHTML(opts: {
+  locale: string;
+  weekRange: string;
+  stats: { revenue: number; clicks: number; conversions: number; cvr: number };
+  topDeals?: Array<{ title: string; revenue: number; clicks: number }>;
+  channelBreakdown?: Array<{ name: string; revenue: number; percentage: number }>;
+  insight?: string;
+  comparison?: { revenueChange: number; clicksChange: number };
+}): string {
+  const topDealsHTML = opts.topDeals && opts.topDeals.length > 0
+    ? `<div style="margin: 24px 0;">
+        <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px 0;">
+          ${opts.locale === 'it' ? '🏆 Top 5 Deal' : '🏆 Top 5 Deals'}
+        </h3>
+        <table width="100%" style="background: rgba(255,255,255,0.05); border-radius: 8px;">
+          ${opts.topDeals.slice(0, 5).map((deal, i) => `
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <td style="padding: 12px 16px; color: #6b7280; font-size: 14px;">${i + 1}.</td>
+              <td style="padding: 12px 16px; color: #ffffff; font-size: 14px;">${deal.title.substring(0, 50)}${deal.title.length > 50 ? '...' : ''}</td>
+              <td style="padding: 12px 16px; color: #10b981; font-size: 14px; text-align: right; font-weight: bold;">€${deal.revenue.toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </table>
+       </div>`
+    : '';
+
+  const channelHTML = opts.channelBreakdown && opts.channelBreakdown.length > 0
+    ? `<div style="margin: 24px 0;">
+        <h3 style="color: #ffffff; font-size: 16px; margin: 0 0 16px 0;">
+          ${opts.locale === 'it' ? '📊 Performance per Canale' : '📊 Channel Performance'}
+        </h3>
+        ${opts.channelBreakdown.map(ch => `
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <span style="color: #ffffff; font-size: 14px;">${ch.name}</span>
+              <span style="color: #00E5E0; font-size: 14px; font-weight: bold;">€${ch.revenue.toFixed(2)} (${ch.percentage}%)</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden;">
+              <div style="background: linear-gradient(135deg, #00E5E0 0%, #0891b2 100%); width: ${ch.percentage}%; height: 100%;"></div>
+            </div>
+          </div>
+        `).join('')}
+       </div>`
+    : '';
+
+  const comparisonHTML = opts.comparison
+    ? `<div style="display: flex; gap: 8px; margin-top: 8px;">
+        <span style="font-size: 12px; color: ${opts.comparison.revenueChange >= 0 ? '#10b981' : '#ef4444'};">
+          ${opts.comparison.revenueChange >= 0 ? '↑' : '↓'} ${Math.abs(opts.comparison.revenueChange)}% ${opts.locale === 'it' ? 'vs settimana scorsa' : 'vs last week'}
+        </span>
+       </div>`
+    : '';
+
+  const insightHTML = opts.insight
+    ? `<div style="background: rgba(0, 229, 224, 0.1); border: 1px solid rgba(0, 229, 224, 0.3); border-radius: 8px; padding: 16px; margin: 24px 0;">
+        <p style="color: #00E5E0; font-size: 14px; margin: 0;">
+          💡 <strong>${opts.locale === 'it' ? 'Insight' : 'Insight'}:</strong> ${opts.insight}
+        </p>
+       </div>`
+    : '';
+
+  return generateBaseEmailHTML(`
+    <tr>
+      <td style="background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); padding: 30px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📊 ${opts.locale === 'it' ? 'Report Settimanale' : 'Weekly Report'}</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">${opts.weekRange}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px;">
+        <!-- Key Metrics -->
+        <table width="100%" style="margin-bottom: 24px;">
+          <tr>
+            <td style="padding: 20px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 8px 0 0 8px;">
+              <div style="color: #10b981; font-size: 32px; font-weight: bold;">€${opts.stats.revenue.toFixed(2)}</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">${opts.locale === 'it' ? 'Guadagni' : 'Revenue'}</div>
+              ${comparisonHTML}
+            </td>
+            <td style="padding: 20px; text-align: center; background: rgba(255,255,255,0.05);">
+              <div style="color: #00E5E0; font-size: 32px; font-weight: bold;">${opts.stats.clicks.toLocaleString()}</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">Click</div>
+            </td>
+            <td style="padding: 20px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 0 8px 8px 0;">
+              <div style="color: #f59e0b; font-size: 32px; font-weight: bold;">${opts.stats.cvr.toFixed(1)}%</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">CVR</div>
+            </td>
+          </tr>
+        </table>
+
+        ${topDealsHTML}
+        ${channelHTML}
+        ${insightHTML}
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
+          <tr>
+            <td align="center">
+              <a href="${APP_URL}/dashboard/analytics" style="display: inline-block; background: linear-gradient(135deg, #00E5E0 0%, #0891b2 100%); color: #0a0b0f; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">
+                ${opts.locale === 'it' ? 'Vedi Analytics Completi' : 'View Full Analytics'}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `, opts.locale);
+}
+
+function generateDailySummaryEmailHTML(opts: {
+  locale: string;
+  date: string;
+  stats: { revenue: number; clicks: number; conversions: number };
+  topLink?: { title: string; revenue: number; clicks: number };
+  insight?: string;
+}): string {
+  const topLinkHTML = opts.topLink
+    ? `<div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 12px; margin: 0 0 8px 0;">
+          ${opts.locale === 'it' ? '🏆 Miglior Link' : '🏆 Top Link'}
+        </p>
+        <p style="color: #ffffff; font-size: 14px; margin: 0 0 8px 0;">${opts.topLink.title}</p>
+        <p style="color: #10b981; font-size: 16px; font-weight: bold; margin: 0;">
+          €${opts.topLink.revenue.toFixed(2)} · ${opts.topLink.clicks} click
+        </p>
+       </div>`
+    : '';
+
+  const insightHTML = opts.insight
+    ? `<div style="background: rgba(0, 229, 224, 0.1); border: 1px solid rgba(0, 229, 224, 0.3); border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <p style="color: #00E5E0; font-size: 14px; margin: 0;">
+          💡 ${opts.insight}
+        </p>
+       </div>`
+    : '';
+
+  return generateBaseEmailHTML(`
+    <tr>
+      <td style="background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%); padding: 30px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">📈 ${opts.locale === 'it' ? 'Riepilogo Giornaliero' : 'Daily Summary'}</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">${opts.date}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px;">
+        <!-- Key Metrics -->
+        <table width="100%" style="margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 16px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 8px; margin-right: 8px;">
+              <div style="color: #10b981; font-size: 28px; font-weight: bold;">€${opts.stats.revenue.toFixed(2)}</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">${opts.locale === 'it' ? 'Guadagni' : 'Revenue'}</div>
+            </td>
+            <td style="width: 8px;"></td>
+            <td style="padding: 16px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 8px; margin-right: 8px;">
+              <div style="color: #00E5E0; font-size: 28px; font-weight: bold;">${opts.stats.clicks}</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">Click</div>
+            </td>
+            <td style="width: 8px;"></td>
+            <td style="padding: 16px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 8px;">
+              <div style="color: #f59e0b; font-size: 28px; font-weight: bold;">${opts.stats.conversions}</div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">${opts.locale === 'it' ? 'Conversioni' : 'Conversions'}</div>
+            </td>
+          </tr>
+        </table>
+
+        ${topLinkHTML}
+        ${insightHTML}
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
+          <tr>
+            <td align="center">
+              <a href="${APP_URL}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #00E5E0 0%, #0891b2 100%); color: #0a0b0f; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">
+                ${opts.locale === 'it' ? 'Vai alla Dashboard' : 'Go to Dashboard'}
+              </a>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   `, opts.locale);
