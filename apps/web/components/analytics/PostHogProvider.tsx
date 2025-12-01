@@ -9,28 +9,17 @@ const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
 
 /**
  * Initialize PostHog
- * - Uses reverse proxy (/ingest) to avoid ad blockers
- * - Session recording disabled by default, enabled for beta users via enableSessionRecording()
+ * - Direct connection to PostHog EU
+ * - Session recording disabled by default, enabled for beta users
  */
 if (typeof window !== 'undefined' && POSTHOG_KEY) {
   posthog.init(POSTHOG_KEY, {
-    // Use reverse proxy to avoid ad blockers
-    api_host: '/ingest',
-    ui_host: 'https://eu.i.posthog.com',
-    // Capture pageviews - we handle manually for Next.js App Router
+    api_host: 'https://eu.i.posthog.com',
     capture_pageview: false,
     capture_pageleave: true,
-    // Session recording - disabled by default, enable for beta users
     disable_session_recording: true,
-    // Privacy settings
     persistence: 'localStorage+cookie',
     respect_dnt: true,
-    loaded: (posthog) => {
-      if (process.env.NODE_ENV === 'development') {
-        // Uncomment to disable in dev:
-        // posthog.opt_out_capturing();
-      }
-    },
   });
 }
 
@@ -47,9 +36,7 @@ function PostHogPageView() {
       if (searchParams?.toString()) {
         url = url + '?' + searchParams.toString();
       }
-      posthog.capture('$pageview', {
-        $current_url: url,
-      });
+      posthog.capture('$pageview', { $current_url: url });
     }
   }, [pathname, searchParams]);
 
