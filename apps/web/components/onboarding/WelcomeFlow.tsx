@@ -520,12 +520,50 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                             <motion.div
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="mt-4 p-3 bg-afflyt-cyan-500/10 border border-afflyt-cyan-500/30 rounded-lg flex items-start gap-2"
+                                className="mt-4 space-y-4"
                             >
-                                <Lightbulb className="w-4 h-4 text-afflyt-cyan-400 shrink-0 mt-0.5" />
-                                <p className="text-xs text-gray-300">
-                                    {t('amazonAssociates.no.feedback')}
-                                </p>
+                                <div className="p-4 bg-afflyt-cyan-500/10 border border-afflyt-cyan-500/30 rounded-lg">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <Info className="w-5 h-5 text-afflyt-cyan-400 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-white mb-1">{t('amazonAssociates.guide.title')}</h4>
+                                            <p className="text-xs text-gray-300">{t('amazonAssociates.guide.subtitle')}</p>
+                                        </div>
+                                    </div>
+                                    <ol className="space-y-2 text-xs text-gray-300 ml-8">
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0 text-afflyt-cyan-400 font-bold">1</span>
+                                            <span>{t('amazonAssociates.guide.step1')}</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0 text-afflyt-cyan-400 font-bold">2</span>
+                                            <span>{t('amazonAssociates.guide.step2')}</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0 text-afflyt-cyan-400 font-bold">3</span>
+                                            <span>{t('amazonAssociates.guide.step3')}</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="w-5 h-5 rounded-full bg-afflyt-cyan-500/20 flex items-center justify-center shrink-0 text-afflyt-cyan-400 font-bold">4</span>
+                                            <span>{t('amazonAssociates.guide.step4')}</span>
+                                        </li>
+                                    </ol>
+                                    <a
+                                        href="https://programma-affiliazione.amazon.it/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-afflyt-cyan-500/20 text-afflyt-cyan-400 rounded-lg text-sm font-medium hover:bg-afflyt-cyan-500/30 transition"
+                                    >
+                                        {t('amazonAssociates.guide.cta')}
+                                        <ChevronRight className="w-4 h-4" />
+                                    </a>
+                                </div>
+                                <div className="p-3 bg-afflyt-dark-50 border border-afflyt-glass-border rounded-lg flex items-start gap-2">
+                                    <Lightbulb className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
+                                    <p className="text-xs text-gray-400">
+                                        {t('amazonAssociates.guide.note')}
+                                    </p>
+                                </div>
                             </motion.div>
                         )}
                     </motion.div>

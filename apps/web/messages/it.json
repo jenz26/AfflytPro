@@ -516,6 +516,16 @@
           "title": "No, non ancora",
           "description": "Non ho ancora un account Amazon Associates o non l'ho mai attivato",
           "feedback": "Nessun problema! Ti guideremo passo-passo nella creazione del tuo account Amazon Associates."
+        },
+        "guide": {
+          "title": "Come creare il tuo account Amazon Associates",
+          "subtitle": "È gratuito e richiede solo 5 minuti",
+          "step1": "Vai su programma-affiliazione.amazon.it e clicca \"Iscriviti\"",
+          "step2": "Accedi con il tuo account Amazon esistente (o creane uno)",
+          "step3": "Compila le informazioni richieste sul tuo sito/canale",
+          "step4": "Una volta approvato, vai su \"Gestione tag affiliato\" per ottenere il tuo tag (es: tuonome-21)",
+          "cta": "Crea Account Amazon Associates",
+          "note": "Puoi continuare l'onboarding ora e aggiungere il tag affiliato dopo nelle impostazioni. Afflyt funzionerà comunque, ma senza tag non guadagnerai commissioni."
         }
       },
       "channels": {
