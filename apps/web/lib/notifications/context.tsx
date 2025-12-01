@@ -73,7 +73,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_BASE}/notifications`, {
+            const response = await fetch(`${API_BASE}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -101,7 +101,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            await fetch(`${API_BASE}/notifications/${id}/read`, {
+            await fetch(`${API_BASE}/api/notifications/${id}/read`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -126,7 +126,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            await fetch(`${API_BASE}/notifications/read-all`, {
+            await fetch(`${API_BASE}/api/notifications/read-all`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -147,7 +147,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            await fetch(`${API_BASE}/notifications/${id}`, {
+            await fetch(`${API_BASE}/api/notifications/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
