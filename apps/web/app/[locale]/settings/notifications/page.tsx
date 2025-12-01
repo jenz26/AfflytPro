@@ -72,7 +72,7 @@ export default function NotificationsPage() {
     useEffect(() => {
         const fetchPreferences = async () => {
             try {
-                const token = localStorage.getItem('afflyt_token');
+                const token = localStorage.getItem('token');
                 const res = await fetch(`${API_BASE}/api/notifications/preferences`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem('afflyt_token');
+            const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE}/api/notifications/preferences`, {
                 method: 'PATCH',
                 headers: {
@@ -129,7 +129,7 @@ export default function NotificationsPage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem('afflyt_token');
+            const token = localStorage.getItem('token');
             const endpoint = type === 'weekly'
                 ? '/api/notifications/test/weekly-report'
                 : '/api/notifications/test/daily-summary';
