@@ -305,7 +305,10 @@ async function resetFailedAttempts(userId: string): Promise<void> {
  */
 function sanitizeUser(user: any) {
   const { password, failedLoginAttempts, lockedUntil, ...safeUser } = user;
-  return safeUser;
+  return {
+    ...safeUser,
+    onboardingCompleted: !!user.onboardingCompletedAt,
+  };
 }
 
 /**

@@ -62,7 +62,8 @@ export default function MagicLinkPage() {
                     setTimeout(() => {
                         if (data.user?.role === 'ADMIN') {
                             router.push(`/${locale}/admin`);
-                        } else if (data.isNewUser) {
+                        } else if (data.isNewUser || !data.user?.onboardingCompleted) {
+                            // New users OR users who haven't completed onboarding
                             router.push(`/${locale}/onboarding`);
                         } else {
                             router.push(`/${locale}/dashboard`);
