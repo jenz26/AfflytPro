@@ -73,7 +73,7 @@ export default function NotificationsPage() {
         const fetchPreferences = async () => {
             try {
                 const token = localStorage.getItem('afflyt_token');
-                const res = await fetch(`${API_BASE}/notifications/preferences`, {
+                const res = await fetch(`${API_BASE}/api/notifications/preferences`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
 
         try {
             const token = localStorage.getItem('afflyt_token');
-            const res = await fetch(`${API_BASE}/notifications/preferences`, {
+            const res = await fetch(`${API_BASE}/api/notifications/preferences`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -131,8 +131,8 @@ export default function NotificationsPage() {
         try {
             const token = localStorage.getItem('afflyt_token');
             const endpoint = type === 'weekly'
-                ? '/notifications/test/weekly-report'
-                : '/notifications/test/daily-summary';
+                ? '/api/notifications/test/weekly-report'
+                : '/api/notifications/test/daily-summary';
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
