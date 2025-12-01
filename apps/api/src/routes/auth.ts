@@ -66,6 +66,20 @@ const resendVerificationSchema = z.object({
   locale: z.string().optional(), // 'it' or 'en'
 });
 
+// Persona Profile Schema - for saving user persona after onboarding survey
+const personaSchema = z.object({
+  // Survey answers
+  experienceLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  audienceSize: z.enum(['starting', 'small', 'medium', 'large']).optional(),
+  primaryGoal: z.enum(['sales', 'audience', 'monetize']).optional(),
+  preferredChannels: z.array(z.string()).optional(),
+  hasAmazonAssociates: z.boolean().optional(),
+  // Calculated persona (backend can also compute this)
+  personaType: z.enum(['beginner', 'creator', 'power_user', 'monetizer']).optional(),
+  // Mark onboarding as completed
+  onboardingCompleted: z.boolean().optional(),
+});
+
 // ==================== CONSTANTS ====================
 
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -1266,6 +1280,161 @@ export async function authRoutes(fastify: FastifyInstance) {
       } catch (err: any) {
         fastify.log.error(err);
         return reply.code(500).send({ message: 'Errore durante il recupero del profilo' });
+      }
+    }
+  );
+
+  /**
+   * GET /auth/persona
+   * Get current user's persona profile (protected)
+   */
+  fastify.get(
+    '/persona',
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: request.user.id },
+          select: {
+            personaType: true,
+            experienceLevel: true,
+            audienceSize: true,
+            primaryGoal: true,
+            preferredChannels: true,
+            hasAmazonAssociates: true,
+            onboardingCompletedAt: true,
+          },
+        });
+
+        if (!user) {
+          return reply.code(404).send({ message: 'Utente non trovato' });
+        }
+
+        return reply.send({
+          persona: {
+            ...user,
+            onboardingCompleted: !!user.onboardingCompletedAt,
+          },
+        });
+      } catch (err: any) {
+        fastify.log.error(err);
+        return reply.code(500).send({ message: 'Errore durante il recupero del profilo persona' });
+      }
+    }
+  );
+
+  /**
+   * PATCH /auth/persona
+   * Update user's persona profile (from onboarding survey)
+   * Also calculates and sets the personaType based on survey answers
+   */
+  fastify.patch<{ Body: z.infer<typeof personaSchema> }>(
+    '/persona',
+    {
+      onRequest: [fastify.authenticate],
+    },
+    async (request, reply) => {
+      try {
+        const data = personaSchema.parse(request.body);
+
+        // Build update object
+        const updateData: any = {};
+
+        if (data.experienceLevel !== undefined) {
+          updateData.experienceLevel = data.experienceLevel;
+        }
+        if (data.audienceSize !== undefined) {
+          updateData.audienceSize = data.audienceSize;
+        }
+        if (data.primaryGoal !== undefined) {
+          updateData.primaryGoal = data.primaryGoal;
+        }
+        if (data.preferredChannels !== undefined) {
+          updateData.preferredChannels = data.preferredChannels;
+        }
+        if (data.hasAmazonAssociates !== undefined) {
+          updateData.hasAmazonAssociates = data.hasAmazonAssociates;
+        }
+        if (data.onboardingCompleted) {
+          updateData.onboardingCompletedAt = new Date();
+        }
+
+        // Calculate persona type if we have enough data
+        // Persona determination algorithm:
+        // 1. MONETIZER: goal=monetize + has audience (small/medium/large)
+        // 2. POWER_USER: advanced experience + has Amazon Associates
+        // 3. CREATOR: intermediate experience + has some audience (small/medium)
+        // 4. BEGINNER: beginner experience OR starting audience OR no Amazon Associates
+        if (data.personaType) {
+          // If persona is explicitly provided, use it
+          updateData.personaType = data.personaType;
+        } else if (data.experienceLevel && data.audienceSize && data.primaryGoal !== undefined) {
+          // Calculate persona based on survey answers
+          const exp = data.experienceLevel;
+          const audience = data.audienceSize;
+          const goal = data.primaryGoal;
+          const hasAmazon = data.hasAmazonAssociates ?? false;
+
+          let calculatedPersona: 'beginner' | 'creator' | 'power_user' | 'monetizer';
+
+          if (goal === 'monetize' && audience !== 'starting') {
+            // Has audience and wants to monetize
+            calculatedPersona = 'monetizer';
+          } else if (exp === 'advanced' && hasAmazon) {
+            // Expert with Amazon Associates already set up
+            calculatedPersona = 'power_user';
+          } else if (exp === 'intermediate' && (audience === 'small' || audience === 'medium')) {
+            // Has some experience and some audience
+            calculatedPersona = 'creator';
+          } else {
+            // Default: just getting started
+            calculatedPersona = 'beginner';
+          }
+
+          updateData.personaType = calculatedPersona;
+        }
+
+        // Update user
+        const user = await prisma.user.update({
+          where: { id: request.user.id },
+          data: updateData,
+          select: {
+            personaType: true,
+            experienceLevel: true,
+            audienceSize: true,
+            primaryGoal: true,
+            preferredChannels: true,
+            hasAmazonAssociates: true,
+            onboardingCompletedAt: true,
+          },
+        });
+
+        fastify.log.info(
+          { userId: request.user.id, persona: user.personaType },
+          'User persona profile updated'
+        );
+
+        return reply.send({
+          message: 'Profilo persona aggiornato con successo',
+          persona: {
+            ...user,
+            onboardingCompleted: !!user.onboardingCompletedAt,
+          },
+        });
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          return reply.code(400).send({
+            message: 'Errore di validazione',
+            errors: err.issues.map((e: any) => ({
+              field: e.path.join('.'),
+              message: e.message,
+            })),
+          });
+        }
+        fastify.log.error(err);
+        return reply.code(500).send({ message: 'Errore durante l\'aggiornamento del profilo persona' });
       }
     }
   );

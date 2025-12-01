@@ -441,7 +441,7 @@
         "avgRoi": "ROI Medio",
         "active": "Attivo"
       },
-      "answerQuestions": "Rispondi a 4 domande per personalizzare la tua esperienza",
+      "answerQuestions": "Rispondi a 5 domande per personalizzare la tua esperienza",
       "useRecommended": "Usa impostazioni raccomandate (più veloce)",
       "step": "Passo {current} di {total}",
       "goals": {
@@ -501,6 +501,21 @@
           "label": "Esperto",
           "description": "Cerco massima flessibilità e controllo",
           "helpText": "Accesso completo a tutte le funzionalità pro"
+        }
+      },
+      "amazonAssociates": {
+        "title": "Hai già Amazon Associates?",
+        "helpText": "Questo ci aiuta a personalizzare il setup per te",
+        "infoTooltip": "Amazon Associates è il programma di affiliazione di Amazon. Se ne hai già uno, puoi usare il tuo tag esistente. Altrimenti ti guideremo nella creazione.",
+        "yes": {
+          "title": "Sì, ho già un account",
+          "description": "Ho già un account Amazon Associates attivo con almeno un tag di affiliazione",
+          "feedback": "Ottimo! Potrai usare direttamente il tuo tag esistente. Salteremo la guida alla creazione dell'account."
+        },
+        "no": {
+          "title": "No, non ancora",
+          "description": "Non ho ancora un account Amazon Associates o non l'ho mai attivato",
+          "feedback": "Nessun problema! Ti guideremo passo-passo nella creazione del tuo account Amazon Associates."
         }
       },
       "channels": {

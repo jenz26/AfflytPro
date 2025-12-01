@@ -17,7 +17,9 @@ import {
     Rocket,
     Info,
     Lightbulb,
-    AlertCircle
+    AlertCircle,
+    ShoppingBag,
+    X
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -32,6 +34,7 @@ interface SurveyData {
     goal: 'sales' | 'audience' | 'monetize' | null;
     audienceSize: 'starting' | 'small' | 'medium' | 'large' | null;
     experienceLevel: 'beginner' | 'intermediate' | 'advanced' | null;
+    hasAmazonAssociates: boolean | null;
     channels: string[];
 }
 
@@ -89,6 +92,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             goal: null,
             audienceSize: null,
             experienceLevel: null,
+            hasAmazonAssociates: null,
             channels: []
         };
         // Carica i dati salvati da localStorage
@@ -130,14 +134,15 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             goal: 'sales', // Obiettivo più comune
             audienceSize: 'starting', // La maggior parte inizia da zero
             experienceLevel: 'beginner', // Setup semplificato
+            hasAmazonAssociates: false, // La maggior parte non ha ancora Amazon Associates
             channels: ['telegram'] // Canale più popolare e facile da configurare
         });
         trackOnboardingStep('welcome_quick_start', 'completed', { method: 'recommended_settings' });
-        // Salta direttamente al recap finale
-        setStep(4);
+        // Salta direttamente al recap finale (now step 5 = channels)
+        setStep(5);
     };
 
-    // Auto-advance dopo 800ms quando si seleziona un'opzione (solo per step 1, 2, 3)
+    // Auto-advance dopo 800ms quando si seleziona un'opzione (solo per step 1, 2, 3, 4)
     useEffect(() => {
         // Clear any existing timer
         if (autoAdvanceTimerRef.current) {
@@ -149,6 +154,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             if (step === 1 && surveyData.goal) return true;
             if (step === 2 && surveyData.audienceSize) return true;
             if (step === 3 && surveyData.experienceLevel) return true;
+            if (step === 4 && surveyData.hasAmazonAssociates !== null) return true;
             return false;
         };
 
@@ -164,7 +170,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                 clearTimeout(autoAdvanceTimerRef.current);
             }
         };
-    }, [surveyData.goal, surveyData.audienceSize, surveyData.experienceLevel, step]);
+    }, [surveyData.goal, surveyData.audienceSize, surveyData.experienceLevel, surveyData.hasAmazonAssociates, step]);
 
     const updateData = (field: keyof SurveyData, value: any) => {
         setSurveyData(prev => ({ ...prev, [field]: value }));
@@ -180,7 +186,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
     };
 
     const nextStep = () => {
-        if (step < 4) {
+        if (step < 5) {
             trackOnboardingStep(`welcome_step_${step + 1}`, 'completed', {
                 ...surveyData,
                 stepName: getStepName(step)
@@ -203,7 +209,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
     };
 
     const getStepName = (stepIndex: number) => {
-        const names = ['welcome', 'goal', 'audience', 'experience', 'channels'];
+        const names = ['welcome', 'goal', 'audience', 'experience', 'amazon', 'channels'];
         return names[stepIndex];
     };
 
@@ -213,7 +219,8 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             case 1: return surveyData.goal !== null;
             case 2: return surveyData.audienceSize !== null;
             case 3: return surveyData.experienceLevel !== null;
-            case 4: return surveyData.channels.length > 0;
+            case 4: return surveyData.hasAmazonAssociates !== null;
+            case 5: return surveyData.channels.length > 0;
             default: return false;
         }
     };
@@ -417,6 +424,115 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     >
+                        <div className="flex items-start gap-2 mb-3">
+                            <h2 className="text-xl font-bold text-white flex-1">{t('amazonAssociates.title')}</h2>
+                            <div className="group relative">
+                                <Info className="w-5 h-5 text-gray-500 cursor-help" />
+                                <div className="absolute right-0 top-6 w-64 p-3 bg-afflyt-dark-100 border border-afflyt-glass-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                    <p className="text-xs text-gray-300">
+                                        {t('amazonAssociates.infoTooltip')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-400 mb-4">{t('amazonAssociates.helpText')}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => updateData('hasAmazonAssociates', true)}
+                                className={`p-5 rounded-xl border-2 transition-all text-left ${surveyData.hasAmazonAssociates === true
+                                    ? 'border-afflyt-profit-500 bg-afflyt-profit-500/10'
+                                    : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-profit-500/50'
+                                    }`}
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${surveyData.hasAmazonAssociates === true
+                                            ? 'bg-afflyt-profit-500'
+                                            : 'bg-afflyt-dark-100'
+                                            }`}>
+                                            <ShoppingBag className={`w-6 h-6 ${surveyData.hasAmazonAssociates === true
+                                                ? 'text-white'
+                                                : 'text-gray-500'
+                                                }`} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-semibold text-white mb-1">{t('amazonAssociates.yes.title')}</h3>
+                                            <p className="text-xs text-gray-400">{t('amazonAssociates.yes.description')}</p>
+                                        </div>
+                                    </div>
+                                    {surveyData.hasAmazonAssociates === true && (
+                                        <div className="w-5 h-5 rounded-full bg-afflyt-profit-500 flex items-center justify-center shrink-0">
+                                            <Check className="w-3 h-3 text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => updateData('hasAmazonAssociates', false)}
+                                className={`p-5 rounded-xl border-2 transition-all text-left ${surveyData.hasAmazonAssociates === false
+                                    ? 'border-afflyt-cyan-500 bg-afflyt-cyan-500/10'
+                                    : 'border-afflyt-glass-border bg-afflyt-dark-50 hover:border-afflyt-cyan-500/50'
+                                    }`}
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-start gap-3">
+                                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${surveyData.hasAmazonAssociates === false
+                                            ? 'bg-afflyt-cyan-500'
+                                            : 'bg-afflyt-dark-100'
+                                            }`}>
+                                            <X className={`w-6 h-6 ${surveyData.hasAmazonAssociates === false
+                                                ? 'text-white'
+                                                : 'text-gray-500'
+                                                }`} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-semibold text-white mb-1">{t('amazonAssociates.no.title')}</h3>
+                                            <p className="text-xs text-gray-400">{t('amazonAssociates.no.description')}</p>
+                                        </div>
+                                    </div>
+                                    {surveyData.hasAmazonAssociates === false && (
+                                        <div className="w-5 h-5 rounded-full bg-afflyt-cyan-500 flex items-center justify-center shrink-0">
+                                            <Check className="w-3 h-3 text-white" />
+                                        </div>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                        {surveyData.hasAmazonAssociates === true && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-4 p-3 bg-afflyt-profit-500/10 border border-afflyt-profit-500/30 rounded-lg flex items-start gap-2"
+                            >
+                                <Lightbulb className="w-4 h-4 text-afflyt-profit-400 shrink-0 mt-0.5" />
+                                <p className="text-xs text-gray-300">
+                                    {t('amazonAssociates.yes.feedback')}
+                                </p>
+                            </motion.div>
+                        )}
+                        {surveyData.hasAmazonAssociates === false && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-4 p-3 bg-afflyt-cyan-500/10 border border-afflyt-cyan-500/30 rounded-lg flex items-start gap-2"
+                            >
+                                <Lightbulb className="w-4 h-4 text-afflyt-cyan-400 shrink-0 mt-0.5" />
+                                <p className="text-xs text-gray-300">
+                                    {t('amazonAssociates.no.feedback')}
+                                </p>
+                            </motion.div>
+                        )}
+                    </motion.div>
+                );
+
+            case 5:
+                return (
+                    <motion.div
+                        initial={{ opacity: 0, x: 100 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -100 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    >
                         <h2 className="text-xl font-bold text-white mb-1">{t('channels.title')}</h2>
                         <p className="text-sm text-gray-400 mb-4">{t('channels.helpText')}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
@@ -499,16 +615,16 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
             {/* Progress Indicator */}
             <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400">{t('step', { current: step + 1, total: 5 })}</span>
+                    <span className="text-xs text-gray-400">{t('step', { current: step + 1, total: 6 })}</span>
                     <span className="text-xs font-mono text-afflyt-cyan-400">
-                        {Math.round(((step + 1) / 5) * 100)}%
+                        {Math.round(((step + 1) / 6) * 100)}%
                     </span>
                 </div>
                 <div className="h-1.5 bg-afflyt-dark-50 rounded-full overflow-hidden">
                     <motion.div
                         className="h-full bg-gradient-to-r from-afflyt-cyan-500 to-afflyt-cyan-400"
                         initial={{ width: '0%' }}
-                        animate={{ width: `${((step + 1) / 5) * 100}%` }}
+                        animate={{ width: `${((step + 1) / 6) * 100}%` }}
                         transition={{ duration: 0.3 }}
                     />
                 </div>
@@ -523,7 +639,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                     dragElastic={0.2}
                     onDragEnd={(e, info) => {
                         // Swipe left = next step (if available)
-                        if (info.offset.x < -100 && step < 4 && isStepComplete()) {
+                        if (info.offset.x < -100 && step < 5 && isStepComplete()) {
                             nextStep();
                         }
                         // Swipe right = previous step
@@ -562,7 +678,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                         </CyberButton>
                     )}
 
-                    {step < 4 ? (
+                    {step < 5 ? (
                         <CyberButton
                             variant="primary"
                             onClick={nextStep}

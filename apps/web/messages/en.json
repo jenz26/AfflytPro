@@ -441,7 +441,7 @@
         "avgRoi": "Avg ROI",
         "active": "Active"
       },
-      "answerQuestions": "Answer 4 questions to customize your experience",
+      "answerQuestions": "Answer 5 questions to customize your experience",
       "useRecommended": "Use recommended settings (faster)",
       "step": "Step {current} of {total}",
       "goals": {
@@ -501,6 +501,21 @@
           "label": "Expert",
           "description": "Looking for maximum flexibility and control",
           "helpText": "Full access to all pro features"
+        }
+      },
+      "amazonAssociates": {
+        "title": "Do you have Amazon Associates?",
+        "helpText": "This helps us customize the setup for you",
+        "infoTooltip": "Amazon Associates is Amazon's affiliate program. If you already have one, you can use your existing tag. Otherwise, we'll guide you through creating one.",
+        "yes": {
+          "title": "Yes, I have an account",
+          "description": "I have an active Amazon Associates account with at least one affiliate tag",
+          "feedback": "Great! You can use your existing tag directly. We'll skip the account creation guide."
+        },
+        "no": {
+          "title": "No, not yet",
+          "description": "I don't have an Amazon Associates account yet or haven't activated it",
+          "feedback": "No problem! We'll guide you step-by-step through creating your Amazon Associates account."
         }
       },
       "channels": {

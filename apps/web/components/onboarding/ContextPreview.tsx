@@ -1,25 +1,28 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Send, Mail, MessageSquare, Zap, Info } from 'lucide-react';
+import { Send, Mail, MessageSquare, Zap, Info, Rocket, Crown, Users, Target } from 'lucide-react';
 import { ReactNode } from 'react';
+
+type PersonaType = 'beginner' | 'creator' | 'power_user' | 'monetizer';
 
 interface ContextPreviewProps {
     context: 'welcome' | 'telegram' | 'email' | 'discord' | 'automation';
     data?: any;
+    personaType?: PersonaType | null;
 }
 
-export const ContextPreview = ({ context, data }: ContextPreviewProps) => {
+export const ContextPreview = ({ context, data, personaType }: ContextPreviewProps) => {
     const renderPreview = () => {
         switch (context) {
             case 'welcome':
-                return <WelcomePreview />;
+                return <WelcomePreview personaType={personaType} />;
             case 'telegram':
-                return <TelegramPreview data={data} />;
+                return <TelegramPreview data={data} personaType={personaType} />;
             case 'email':
-                return <EmailPreview data={data} />;
+                return <EmailPreview data={data} personaType={personaType} />;
             case 'automation':
-                return <AutomationPreview data={data} />;
+                return <AutomationPreview data={data} personaType={personaType} />;
             default:
                 return <DefaultPreview />;
         }
@@ -48,35 +51,110 @@ const PreviewCard = ({ children }: { children: ReactNode }) => (
     </div>
 );
 
-const WelcomePreview = () => (
-    <div className="space-y-4">
-        <PreviewCard>
-            <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-afflyt-cyan-500/20 flex items-center justify-center">
-                    <Info className="w-5 h-5 text-afflyt-cyan-400" />
-                </div>
-                <div className="flex-1">
-                    <h4 className="text-base font-semibold text-white mb-1">Perché queste domande?</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">
-                        Le tue risposte ci aiutano a personalizzare l'esperienza, suggerire le automazioni migliori per te e configurare i filtri più adatti al tuo pubblico.
-                    </p>
-                </div>
-            </div>
-        </PreviewCard>
+const WelcomePreview = ({ personaType }: { personaType?: PersonaType | null }) => {
+    // Personalized content based on persona
+    const getPersonaContent = () => {
+        switch (personaType) {
+            case 'power_user':
+                return {
+                    icon: Crown,
+                    iconColor: 'bg-amber-500/20',
+                    iconTextColor: 'text-amber-400',
+                    title: 'Modalità Esperto',
+                    description: 'Configurazione veloce per chi già conosce il settore. Skip delle guide base, accesso diretto alle funzionalità avanzate.',
+                    benefits: [
+                        'Setup accelerato in 2 minuti',
+                        'Importa le tue configurazioni esistenti',
+                        'Filtri avanzati multi-parametro',
+                        'API access per automazioni custom'
+                    ]
+                };
+            case 'monetizer':
+                return {
+                    icon: Target,
+                    iconColor: 'bg-afflyt-profit-500/20',
+                    iconTextColor: 'text-afflyt-profit-400',
+                    title: 'Focus Monetizzazione',
+                    description: 'Hai già un\'audience, ora è il momento di monetizzarla. Ti mostreremo le strategie più efficaci.',
+                    benefits: [
+                        'Strategie di monetizzazione testate',
+                        'Segmentazione avanzata audience',
+                        'A/B testing per massimizzare CTR',
+                        'Report ROI in tempo reale'
+                    ]
+                };
+            case 'creator':
+                return {
+                    icon: Users,
+                    iconColor: 'bg-afflyt-plasma-500/20',
+                    iconTextColor: 'text-afflyt-plasma-400',
+                    title: 'Crescita + Revenue',
+                    description: 'Bilancia la crescita della tua audience con le opportunità di monetizzazione.',
+                    benefits: [
+                        'Template ottimizzati per engagement',
+                        'Calendario editoriale automatico',
+                        'Mix di contenuti value/promo',
+                        'Analytics crescita audience'
+                    ]
+                };
+            default: // beginner
+                return {
+                    icon: Rocket,
+                    iconColor: 'bg-afflyt-cyan-500/20',
+                    iconTextColor: 'text-afflyt-cyan-400',
+                    title: 'Guida Step-by-Step',
+                    description: 'Ti guideremo in ogni passaggio per configurare la tua prima automazione di successo.',
+                    benefits: [
+                        'Setup guidato in 5 minuti',
+                        'Template pronti all\'uso',
+                        'Filtri pre-configurati',
+                        'Supporto prioritario 30 giorni'
+                    ]
+                };
+        }
+    };
 
-        <PreviewCard>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Cosa otterrai</h4>
-            <div className="space-y-2">
-                <PreviewItem icon="✓" text="Automazione configurata in 5 minuti" />
-                <PreviewItem icon="✓" text="Filtri personalizzati per la tua nicchia" />
-                <PreviewItem icon="✓" text="Analytics e A/B testing integrati" />
-                <PreviewItem icon="✓" text="Supporto prioritario per 30 giorni" />
-            </div>
-        </PreviewCard>
-    </div>
-);
+    const content = getPersonaContent();
+    const IconComponent = content.icon;
 
-const TelegramPreview = ({ data }: { data?: any }) => (
+    return (
+        <div className="space-y-4">
+            <PreviewCard>
+                <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-9 h-9 rounded-lg ${content.iconColor} flex items-center justify-center`}>
+                        <IconComponent className={`w-5 h-5 ${content.iconTextColor}`} />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="text-base font-semibold text-white mb-1">{content.title}</h4>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                            {content.description}
+                        </p>
+                    </div>
+                </div>
+            </PreviewCard>
+
+            <PreviewCard>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Il tuo percorso</h4>
+                <div className="space-y-2">
+                    {content.benefits.map((benefit, index) => (
+                        <PreviewItem key={index} icon="✓" text={benefit} />
+                    ))}
+                </div>
+            </PreviewCard>
+
+            {personaType && (
+                <PreviewCard>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="w-2 h-2 rounded-full bg-afflyt-cyan-500 animate-pulse" />
+                        <span>Percorso personalizzato: <strong className="text-gray-400 capitalize">{personaType.replace('_', ' ')}</strong></span>
+                    </div>
+                </PreviewCard>
+            )}
+        </div>
+    );
+};
+
+const TelegramPreview = ({ data, personaType }: { data?: any; personaType?: PersonaType | null }) => (
     <div className="space-y-4">
         <PreviewCard>
             <div className="flex items-center gap-2 mb-3">
@@ -110,7 +188,7 @@ const TelegramPreview = ({ data }: { data?: any }) => (
     </div>
 );
 
-const EmailPreview = ({ data }: { data?: any }) => (
+const EmailPreview = ({ data, personaType }: { data?: any; personaType?: PersonaType | null }) => (
     <div className="space-y-4">
         <PreviewCard>
             <div className="flex items-center gap-2 mb-3">
@@ -142,7 +220,7 @@ const EmailPreview = ({ data }: { data?: any }) => (
     </div>
 );
 
-const AutomationPreview = ({ data }: { data?: any }) => (
+const AutomationPreview = ({ data, personaType }: { data?: any; personaType?: PersonaType | null }) => (
     <div className="space-y-4">
         <PreviewCard>
             <div className="flex items-center gap-2 mb-3">

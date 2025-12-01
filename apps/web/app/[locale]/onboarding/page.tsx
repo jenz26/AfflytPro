@@ -24,6 +24,7 @@ interface SurveyData {
     goal: string | null;
     audienceSize: string | null;
     experienceLevel: string | null;
+    hasAmazonAssociates: boolean | null;
     channels: string[];
 }
 
@@ -82,6 +83,49 @@ const clearOnboardingState = () => {
     localStorage.removeItem(ONBOARDING_STATE_KEY);
 };
 
+// Persona type determination - mirrors backend logic
+type PersonaType = 'beginner' | 'creator' | 'power_user' | 'monetizer';
+
+const calculatePersonaType = (data: SurveyData): PersonaType => {
+    const exp = data.experienceLevel;
+    const audience = data.audienceSize;
+    const goal = data.goal;
+    const hasAmazon = data.hasAmazonAssociates ?? false;
+
+    // 1. MONETIZER: goal=monetize + has audience (not starting)
+    if (goal === 'monetize' && audience !== 'starting') {
+        return 'monetizer';
+    }
+
+    // 2. POWER_USER: advanced experience + has Amazon Associates
+    if (exp === 'advanced' && hasAmazon) {
+        return 'power_user';
+    }
+
+    // 3. CREATOR: intermediate experience + has some audience (small/medium)
+    if (exp === 'intermediate' && (audience === 'small' || audience === 'medium')) {
+        return 'creator';
+    }
+
+    // 4. BEGINNER: default for everyone else
+    return 'beginner';
+};
+
+// Get personalized step order based on persona
+const getPersonalizedStepFlow = (persona: PersonaType, channels: string[], hasAmazonAssociates: boolean): OnboardingStep[] => {
+    const steps: OnboardingStep[] = ['welcome', 'plan'];
+
+    // Add channel setup steps based on selection
+    if (channels.includes('telegram')) steps.push('telegram');
+    if (channels.includes('email')) steps.push('email');
+
+    // Always end with automation
+    steps.push('automation');
+    steps.push('complete');
+
+    return steps;
+};
+
 export default function OnboardingPage() {
     const router = useRouter();
     const locale = useLocale();
@@ -95,6 +139,7 @@ export default function OnboardingPage() {
     const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
     const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
+    const [personaType, setPersonaType] = useState<PersonaType | null>(null);
     const [progress, setProgress] = useState({
         welcomeSurveyCompleted: false,
         planSelected: false,
@@ -143,10 +188,16 @@ export default function OnboardingPage() {
         }
     }, [isInitialized, currentStep]);
 
-    const handleWelcomeComplete = (data: SurveyData) => {
+    const handleWelcomeComplete = async (data: SurveyData) => {
         console.log('Survey completed:', data);
         setSurveyData(data);
         setSelectedChannels(data.channels);
+
+        // Calculate and set persona type
+        const persona = calculatePersonaType(data);
+        setPersonaType(persona);
+        console.log('Calculated persona:', persona);
+
         setProgress(prev => ({
             ...prev,
             welcomeSurveyCompleted: true,
@@ -155,6 +206,37 @@ export default function OnboardingPage() {
             audienceSize: data.audienceSize,
             experienceLevel: data.experienceLevel
         }));
+
+        // Save persona to API (async, don't block navigation)
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch(`${API_BASE}/auth/persona`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        experienceLevel: data.experienceLevel,
+                        audienceSize: data.audienceSize,
+                        primaryGoal: data.goal,
+                        preferredChannels: data.channels,
+                        hasAmazonAssociates: data.hasAmazonAssociates ?? false
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('Persona saved successfully');
+                    } else {
+                        console.error('Failed to save persona');
+                    }
+                }).catch(error => {
+                    console.error('Error saving persona:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Error initiating persona save:', error);
+        }
 
         // Go to plan selection
         setCurrentStep('plan');
@@ -165,7 +247,41 @@ export default function OnboardingPage() {
         setSelectedPlan(plan);
         setProgress(prev => ({ ...prev, planSelected: true }));
 
-        // Navigate to first selected channel or automation
+        // Personalized routing based on persona type
+        const persona = personaType || 'beginner';
+        console.log('Routing for persona:', persona);
+
+        // Power User: Already has Amazon Associates, skip to first channel or automation
+        // They're experienced and ready to go fast
+        if (persona === 'power_user') {
+            console.log('Power User path - fast track');
+            if (selectedChannels.includes('telegram')) {
+                setCurrentStep('telegram');
+            } else if (selectedChannels.includes('email')) {
+                setCurrentStep('email');
+            } else {
+                // Skip directly to automation - they know what they're doing
+                setCurrentStep('automation');
+            }
+            return;
+        }
+
+        // Monetizer: Has audience, wants to monetize
+        // Also fast track, focus on getting automation set up
+        if (persona === 'monetizer') {
+            console.log('Monetizer path - focus on monetization');
+            if (selectedChannels.includes('telegram')) {
+                setCurrentStep('telegram');
+            } else if (selectedChannels.includes('email')) {
+                setCurrentStep('email');
+            } else {
+                setCurrentStep('automation');
+            }
+            return;
+        }
+
+        // Creator & Beginner: Full guided path
+        console.log('Guided path for:', persona);
         if (selectedChannels.includes('telegram')) {
             setCurrentStep('telegram');
         } else if (selectedChannels.includes('email')) {
@@ -300,6 +416,23 @@ export default function OnboardingPage() {
         if (typeof window !== 'undefined') {
             localStorage.setItem('onboarding_completed', 'true');
             clearOnboardingState();
+
+            // Mark onboarding as completed in API
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch(`${API_BASE}/auth/persona`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        onboardingCompleted: true
+                    })
+                }).catch(error => {
+                    console.error('Error marking onboarding as completed:', error);
+                });
+            }
         }
 
         // Redirect to dashboard after 2 seconds
@@ -325,6 +458,23 @@ export default function OnboardingPage() {
         // Mark onboarding as completed even when skipping and clear saved state
         if (typeof window !== 'undefined') {
             localStorage.setItem('onboarding_completed', 'true');
+
+            // Mark onboarding as completed in API
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch(`${API_BASE}/auth/persona`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        onboardingCompleted: true
+                    })
+                }).catch(error => {
+                    console.error('Error marking onboarding as completed:', error);
+                });
+            }
             clearOnboardingState();
         }
         router.push(`/${locale}/dashboard`);
