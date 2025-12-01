@@ -15,6 +15,7 @@ import {
     Sparkles
 } from 'lucide-react';
 import { CommandBar } from '@/components/navigation/CommandBar';
+import { NotificationWrapper } from '@/components/notifications';
 
 interface SettingsTab {
     key: string;
@@ -44,7 +45,7 @@ export default function SettingsLayout({
     const isActive = (path: string) => pathname === path;
 
     return (
-        <>
+        <NotificationWrapper>
             <CommandBar />
             <main className="pt-16 lg:pt-16 min-h-screen bg-afflyt-dark-100">
                 {/* Settings Header */}
@@ -107,6 +108,6 @@ export default function SettingsLayout({
                     {children}
                 </div>
             </main>
-        </>
+        </NotificationWrapper>
     );
 }
