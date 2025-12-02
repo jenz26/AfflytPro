@@ -16,6 +16,7 @@ import { Step4Quality } from './wizard/Step4Quality';
 import { Step5Destination } from './wizard/Step5Destination';
 import { Step6Review } from './wizard/Step6Review';
 import { API_BASE } from '@/lib/api/config';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -178,6 +179,11 @@ export function CreateMissionWizard({
         };
 
         fetchConfig();
+
+        // Track wizard opened
+        Analytics.track('automation_wizard_opened', {
+            is_edit: !!editingMission,
+        });
     }, []);
 
     // ═══════════════════════════════════════════════════════════════
@@ -252,6 +258,12 @@ export function CreateMissionWizard({
 
     const handleNext = () => {
         if (currentStep < steps.length && canProceed()) {
+            // Track step completion
+            Analytics.track('automation_wizard_step_completed', {
+                step: currentStep,
+                step_name: steps[currentStep - 1]?.title || `Step ${currentStep}`,
+                categories_count: mission.categories.length,
+            });
             setCurrentStep(currentStep + 1);
         }
     };
@@ -265,10 +277,29 @@ export function CreateMissionWizard({
     const handleSubmit = async (activate: boolean) => {
         setIsSubmitting(true);
         try {
+            // Track wizard completion
+            Analytics.track('automation_wizard_completed', {
+                is_edit: !!editingMission,
+                categories_count: mission.categories.length,
+                min_score: mission.minScore,
+                has_channel: !!mission.channelId,
+                copy_mode: mission.copyMode,
+                activate_immediately: activate,
+            });
             await onComplete({ ...mission, isActive: activate });
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleCancel = () => {
+        // Track wizard abandoned
+        Analytics.track('automation_wizard_abandoned', {
+            step: currentStep,
+            step_name: steps[currentStep - 1]?.title || `Step ${currentStep}`,
+            is_edit: !!editingMission,
+        });
+        onCancel();
     };
 
     const updateMission = (updates: Partial<MissionConfig>) => {
@@ -369,10 +400,10 @@ export function CreateMissionWizard({
     if (error) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={handleCancel} />
                 <GlassCard className="relative p-8 max-w-md text-center">
                     <p className="text-red-400 mb-4">{error}</p>
-                    <CyberButton variant="secondary" onClick={onCancel}>
+                    <CyberButton variant="secondary" onClick={handleCancel}>
                         {t('cancel')}
                     </CyberButton>
                 </GlassCard>
@@ -389,7 +420,7 @@ export function CreateMissionWizard({
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                onClick={onCancel}
+                onClick={handleCancel}
             />
 
             {/* Modal */}
@@ -418,7 +449,7 @@ export function CreateMissionWizard({
                             </div>
                         </div>
                         <button
-                            onClick={onCancel}
+                            onClick={handleCancel}
                             className="text-gray-400 hover:text-white transition-colors"
                         >
                             <X className="w-6 h-6" />
@@ -438,7 +469,7 @@ export function CreateMissionWizard({
                 {currentStep < steps.length && (
                     <div className="p-6 border-t border-afflyt-glass-border flex items-center justify-between">
                         <button
-                            onClick={onCancel}
+                            onClick={handleCancel}
                             className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
                         >
                             {t('cancel')}

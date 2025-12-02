@@ -28,6 +28,7 @@ import { CyberButton } from '@/components/ui/CyberButton';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { API_BASE } from '@/lib/api/config';
 import { CreateScheduleWizard } from '@/components/scheduler/CreateScheduleWizard';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 // Types
 interface ScheduledPost {
@@ -107,6 +108,7 @@ export default function SchedulerPage() {
   };
 
   const handleToggle = async (id: string) => {
+    const post = posts.find(p => p.id === id);
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/scheduler/${id}/toggle`, {
@@ -117,6 +119,11 @@ export default function SchedulerPage() {
       });
 
       if (response.ok) {
+        // Track scheduled post toggled
+        Analytics.track('scheduled_post_toggled', {
+          type: post?.type,
+          new_state: !post?.isActive ? 'active' : 'paused'
+        });
         fetchPosts();
       }
     } catch (error) {
@@ -153,12 +160,18 @@ export default function SchedulerPage() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API_BASE}/api/scheduler/${postToDelete.id}`, {
+      const response = await fetch(`${API_BASE}/api/scheduler/${postToDelete.id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.ok) {
+        // Track scheduled post deleted
+        Analytics.track('scheduled_post_deleted', { type: postToDelete.type });
+      }
+
       fetchPosts();
       setPostToDelete(null);
     } catch (error) {
@@ -199,6 +212,8 @@ export default function SchedulerPage() {
         });
 
         if (response.ok) {
+          // Track scheduled post updated
+          Analytics.track('scheduled_post_updated', { type: postData.type });
           setShowWizard(false);
           setEditingPost(null);
           fetchPosts();
@@ -218,6 +233,11 @@ export default function SchedulerPage() {
         });
 
         if (response.ok) {
+          // Track scheduled post created
+          Analytics.track('scheduled_post_created', {
+            type: postData.type,
+            schedule: postData.schedule
+          });
           setShowWizard(false);
           fetchPosts();
         } else {

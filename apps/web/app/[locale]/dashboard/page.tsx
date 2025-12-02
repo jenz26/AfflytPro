@@ -2,37 +2,74 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import {
-    Activity,
-    TrendingUp,
-    Clock,
-    Shield,
-    Zap,
-    DollarSign,
-    Gauge,
-    Sparkles,
-    ChevronRight,
-    BarChart3
-} from 'lucide-react';
+import { Shield, Zap, Activity } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { CyberButton } from '@/components/ui/CyberButton';
-import { OnboardingFlow } from '@/components/dashboard/OnboardingFlow';
-import { KPIWidget } from '@/components/dashboard/KPIWidget';
+import { HeroSection, HeroData } from '@/components/dashboard/HeroSection';
+import { StatusCard, AutomationsCardData, ChannelsCardData, PerformanceCardData } from '@/components/dashboard/StatusCard';
+import { ActionSuggestions, Suggestion } from '@/components/dashboard/ActionSuggestions';
+import { DealFeed, Deal } from '@/components/dashboard/DealFeed';
+import { ActivityLog, Activity as ActivityItem } from '@/components/dashboard/ActivityLog';
 import { API_BASE } from '@/lib/api/config';
+
+// ═══════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════
+
+interface DashboardData {
+    hero: HeroData;
+    automations: Array<{
+        id: string;
+        name: string;
+        status: 'active' | 'paused' | 'error' | 'incomplete';
+        lastRun?: string;
+        dealsFound24h: number;
+    }>;
+    channels: Array<{
+        id: string;
+        name: string;
+        platform: string;
+        status: 'online' | 'offline' | 'error';
+        lastActivity?: string;
+    }>;
+    performance: {
+        clicks: number;
+        revenue: number;
+        trend: number;
+        sparkline: number[];
+    };
+    suggestions: Suggestion[];
+    recentDeals: Deal[];
+    activities: ActivityItem[];
+    accountData: {
+        plan: string;
+        ttl: number;
+        limits: {
+            rules: { used: number; max: number };
+            offers: { used: number; max: number };
+            channels: { used: number; max: number };
+        };
+        credits: {
+            used: number;
+            total: number;
+            remaining: number;
+            daysRemaining: number;
+        };
+    };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENT
+// ═══════════════════════════════════════════════════════════════
 
 export default function DashboardPage() {
     const locale = useLocale();
     const t = useTranslations('dashboard');
-    const tKPI = useTranslations('dashboard.kpi');
-    const tHotDeals = useTranslations('dashboard.hotDeals');
-    const tQuickStats = useTranslations('dashboard.quickStats');
-    const tStates = useTranslations('dashboard.states');
     const tAccount = useTranslations('dashboard.account');
 
     // State
-    const [userState, setUserState] = useState<'new' | 'partial' | 'active'>('new');
-    const [dashboardData, setDashboardData] = useState<any>(null);
+    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Fetch dashboard data
     useEffect(() => {
@@ -56,25 +93,16 @@ export default function DashboardPage() {
 
                 const data = await response.json();
                 setDashboardData(data);
-
-                // Calculate user state
-                const { onboardingProgress } = data;
-                const steps = Object.values(onboardingProgress);
-                const completed = steps.filter(Boolean).length;
-
-                if (completed === 0) setUserState('new');
-                else if (completed < 3) setUserState('partial');
-                else setUserState('active');
-
                 setLoading(false);
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
+            } catch (err: any) {
+                console.error('Error fetching dashboard data:', err);
+                setError(err.message);
                 setLoading(false);
             }
         };
 
         fetchDashboardData();
-    }, []);
+    }, [locale]);
 
     // Loading state
     if (loading) {
@@ -88,21 +116,41 @@ export default function DashboardPage() {
         );
     }
 
-    // No data fallback
-    if (!dashboardData) {
+    // Error state
+    if (error || !dashboardData) {
         return (
             <div className="min-h-screen bg-afflyt-dark-100 flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-gray-400">{t('error')}</p>
+                    <p className="text-red-400 mb-2">{t('error')}</p>
+                    <p className="text-gray-500 text-sm">{error}</p>
                 </div>
             </div>
         );
     }
 
-    const { onboardingProgress, accountData, performance, recentDeals } = dashboardData;
+    // Build card data
+    const automationsCardData: AutomationsCardData = {
+        type: 'automations',
+        items: dashboardData.automations,
+        activeCount: dashboardData.automations.filter(a => a.status === 'active').length,
+        totalCount: dashboardData.automations.length
+    };
+
+    const channelsCardData: ChannelsCardData = {
+        type: 'channels',
+        items: dashboardData.channels
+    };
+
+    const performanceCardData: PerformanceCardData = {
+        type: 'performance',
+        clicks: dashboardData.performance.clicks,
+        revenue: dashboardData.performance.revenue,
+        trend: dashboardData.performance.trend,
+        sparkline: dashboardData.performance.sparkline
+    };
 
     // North Star Metric
-    const WAA = performance.activeAutomations;
+    const WAA = dashboardData.automations.filter(a => a.status === 'active').length;
     const WAATarget = 5;
 
     return (
@@ -118,26 +166,19 @@ export default function DashboardPage() {
                                 </div>
                                 {t('title')}
                             </h1>
-                            <p className="text-gray-400 mt-1">
-                                {userState === 'new'
-                                    ? tStates('new')
-                                    : userState === 'partial'
-                                        ? tStates('partial')
-                                        : tStates('active')
-                                }
-                            </p>
+                            <p className="text-gray-400 mt-1">{t('subtitle')}</p>
                         </div>
 
-                        {/* Account Status Badge */}
+                        {/* Account Status Badges */}
                         <div className="flex items-center gap-4">
                             {/* Plan & TTL */}
-                            <GlassCard className="px-4 py-3">
+                            <GlassCard className="px-4 py-3" padding="none">
                                 <div className="flex items-center gap-3">
                                     <Shield className="w-5 h-5 text-afflyt-plasma-400" />
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase">{tAccount('plan')} {accountData.plan}</p>
+                                        <p className="text-xs text-gray-500 uppercase">{tAccount('plan')} {dashboardData.accountData.plan}</p>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-lg font-bold text-white font-mono">{accountData.ttl}h</span>
+                                            <span className="text-lg font-bold text-white font-mono">{dashboardData.accountData.ttl}h</span>
                                             <span className="text-xs text-afflyt-cyan-400">TTL</span>
                                         </div>
                                     </div>
@@ -145,7 +186,7 @@ export default function DashboardPage() {
                             </GlassCard>
 
                             {/* North Star Metric - WAA */}
-                            <GlassCard className="px-4 py-3 border-afflyt-cyan-500/30">
+                            <GlassCard className="px-4 py-3 border-afflyt-cyan-500/30" padding="none">
                                 <div className="flex items-center gap-3">
                                     <Zap className="w-5 h-5 text-afflyt-cyan-400" />
                                     <div>
@@ -170,153 +211,35 @@ export default function DashboardPage() {
 
             {/* Main Content */}
             <div className="p-8">
-                {/* Onboarding Section - Shows for new/partial users */}
-                {userState !== 'active' && (
-                    <OnboardingFlow
-                        progress={onboardingProgress}
-                        onProgressUpdate={() => { }}
-                    />
-                )}
+                {/* Hero Section */}
+                <HeroSection data={dashboardData.hero} />
 
-                {/* KPI Grid - Always visible but enhanced for active users */}
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-                    {/* Performance Widget */}
-                    <KPIWidget
-                        title={tKPI('totalPerformance')}
-                        icon={TrendingUp}
-                        mainValue={performance.totalClicks.toLocaleString()}
-                        mainLabel={tKPI('totalClicks')}
-                        subValue={`€${performance.revenue.toFixed(2)}`}
-                        subLabel={tKPI('estimatedRevenue')}
-                        trend={{
-                            value: 23,
-                            positive: true,
-                            label: tKPI('vsLastWeek')
-                        }}
-                        sparkline={[40, 55, 45, 70, 65, 80, 75]}
-                        color="cyan"
+                {/* Status Cards Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <StatusCard data={automationsCardData} />
+                    <StatusCard
+                        data={channelsCardData}
+                        onAddClick={() => window.location.href = `/${locale}/dashboard/channels`}
                     />
-
-                    {/* Governance/Limits Widget */}
-                    <KPIWidget
-                        title={tKPI('limitsStatus')}
-                        icon={Gauge}
-                        mainValue={`${accountData.limits.rules.used}/${accountData.limits.rules.max}`}
-                        mainLabel={tKPI('activeRules')}
-                        subValue={`${accountData.limits.offers.used}/${accountData.limits.offers.max}`}
-                        subLabel={tKPI('sentOffers')}
-                        status={
-                            accountData.limits.rules.used / accountData.limits.rules.max > 0.8
-                                ? 'warning'
-                                : 'good'
-                        }
-                        color="plasma"
-                    />
-
-                    {/* Afflyt Credits Widget */}
-                    <KPIWidget
-                        title={tKPI('afflytCredits')}
-                        icon={DollarSign}
-                        mainValue={`${accountData.credits?.used || 0}`}
-                        mainLabel={tKPI('consumed')}
-                        subValue={`${accountData.credits?.remaining || 0}`}
-                        subLabel={tKPI('remaining')}
-                        progress={{
-                            value: accountData.credits ? (accountData.credits.used / accountData.credits.total) * 100 : 0,
-                            label: `${accountData.credits?.daysRemaining || 30} ${tKPI('daysRemaining')}`
-                        }}
-                        color="profit"
-                    />
-
-                    {/* Last Activity Widget */}
-                    <KPIWidget
-                        title={tKPI('lastActivity')}
-                        icon={Clock}
-                        mainValue="15m fa"
-                        mainLabel={tKPI('lastClick')}
-                        subValue="2h fa"
-                        subLabel={tKPI('lastDeal')}
-                        activity={{
-                            recentDeals: recentDeals
-                        }}
-                        color="cyan"
-                    />
+                    <StatusCard data={performanceCardData} />
                 </div>
 
-                {/* Active User Dashboard Content */}
-                {userState === 'active' && (
-                    <>
-                        {/* Hot Deals Preview */}
-                        <GlassCard className="p-6 mb-8">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <Sparkles className="w-5 h-5 text-orange-400" />
-                                    {tHotDeals('title')}
-                                </h2>
-                                <CyberButton variant="secondary" size="sm">
-                                    {tHotDeals('seeAll')}
-                                    <ChevronRight className="w-4 h-4" />
-                                </CyberButton>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
-                                {recentDeals.map((deal: any, index: number) => (
-                                    <div
-                                        key={index}
-                                        className="p-4 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border hover:border-afflyt-cyan-500/40 transition-all cursor-pointer"
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${deal.score >= 90
-                                                    ? 'from-orange-400 to-red-500'
-                                                    : 'from-afflyt-cyan-400 to-afflyt-cyan-600'
-                                                    } flex items-center justify-center`}>
-                                                    <span className="text-sm font-bold text-white font-mono">
-                                                        {deal.score}
-                                                    </span>
-                                                </div>
-                                                {deal.score >= 90 && (
-                                                    <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full">
-                                                        {tHotDeals('hot')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-xs text-gray-500">{deal.time}</span>
-                                        </div>
-                                        <p className="text-sm text-white line-clamp-1">{deal.title}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </GlassCard>
-
-                        {/* Quick Stats */}
-                        <GlassCard className="p-6">
-                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-afflyt-cyan-400" />
-                                {tQuickStats('title')}
-                            </h3>
-
-                            <div className="grid grid-cols-4 gap-6">
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-gray-400">{tQuickStats('dealsAnalyzed')}</span>
-                                    <span className="text-2xl font-mono text-white mt-1">4,892</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-gray-400">{tQuickStats('dealsPublished')}</span>
-                                    <span className="text-2xl font-mono text-afflyt-cyan-400 mt-1">147</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-gray-400">{tQuickStats('conversionRate')}</span>
-                                    <span className="text-2xl font-mono text-afflyt-profit-400 mt-1">{performance.conversionRate}%</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm text-gray-400">{tQuickStats('averageScore')}</span>
-                                    <span className="text-2xl font-mono text-white mt-1">78.5</span>
-                                </div>
-                            </div>
-                        </GlassCard>
-                    </>
+                {/* Action Suggestions */}
+                {dashboardData.suggestions.length > 0 && (
+                    <ActionSuggestions suggestions={dashboardData.suggestions} maxVisible={3} />
                 )}
+
+                {/* Bottom Grid: Deals & Activity */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <DealFeed
+                        deals={dashboardData.recentDeals}
+                        maxVisible={5}
+                    />
+                    <ActivityLog
+                        activities={dashboardData.activities}
+                        maxVisible={6}
+                    />
+                </div>
             </div>
         </div>
     );

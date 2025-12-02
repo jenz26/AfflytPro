@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/automations/EmptyState';
 import { TemplateWizard } from '@/components/automations/TemplateWizard';
 import { AutomationTemplate } from '@/components/automations/TemplateCard';
 import { API_BASE } from '@/lib/api/config';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 interface AutomationRule {
     id: string;
@@ -158,6 +159,10 @@ export default function AutomationStudioPage() {
                 if (response.ok) {
                     const result = await response.json();
                     console.log('[handleCreateRule] Success:', result);
+
+                    // Track automation created in PostHog
+                    Analytics.trackAutomationCreated(ruleData.categories?.length > 1 ? 'multi-category' : 'single-category');
+
                     setShowWizard(false);
                     setSelectedTemplate(null);
                     fetchRules();
@@ -179,7 +184,7 @@ export default function AutomationStudioPage() {
 
         try {
             const token = localStorage.getItem('token');
-            await fetch(`${API_BASE}/automation/rules/${id}`, {
+            const response = await fetch(`${API_BASE}/automation/rules/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -187,6 +192,12 @@ export default function AutomationStudioPage() {
                 },
                 body: JSON.stringify({ isActive: !rule.isActive })
             });
+
+            if (response.ok) {
+                // Track automation toggled in PostHog
+                Analytics.trackAutomationToggled(id, !rule.isActive);
+            }
+
             fetchRules();
         } catch (error) {
             console.error('Failed to toggle rule:', error);
@@ -296,6 +307,8 @@ export default function AutomationStudioPage() {
             });
 
             if (response.ok) {
+                // Track automation created (from duplicate) in PostHog
+                Analytics.trackAutomationCreated('duplicate');
                 fetchRules();
             }
         } catch (error) {

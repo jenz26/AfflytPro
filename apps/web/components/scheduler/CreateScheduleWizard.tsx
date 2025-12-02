@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 // Types
 interface ScheduledPost {
@@ -158,6 +159,11 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
 
   useEffect(() => {
     fetchData();
+    // Track wizard opened
+    Analytics.track('schedule_wizard_opened', {
+      is_edit: !!editingPost,
+      initial_type: editingPost?.type || 'CUSTOM',
+    });
   }, []);
 
   const fetchData = async () => {
@@ -236,6 +242,13 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
 
   const handleNext = () => {
     if (validateStep(step)) {
+      // Track step completion
+      Analytics.track('schedule_wizard_step_completed', {
+        step: step,
+        step_name: steps[step - 1]?.label || `Step ${step}`,
+        type: formData.type,
+        bounty_template: formData.type === 'BOUNTY' ? formData.bountyTemplate : null,
+      });
       setStep(step + 1);
     }
   };
@@ -246,8 +259,30 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
 
   const handleSubmit = () => {
     if (validateStep(step)) {
+      // Track wizard completion
+      Analytics.track('schedule_wizard_completed', {
+        is_edit: !!editingPost,
+        type: formData.type,
+        bounty_template: formData.type === 'BOUNTY' ? formData.bountyTemplate : null,
+        schedule: formData.schedule,
+        timezone: formData.timezone,
+        has_media: !!formData.mediaUrl,
+        content_length: formData.content.length,
+      });
       onComplete(formData);
     }
+  };
+
+  const handleCancel = () => {
+    // Track wizard abandoned
+    Analytics.track('schedule_wizard_abandoned', {
+      step: step,
+      step_name: steps[step - 1]?.label || `Step ${step}`,
+      is_edit: !!editingPost,
+      type: formData.type,
+      bounty_template: formData.type === 'BOUNTY' ? formData.bountyTemplate : null,
+    });
+    onCancel();
   };
 
   const handleTestPublish = async () => {
@@ -332,7 +367,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
               <p className="text-sm text-gray-400">{t('subtitle')}</p>
             </div>
           </div>
-          <button onClick={onCancel} className="text-gray-400 hover:text-white">
+          <button onClick={handleCancel} className="text-gray-400 hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -933,7 +968,7 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
             )}
           </div>
           <div className="flex items-center gap-3">
-            <CyberButton variant="ghost" onClick={onCancel}>
+            <CyberButton variant="ghost" onClick={handleCancel}>
               {t('cancel')}
             </CyberButton>
             {step < 4 ? (

@@ -173,14 +173,30 @@ export default function OnboardingPage() {
         });
     }, [isInitialized, currentStep, surveyData, selectedChannels, progress]);
 
+    // Track onboarding started on first load
+    useEffect(() => {
+        if (!isInitialized) return;
+        // Only track if this is the first step (welcome)
+        if (currentStep === 'welcome' && !progress.welcomeSurveyCompleted) {
+            Analytics.track('onboarding_started', {});
+        }
+    }, [isInitialized]);
+
     // Track onboarding step changes
     useEffect(() => {
         if (!isInitialized) return;
         const stepIndex = ['welcome', 'telegram', 'email', 'automation', 'complete'].indexOf(currentStep);
         Analytics.trackOnboardingStep(stepIndex + 1, currentStep);
 
-        // Track completion
+        // Track completion with more details
         if (currentStep === 'complete') {
+            Analytics.track('onboarding_wizard_completed', {
+                channels_selected: selectedChannels,
+                telegram_completed: progress.telegramSetupCompleted,
+                email_completed: progress.emailSetupCompleted,
+                automation_created: progress.firstAutomationCreated,
+                persona_type: personaType,
+            });
             Analytics.trackOnboardingCompleted();
         }
     }, [isInitialized, currentStep]);
@@ -194,6 +210,16 @@ export default function OnboardingPage() {
         const persona = calculatePersonaType(data);
         setPersonaType(persona);
         console.log('Calculated persona:', persona);
+
+        // Track welcome survey completed
+        Analytics.track('onboarding_welcome_completed', {
+            persona_type: persona,
+            experience_level: data.experienceLevel,
+            audience_size: data.audienceSize,
+            goal: data.goal,
+            channels_selected: data.channels,
+            has_amazon_associates: data.hasAmazonAssociates,
+        });
 
         setProgress(prev => ({
             ...prev,
@@ -292,6 +318,8 @@ export default function OnboardingPage() {
             }
 
             console.log('Telegram channel saved successfully!');
+            // Track telegram setup completed
+            Analytics.track('onboarding_telegram_completed', {});
             setProgress(prev => ({ ...prev, telegramSetupCompleted: true }));
 
             // Check if email is next
@@ -353,6 +381,8 @@ export default function OnboardingPage() {
             }
 
             console.log('Email channel saved successfully!');
+            // Track email setup completed
+            Analytics.track('onboarding_email_completed', {});
             setProgress(prev => ({ ...prev, emailSetupCompleted: true }));
             setCurrentStep('automation');
         } catch (error) {
@@ -363,6 +393,12 @@ export default function OnboardingPage() {
 
     const handleAutomationComplete = (automationId: string) => {
         console.log('Automation created:', automationId);
+        // Track first automation created in onboarding
+        Analytics.track('onboarding_automation_created', {
+            automation_id: automationId,
+            telegram_completed: progress.telegramSetupCompleted,
+            email_completed: progress.emailSetupCompleted,
+        });
         setProgress(prev => ({ ...prev, firstAutomationCreated: true }));
         setCurrentStep('complete');
 
@@ -396,6 +432,10 @@ export default function OnboardingPage() {
     };
 
     const handleSkipChannel = () => {
+        // Track channel skipped
+        Analytics.track('onboarding_channel_skipped', {
+            channel_type: currentStep,
+        });
         // Skip to next step
         if (currentStep === 'telegram') {
             if (selectedChannels.includes('email')) {
@@ -409,6 +449,11 @@ export default function OnboardingPage() {
     };
 
     const handleSkipAutomation = () => {
+        // Track automation skipped
+        Analytics.track('onboarding_automation_skipped', {
+            telegram_completed: progress.telegramSetupCompleted,
+            email_completed: progress.emailSetupCompleted,
+        });
         // Mark onboarding as completed even when skipping and clear saved state
         if (typeof window !== 'undefined') {
             localStorage.setItem('onboarding_completed', 'true');

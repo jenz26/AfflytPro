@@ -17,6 +17,7 @@ import { ChannelsEmptyState } from '@/components/channels/ChannelsEmptyState';
 import { ChannelCard, Channel } from '@/components/channels/ChannelCard';
 import { API_BASE } from '@/lib/api/config';
 import { CommandBar } from '@/components/navigation/CommandBar';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 export default function ChannelsPage() {
     const t = useTranslations('channels');
@@ -68,6 +69,10 @@ export default function ChannelsPage() {
         setNewChannel(prev => ({ ...prev, platform: platform.toUpperCase() }));
         setIsAddingChannel(true);
         setSetupStep(1);
+        // Track wizard opened
+        Analytics.track('channel_wizard_opened', {
+            platform: platform.toLowerCase(),
+        });
     };
 
     const handleStep1_SaveToken = async () => {
@@ -91,6 +96,12 @@ export default function ChannelsPage() {
             if (res.ok) {
                 const cred = await res.json();
                 setNewChannel(prev => ({ ...prev, credentialId: cred.id }));
+                // Track step 1 completed
+                Analytics.track('channel_wizard_step_completed', {
+                    step: 1,
+                    step_name: 'Bot Token',
+                    platform: newChannel.platform.toLowerCase(),
+                });
                 setSetupStep(2);
             } else {
                 alert(t('wizard.tokenSaveError'));
@@ -101,6 +112,16 @@ export default function ChannelsPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleStep2_Continue = () => {
+        // Track step 2 completed
+        Analytics.track('channel_wizard_step_completed', {
+            step: 2,
+            step_name: 'Channel Details',
+            platform: newChannel.platform.toLowerCase(),
+        });
+        setSetupStep(3);
     };
 
     const handleStep3_CreateChannel = async () => {
@@ -122,6 +143,19 @@ export default function ChannelsPage() {
             });
 
             if (res.ok) {
+                // Track step 3 completed and wizard completed
+                Analytics.track('channel_wizard_step_completed', {
+                    step: 3,
+                    step_name: 'Verify',
+                    platform: newChannel.platform.toLowerCase(),
+                });
+                Analytics.track('channel_wizard_completed', {
+                    platform: newChannel.platform.toLowerCase(),
+                });
+                // Track channel connected in PostHog
+                console.log('[Channels] Tracking channel_connected:', newChannel.platform.toLowerCase());
+                Analytics.trackChannelConnected(newChannel.platform.toLowerCase());
+
                 resetWizard();
                 fetchChannels();
             } else {
@@ -140,6 +174,16 @@ export default function ChannelsPage() {
         setSelectedPlatform(null);
         setSetupStep(1);
         setNewChannel({ platform: 'TELEGRAM', name: '', channelId: '', botToken: '', credentialId: '' });
+    };
+
+    const handleCancelWizard = () => {
+        // Track wizard abandoned
+        Analytics.track('channel_wizard_abandoned', {
+            step: setupStep,
+            step_name: setupStep === 1 ? 'Bot Token' : setupStep === 2 ? 'Channel Details' : 'Verify',
+            platform: newChannel.platform.toLowerCase(),
+        });
+        resetWizard();
     };
 
     const handleDeleteClick = (channel: Channel) => {
@@ -295,7 +339,7 @@ export default function ChannelsPage() {
                                             <p className="text-xs text-gray-500 mt-2">{t('wizard.botTokenHelp')}</p>
                                         </div>
                                         <div className="flex justify-end gap-3">
-                                            <CyberButton variant="ghost" onClick={resetWizard}>{tCommon('cancel')}</CyberButton>
+                                            <CyberButton variant="ghost" onClick={handleCancelWizard}>{tCommon('cancel')}</CyberButton>
                                             <CyberButton variant="primary" onClick={handleStep1_SaveToken} disabled={isSaving || !newChannel.botToken}>
                                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t('wizard.saveAndContinue')}
                                             </CyberButton>
@@ -332,7 +376,7 @@ export default function ChannelsPage() {
                                         </div>
                                         <div className="flex justify-end gap-3">
                                             <CyberButton variant="ghost" onClick={() => setSetupStep(1)}>{tCommon('back')}</CyberButton>
-                                            <CyberButton variant="primary" onClick={() => setSetupStep(3)} disabled={!newChannel.name || !newChannel.channelId}>
+                                            <CyberButton variant="primary" onClick={handleStep2_Continue} disabled={!newChannel.name || !newChannel.channelId}>
                                                 {tCommon('next')}
                                             </CyberButton>
                                         </div>

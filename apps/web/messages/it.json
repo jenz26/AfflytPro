@@ -247,6 +247,57 @@
       "conversionRate": "Conversion Rate",
       "averageScore": "Score Medio"
     },
+    "subtitle": "Centro di comando per le tue automazioni affiliate",
+    "hero": {
+      "greetings": {
+        "morning": "Buongiorno",
+        "afternoon": "Buon pomeriggio",
+        "evening": "Buonasera",
+        "night": "Buonanotte"
+      },
+      "lastUpdate": "Ultimo aggiornamento: {time} fa"
+    },
+    "statusCards": {
+      "automations": {
+        "title": "Automazioni",
+        "active": "attive",
+        "empty": "Nessuna automazione configurata",
+        "deals": "deal",
+        "manage": "Gestisci"
+      },
+      "channels": {
+        "title": "Canali",
+        "connected": "connessi",
+        "empty": "Nessun canale connesso",
+        "add": "Aggiungi",
+        "manage": "Gestisci"
+      },
+      "performance": {
+        "title": "Performance",
+        "clicks": "Click",
+        "revenue": "Revenue Stimata",
+        "vsLastWeek": "vs settimana scorsa",
+        "viewAnalytics": "Analytics"
+      }
+    },
+    "suggestions": {
+      "title": "Azioni Suggerite",
+      "more": "altre"
+    },
+    "dealFeed": {
+      "title": "Ultimi Deal Trovati",
+      "published": "Pubblicato",
+      "publish": "Pubblica",
+      "empty": "Nessun deal disponibile",
+      "emptyHint": "Le automazioni troveranno nuovi deal",
+      "viewAll": "Vedi tutti"
+    },
+    "activityLog": {
+      "title": "Attivita Recente",
+      "empty": "Nessuna attivita recente",
+      "emptyHint": "Le attivita appariranno qui",
+      "viewAll": "Vedi log completo"
+    },
     "onboarding": {
       "welcome": "Benvenuto nel Command Center di Afflyt Pro",
       "completeSetup": "Completa la configurazione per sbloccare tutto il potenziale",

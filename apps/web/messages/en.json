@@ -247,6 +247,57 @@
       "conversionRate": "Conversion Rate",
       "averageScore": "Average Score"
     },
+    "subtitle": "Command center for your affiliate automations",
+    "hero": {
+      "greetings": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening",
+        "night": "Good night"
+      },
+      "lastUpdate": "Last update: {time} ago"
+    },
+    "statusCards": {
+      "automations": {
+        "title": "Automations",
+        "active": "active",
+        "empty": "No automations configured",
+        "deals": "deals",
+        "manage": "Manage"
+      },
+      "channels": {
+        "title": "Channels",
+        "connected": "connected",
+        "empty": "No channels connected",
+        "add": "Add",
+        "manage": "Manage"
+      },
+      "performance": {
+        "title": "Performance",
+        "clicks": "Clicks",
+        "revenue": "Estimated Revenue",
+        "vsLastWeek": "vs last week",
+        "viewAnalytics": "Analytics"
+      }
+    },
+    "suggestions": {
+      "title": "Suggested Actions",
+      "more": "more"
+    },
+    "dealFeed": {
+      "title": "Recent Deals Found",
+      "published": "Published",
+      "publish": "Publish",
+      "empty": "No deals available",
+      "emptyHint": "Automations will find new deals",
+      "viewAll": "View all"
+    },
+    "activityLog": {
+      "title": "Recent Activity",
+      "empty": "No recent activity",
+      "emptyHint": "Activities will appear here",
+      "viewAll": "View full log"
+    },
     "onboarding": {
       "welcome": "Welcome to Afflyt Pro Command Center",
       "completeSetup": "Configure the system in 3 simple steps and start monetizing",
