@@ -348,7 +348,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
 
   /**
    * GET /analytics/channels
-   * Returns performance breakdown by channel/source (UTM-based)
+   * Returns performance breakdown by channel/source
+   * Uses UTM params when available, falls back to link's channelId
    */
   app.get('/channels', {
     onRequest: [app.authenticate]
@@ -359,12 +360,20 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links
+    // Get user's links WITH channelId for fallback attribution
     const userLinks = await prisma.affiliateLink.findMany({
       where: { userId },
-      select: { id: true }
+      select: { id: true, channelId: true }
     });
     const linkIds = userLinks.map(l => l.id);
+
+    // Build a map of linkId -> channelId for fallback
+    const linkChannelMap = new Map<string, string>();
+    userLinks.forEach(l => {
+      if (l.channelId) {
+        linkChannelMap.set(l.id, l.channelId);
+      }
+    });
 
     if (linkIds.length === 0) {
       return {
@@ -373,6 +382,13 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         period: periodDays
       };
     }
+
+    // Get all user's channels for name/platform lookup
+    const userChannels = await prisma.channel.findMany({
+      where: { userId },
+      select: { id: true, name: true, platform: true }
+    });
+    const channelInfoMap = new Map(userChannels.map(c => [c.id, { name: c.name, platform: c.platform }]));
 
     // Get clicks with UTM data
     const clicks = await prisma.click.findMany({
@@ -401,43 +417,58 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       }
     });
 
-    // Group clicks by platform (utm_medium) for consistent icon matching
-    // utm_medium = platform (telegram, discord, email)
-    // utm_source = channel name (user's channel name)
+    // Group clicks by channel
+    // Priority: 1. UTM params, 2. Link's channelId, 3. 'direct'
     const channelMap = new Map<string, {
       clicks: number;
       conversions: number;
       revenue: number;
       linkIds: Set<string>;
-      channelNames: Set<string>;
+      channelName: string;
+      platform: string;
     }>();
 
     clicks.forEach(click => {
-      // Use utm_medium (platform) as primary grouping, fallback to 'direct'
-      const platform = click.utmMedium || 'direct';
-      const channelName = click.utmSource || null;
+      let channelKey = 'direct';
+      let channelName = 'Direct';
+      let platform = 'direct';
 
-      const entry = channelMap.get(platform) || {
+      // Priority 1: UTM params (new clicks after UTM fix)
+      if (click.utmMedium && click.utmSource) {
+        platform = click.utmMedium.toLowerCase();
+        channelName = click.utmSource;
+        channelKey = `${platform}:${channelName}`;
+      }
+      // Priority 2: Link's channelId (fallback for old clicks)
+      else if (linkChannelMap.has(click.linkId)) {
+        const chId = linkChannelMap.get(click.linkId)!;
+        const chInfo = channelInfoMap.get(chId);
+        if (chInfo) {
+          platform = chInfo.platform.toLowerCase();
+          channelName = chInfo.name;
+          channelKey = `${platform}:${channelName}`;
+        }
+      }
+      // Priority 3: Direct (no attribution)
+
+      const entry = channelMap.get(channelKey) || {
         clicks: 0,
         conversions: 0,
         revenue: 0,
-        linkIds: new Set(),
-        channelNames: new Set()
+        linkIds: new Set<string>(),
+        channelName,
+        platform
       };
       entry.clicks++;
       entry.linkIds.add(click.linkId);
-      if (channelName) {
-        entry.channelNames.add(channelName);
-      }
-      channelMap.set(platform, entry);
+      channelMap.set(channelKey, entry);
     });
 
     // Add conversion data
     conversions.forEach(conv => {
       // Find which channel this conversion belongs to (by linkId)
-      // For simplicity, attribute to 'direct' if we can't determine
       let attributed = false;
-      channelMap.forEach((data, channel) => {
+      channelMap.forEach((data) => {
         if (data.linkIds.has(conv.linkId)) {
           data.conversions++;
           data.revenue += conv.commission || conv.revenue * 0.05;
@@ -451,7 +482,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
           conversions: 0,
           revenue: 0,
           linkIds: new Set<string>(),
-          channelNames: new Set<string>()
+          channelName: 'Direct',
+          platform: 'direct'
         };
         direct.conversions++;
         direct.revenue += conv.commission || conv.revenue * 0.05;
@@ -463,23 +495,19 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     let totalClicks = 0;
     let totalRevenue = 0;
 
-    const channels = Array.from(channelMap.entries()).map(([channel, data]) => {
+    const channels = Array.from(channelMap.entries()).map(([key, data]) => {
       totalClicks += data.clicks;
       totalRevenue += data.revenue;
 
-      // Build display name: if there's a channel name, show "name (platform)"
-      // Otherwise just show the platform
-      const channelNamesArray = Array.from(data.channelNames);
-      const displayName = channelNamesArray.length > 0
-        ? channelNamesArray.length === 1
-          ? `${channelNamesArray[0]} (${channel})`
-          : `${channelNamesArray.length} channels (${channel})`
-        : channel;
+      // Format display name: "ChannelName (platform)" or just "Direct"
+      const displayName = data.platform === 'direct'
+        ? 'Direct'
+        : `${data.channelName} (${data.platform})`;
 
       return {
-        channel,
+        channel: data.platform, // Use platform for icon matching
         displayName,
-        channelNames: channelNamesArray,
+        channelNames: [data.channelName],
         clicks: data.clicks,
         conversions: data.conversions,
         revenue: Math.round(data.revenue * 100) / 100,

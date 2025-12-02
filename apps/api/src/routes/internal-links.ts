@@ -117,6 +117,20 @@ const internalLinkRoutes: FastifyPluginAsync = async (fastify) => {
             // Create the affiliate link with tracking
             const shortUrl = `${SHORT_LINK_BASE}/r/${shortCode}`;
 
+            // Extract channelId from campaignId if present (format: "channel_{uuid}")
+            let channelId: string | undefined;
+            if (campaignId && campaignId.startsWith('channel_')) {
+                const potentialChannelId = campaignId.replace('channel_', '');
+                // Verify the channel exists
+                const channel = await prisma.channel.findUnique({
+                    where: { id: potentialChannelId },
+                    select: { id: true }
+                });
+                if (channel) {
+                    channelId = channel.id;
+                }
+            }
+
             const affiliateLink = await prisma.affiliateLink.create({
                 data: {
                     productId: product.id,
@@ -128,7 +142,8 @@ const internalLinkRoutes: FastifyPluginAsync = async (fastify) => {
                     destinationUrl: amazonUrl,
                     clicks: 0,
                     totalRevenue: 0,
-                    conversionCount: 0
+                    conversionCount: 0,
+                    channelId // Associate link with channel for attribution
                 }
             });
 
