@@ -5,6 +5,8 @@ import { Radio, TrendingUp, TrendingDown, Minus, Lightbulb } from 'lucide-react'
 
 interface ChannelData {
     channel: string;
+    displayName?: string;
+    channelNames?: string[];
     clicks: number;
     conversions: number;
     revenue: number;
@@ -91,15 +93,17 @@ export function ChannelDeepDive({ channels, totals, loading }: ChannelDeepDivePr
         const topByRevenue = [...channels].sort((a, b) => b.revenue - a.revenue)[0];
         const topByCVR = [...channels].sort((a, b) => b.cvr - a.cvr)[0];
 
+        const getDisplayName = (ch: ChannelData) => ch.displayName || ch.channel;
+
         if (topByClicks.channel !== topByRevenue.channel) {
-            return `${getChannelIcon(topByClicks.channel)} ${topByClicks.channel} drives the most traffic, but ${getChannelIcon(topByRevenue.channel)} ${topByRevenue.channel} generates more revenue. Consider promoting higher-value products on ${topByRevenue.channel}.`;
+            return `${getChannelIcon(topByClicks.channel)} ${getDisplayName(topByClicks)} drives the most traffic, but ${getChannelIcon(topByRevenue.channel)} ${getDisplayName(topByRevenue)} generates more revenue. Consider promoting higher-value products on ${getDisplayName(topByRevenue)}.`;
         }
 
         if (topByCVR.cvr > 0 && topByCVR.channel !== topByClicks.channel) {
-            return `${getChannelIcon(topByCVR.channel)} ${topByCVR.channel} has the best conversion rate (${topByCVR.cvr}%). Focus on increasing traffic to this channel for maximum ROI.`;
+            return `${getChannelIcon(topByCVR.channel)} ${getDisplayName(topByCVR)} has the best conversion rate (${topByCVR.cvr}%). Focus on increasing traffic to this channel for maximum ROI.`;
         }
 
-        return `${getChannelIcon(bestChannel.channel)} ${bestChannel.channel} is your top performer. Keep optimizing content for this channel.`;
+        return `${getChannelIcon(bestChannel.channel)} ${getDisplayName(bestChannel)} is your top performer. Keep optimizing content for this channel.`;
     };
 
     return (
@@ -139,7 +143,7 @@ export function ChannelDeepDive({ channels, totals, loading }: ChannelDeepDivePr
                                             </div>
                                             <div>
                                                 <span className="text-white font-medium capitalize">
-                                                    {channel.channel}
+                                                    {channel.displayName || channel.channel}
                                                 </span>
                                                 {channel.channel === bestChannel.channel && (
                                                     <span className="ml-2 px-2 py-0.5 bg-afflyt-cyan-500/20 text-afflyt-cyan-400 text-xs rounded">

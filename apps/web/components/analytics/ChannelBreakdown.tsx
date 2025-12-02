@@ -5,6 +5,8 @@ import { Send, Mail, MessageCircle, Globe, Lightbulb } from 'lucide-react';
 
 interface ChannelData {
     channel: string;
+    displayName?: string;
+    channelNames?: string[];
     clicks: number;
     conversions: number;
     revenue: number;
@@ -88,7 +90,9 @@ export function ChannelBreakdown({
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <Icon className="w-4 h-4 text-gray-400" />
-                                            <span className="text-sm text-white capitalize">{channel.channel}</span>
+                                            <span className="text-sm text-white capitalize">
+                                                {channel.displayName || channel.channel}
+                                            </span>
                                         </div>
                                         <div className="flex items-center gap-4 text-xs">
                                             <span className="text-gray-400">
@@ -119,7 +123,7 @@ export function ChannelBreakdown({
                         <div className="flex items-start gap-3 p-3 bg-afflyt-cyan-500/10 rounded-lg border border-afflyt-cyan-500/20">
                             <Lightbulb className="w-5 h-5 text-afflyt-cyan-400 flex-shrink-0 mt-0.5" />
                             <p className="text-sm text-gray-300">
-                                <span className="text-afflyt-cyan-400 font-medium capitalize">{topChannel.channel}</span> is your top performing channel with {topChannel.clicksPercent}% of total clicks. Focus your efforts here for maximum ROI.
+                                <span className="text-afflyt-cyan-400 font-medium capitalize">{topChannel.displayName || topChannel.channel}</span> is your top performing channel with {topChannel.clicksPercent}% of total clicks. Focus your efforts here for maximum ROI.
                             </p>
                         </div>
                     )}

@@ -176,7 +176,12 @@ export class TelegramBotService {
       avgPrice30?: number;
     },
     userId?: string,
-    amazonTag?: string
+    amazonTag?: string,
+    // UTM tracking params for channel attribution
+    utmParams?: {
+      channelName: string;
+      platform: string;
+    }
   ) {
     // Mock for stress test channels - dont actually send to Telegram
     if (channelId.startsWith('TEST_')) {
@@ -215,6 +220,16 @@ export class TelegramBotService {
           if (shortLinkResponse.ok) {
             const linkData = await shortLinkResponse.json();
             shortUrl = linkData.shortUrl;
+
+            // Add UTM params for channel attribution tracking
+            if (utmParams) {
+              const utmString = new URLSearchParams({
+                utm_source: utmParams.channelName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase(),
+                utm_medium: utmParams.platform.toLowerCase(),
+                utm_campaign: 'afflyt_automation'
+              }).toString();
+              shortUrl = `${shortUrl}?${utmString}`;
+            }
           } else {
             console.warn('Failed to create short link, using direct Amazon link');
           }

@@ -401,16 +401,35 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       }
     });
 
-    // Group clicks by UTM source (or 'direct' if no UTM)
-    const channelMap = new Map<string, { clicks: number; conversions: number; revenue: number; linkIds: Set<string> }>();
+    // Group clicks by platform (utm_medium) for consistent icon matching
+    // utm_medium = platform (telegram, discord, email)
+    // utm_source = channel name (user's channel name)
+    const channelMap = new Map<string, {
+      clicks: number;
+      conversions: number;
+      revenue: number;
+      linkIds: Set<string>;
+      channelNames: Set<string>;
+    }>();
 
     clicks.forEach(click => {
-      // Use UTM source, or medium, or 'direct'
-      const channel = click.utmSource || click.utmMedium || 'direct';
-      const entry = channelMap.get(channel) || { clicks: 0, conversions: 0, revenue: 0, linkIds: new Set() };
+      // Use utm_medium (platform) as primary grouping, fallback to 'direct'
+      const platform = click.utmMedium || 'direct';
+      const channelName = click.utmSource || null;
+
+      const entry = channelMap.get(platform) || {
+        clicks: 0,
+        conversions: 0,
+        revenue: 0,
+        linkIds: new Set(),
+        channelNames: new Set()
+      };
       entry.clicks++;
       entry.linkIds.add(click.linkId);
-      channelMap.set(channel, entry);
+      if (channelName) {
+        entry.channelNames.add(channelName);
+      }
+      channelMap.set(platform, entry);
     });
 
     // Add conversion data
@@ -427,7 +446,13 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       });
       // If not attributed, add to direct
       if (!attributed) {
-        const direct = channelMap.get('direct') || { clicks: 0, conversions: 0, revenue: 0, linkIds: new Set() };
+        const direct = channelMap.get('direct') || {
+          clicks: 0,
+          conversions: 0,
+          revenue: 0,
+          linkIds: new Set<string>(),
+          channelNames: new Set<string>()
+        };
         direct.conversions++;
         direct.revenue += conv.commission || conv.revenue * 0.05;
         channelMap.set('direct', direct);
@@ -442,8 +467,19 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       totalClicks += data.clicks;
       totalRevenue += data.revenue;
 
+      // Build display name: if there's a channel name, show "name (platform)"
+      // Otherwise just show the platform
+      const channelNamesArray = Array.from(data.channelNames);
+      const displayName = channelNamesArray.length > 0
+        ? channelNamesArray.length === 1
+          ? `${channelNamesArray[0]} (${channel})`
+          : `${channelNamesArray.length} channels (${channel})`
+        : channel;
+
       return {
         channel,
+        displayName,
+        channelNames: channelNamesArray,
         clicks: data.clicks,
         conversions: data.conversions,
         revenue: Math.round(data.revenue * 100) / 100,

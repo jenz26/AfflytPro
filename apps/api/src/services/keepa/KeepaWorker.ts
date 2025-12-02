@@ -739,7 +739,12 @@ export class KeepaWorker {
           avgPrice30: deal.avgPrice30
         },
         channel.user.id,
-        amazonTag
+        amazonTag,
+        // UTM params for channel attribution tracking
+        {
+          channelName: channel.name,
+          platform: channel.platform
+        }
       );
 
       if (result.success) {
