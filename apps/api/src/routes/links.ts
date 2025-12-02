@@ -135,10 +135,13 @@ export async function linkRoutes(fastify: FastifyInstance) {
 
     /**
      * GET /links/my
-     * Get user's generated links
+     * Get user's generated links with full analytics data
      */
-    fastify.get('/my', async (request, reply) => {
+    fastify.get<{
+        Querystring: { limit?: string };
+    }>('/my', async (request, reply) => {
         const userId = request.user.id;
+        const limit = parseInt(request.query.limit || '50', 10);
 
         try {
             const links = await prisma.affiliateLink.findMany({
@@ -149,24 +152,41 @@ export async function linkRoutes(fastify: FastifyInstance) {
                             asin: true,
                             title: true,
                             currentPrice: true,
-                            imageUrl: true
+                            imageUrl: true,
+                            category: true
                         }
                     }
                 },
                 orderBy: { createdAt: 'desc' },
-                take: 50
+                take: Math.min(limit, 500)
             });
+
+            // Get channel info for links that have channelId
+            const channelIds = [...new Set(links.filter(l => l.channelId).map(l => l.channelId!))] as string[];
+            const channels = channelIds.length > 0
+                ? await prisma.channel.findMany({
+                    where: { id: { in: channelIds } },
+                    select: { id: true, name: true, platform: true }
+                })
+                : [];
+            const channelMap = new Map(channels.map(c => [c.id, c]));
 
             return {
                 links: links.map((link: any) => ({
                     id: link.id,
+                    shortCode: link.shortCode,
                     shortUrl: link.shortUrl,
                     fullUrl: link.fullUrl,
                     amazonTag: link.amazonTag,
                     clicks: link.clicks,
+                    totalRevenue: link.totalRevenue || 0,
+                    conversionCount: link.conversionCount || 0,
+                    channelId: link.channelId,
                     product: link.product,
+                    channel: link.channelId ? channelMap.get(link.channelId) || null : null,
                     createdAt: link.createdAt
-                }))
+                })),
+                total: links.length
             };
         } catch (error) {
             request.log.error(error);
