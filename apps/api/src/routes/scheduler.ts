@@ -628,6 +628,113 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // ==================== TEST DRAFT POST (before saving) ====================
+  fastify.post<{ Body: { channelId: string; content: string; mediaUrl?: string; type?: string; bountyUrl?: string; affiliateTagId?: string } }>('/test-draft', async (request, reply) => {
+    const userId = request.user.id;
+
+    try {
+      const { channelId, content, mediaUrl, type, bountyUrl, affiliateTagId } = request.body;
+
+      if (!channelId) {
+        return reply.code(400).send({ message: 'Channel is required' });
+      }
+
+      if (!content) {
+        return reply.code(400).send({ message: 'Content is required' });
+      }
+
+      // Validate channel ownership
+      const channel = await prisma.channel.findFirst({
+        where: {
+          id: channelId,
+          userId,
+        },
+        include: {
+          credential: true,
+        },
+      });
+
+      if (!channel) {
+        return reply.code(404).send({ message: 'Channel not found or access denied' });
+      }
+
+      if (!channel.credential) {
+        return reply.code(400).send({ message: 'Channel has no credential configured' });
+      }
+
+      // Decrypt bot token
+      const securityService = new SecurityService();
+      let botToken: string;
+      try {
+        botToken = securityService.decrypt(channel.credential.key);
+      } catch {
+        return reply.code(400).send({ message: 'Failed to decrypt channel credential' });
+      }
+
+      // Generate test content (replace variables)
+      let testContent = sanitizeContent(content);
+      const now = new Date();
+      testContent = testContent
+        .replace(/\{\{date\}\}/g, now.toLocaleDateString('it-IT'))
+        .replace(/\{\{time\}\}/g, now.toLocaleTimeString('it-IT'))
+        .replace(/\{\{channelName\}\}/g, channel.name);
+
+      // For BOUNTY type, generate affiliate link
+      if (type === 'BOUNTY' && bountyUrl) {
+        // Get affiliate tag
+        let affiliateTag = '';
+        if (affiliateTagId) {
+          const tag = await prisma.affiliateTag.findFirst({
+            where: { id: affiliateTagId, userId },
+          });
+          if (tag) {
+            affiliateTag = tag.tag;
+          }
+        }
+        // Replace {{link}} with a test link
+        const testLink = affiliateTag ? `${bountyUrl}?tag=${affiliateTag}` : bountyUrl;
+        testContent = testContent.replace(/\{\{link\}\}/g, testLink);
+      } else {
+        // Remove unprocessed {{link}} placeholders
+        testContent = testContent.replace(/\{\{link\}\}/g, '[Link affiliato]');
+      }
+
+      // Add test prefix
+      testContent = `🧪 TEST - Anteprima Post\n\n${testContent}\n\n⚠️ Questo è un messaggio di test`;
+
+      // Send to channel
+      const result = await TelegramBotService.sendMessage(
+        channel.channelId,
+        botToken,
+        {
+          text: testContent,
+          parseMode: 'HTML',
+        }
+      );
+
+      if (!result.success) {
+        return reply.code(500).send({
+          message: 'Failed to send test message',
+          error: result.error,
+        });
+      }
+
+      return {
+        success: true,
+        messageId: result.messageId,
+        channel: {
+          id: channel.id,
+          name: channel.name,
+          channelId: channel.channelId,
+        },
+        message: 'Test message sent successfully',
+      };
+    } catch (error: any) {
+      request.log.error(error);
+      return reply.code(500).send({ message: 'Failed to send test message' });
+    }
+  });
+
   // ==================== GET EXECUTION LOGS ====================
   fastify.get<{ Params: { id: string }; Querystring: Record<string, string> }>('/:id/logs', async (request, reply) => {
     const userId = request.user.id;

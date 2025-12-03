@@ -29,6 +29,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { API_BASE } from '@/lib/api/config';
 import { CreateScheduleWizard } from '@/components/scheduler/CreateScheduleWizard';
 import { Analytics } from '@/components/analytics/PostHogProvider';
+import { parseCronToHumanReadable } from '@/lib/utils/cron-parser';
 
 // Types
 interface ScheduledPost {
@@ -150,6 +151,39 @@ export default function SchedulerPage() {
       }
     } catch (error) {
       console.error('Failed to test post:', error);
+      alert(t('testError'));
+    }
+  };
+
+  // Test publish a draft post (from wizard, before saving)
+  const handleTestPublish = async (postData: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/scheduler/test-draft`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          channelId: postData.channelId,
+          content: postData.content,
+          mediaUrl: postData.mediaUrl,
+          type: postData.type,
+          bountyUrl: postData.bountyUrl,
+          affiliateTagId: postData.affiliateTagId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(t('testSuccess'));
+      } else {
+        alert(result.message || t('testError'));
+      }
+    } catch (error) {
+      console.error('Failed to test draft post:', error);
       alert(t('testError'));
     }
   };
@@ -408,9 +442,9 @@ export default function SchedulerPage() {
         {/* Usage Bar */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-gray-400">{t('activeSchedules')}</span>
+            <span className="text-gray-400">{t('usageLabel')}</span>
             <span className="font-mono text-white">
-              {activePostsCount}/{maxPosts}
+              {activePostsCount} {t('activeOf')} {maxPosts} {t('postsLimit')}
             </span>
           </div>
           <div className="h-2 bg-afflyt-dark-100 rounded-full overflow-hidden">
@@ -472,6 +506,7 @@ export default function SchedulerPage() {
             setShowWizard(false);
             setEditingPost(null);
           }}
+          onTestPublish={handleTestPublish}
         />
       )}
 
@@ -680,9 +715,9 @@ function ScheduledPostCard({
 
         {/* Schedule Info */}
         <div className="flex items-center gap-4 text-sm mb-4">
-          <div className="flex items-center gap-1 text-gray-500">
+          <div className="flex items-center gap-1 text-gray-500" title={post.schedule}>
             <Clock className="w-4 h-4" />
-            <span>{post.schedule}</span>
+            <span>{parseCronToHumanReadable(post.schedule)}</span>
           </div>
           {post.isActive && post.nextRunAt && (
             <div className="flex items-center gap-1 text-afflyt-cyan-400">

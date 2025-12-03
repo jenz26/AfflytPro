@@ -23,6 +23,7 @@ import {
 import { CyberButton } from '@/components/ui/CyberButton';
 import { API_BASE } from '@/lib/api/config';
 import { Analytics } from '@/components/analytics/PostHogProvider';
+import { parseCronToHumanReadable, formatContentPreview } from '@/lib/utils/cron-parser';
 
 // Types
 interface ScheduledPost {
@@ -884,7 +885,10 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-afflyt-glass-border">
                     <span className="text-gray-400 text-sm">{t('fields.schedule')}</span>
-                    <span className="text-white font-mono text-sm">{formData.schedule}</span>
+                    <div className="text-right">
+                      <span className="text-white">{parseCronToHumanReadable(formData.schedule)}</span>
+                      <p className="text-xs text-gray-500 font-mono">{formData.schedule}</p>
+                    </div>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-gray-400 text-sm">{t('fields.timezone')}</span>
@@ -900,9 +904,15 @@ export function CreateScheduleWizard({ editingPost, onComplete, onCancel, onTest
                 <h4 className="text-sm font-medium text-gray-400 mb-2">{t('review.contentPreview')}</h4>
                 <div className="p-3 bg-gray-900 rounded-lg border border-gray-700">
                   <p className="text-white text-sm whitespace-pre-wrap font-mono">
-                    {formData.content || <span className="text-gray-500 italic">Nessun contenuto</span>}
+                    {formData.content ? formatContentPreview(formData.content) : <span className="text-gray-500 italic">Nessun contenuto</span>}
                   </p>
                 </div>
+                {(formData.content.includes('{{link}}') || formData.content.includes('{{deals}}') || formData.content.includes('{{date}}') || formData.content.includes('{{time}}')) && (
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Le variabili verranno sostituite al momento della pubblicazione
+                  </p>
+                )}
               </div>
 
               {/* Test Publish Button */}
