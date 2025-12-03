@@ -4,6 +4,21 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function getPlanDisplayName(plan: string | null | undefined): string {
+    const planMap: Record<string, string> = {
+        'FREE': 'Free',
+        'BUSINESS': 'Business',
+        'PRO': 'Pro',
+        'BETA_TESTER': 'Beta Tester',
+        'ADMIN': 'Admin'
+    };
+    return planMap[plan || 'FREE'] || plan || 'Free';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
 
@@ -16,6 +31,7 @@ type ActivityType = 'deal_published' | 'deal_found' | 'click' | 'channel_verifie
 interface HeroData {
     type: HeroType;
     message: string;
+    subMessage?: string; // Context message (e.g., "15 deals scartati sotto score 80")
     metric?: number;
     ctaLink: string;
     ctaLabel: string;
@@ -89,6 +105,7 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 automations,
                 affiliateLinks,
                 recentProducts,
+                allRecentProducts, // All products to show what was filtered
                 keepaBudget
             ] = await Promise.all([
                 prisma.user.findUnique({
@@ -113,7 +130,7 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                     where: { userId },
                     select: { clicks: true, createdAt: true }
                 }),
-                prisma.product.findMany({
+prisma.product.findMany({
                     where: { discount: { gte: 40 } },
                     orderBy: { lastPriceCheckAt: 'desc' },
                     take: 10,
@@ -123,6 +140,19 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                         title: true,
                         discount: true,
                         lastPriceCheckAt: true,
+                        scoreComponents: true
+                    }
+                }),
+                // Get ALL recent products in last 24h (to show filtering stats)
+                prisma.product.findMany({
+                    where: {
+                        lastPriceCheckAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+                    },
+                    orderBy: { lastPriceCheckAt: 'desc' },
+                    take: 100,
+                    select: {
+                        id: true,
+                        discount: true,
                         scoreComponents: true
                     }
                 }),
@@ -224,6 +254,11 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
             // 6. BUILD HERO DATA
             // ═══════════════════════════════════════════════════════════════
 
+            // Calculate filtered products stats
+            const minScoreThreshold = 40; // Default threshold, could come from user settings
+            const totalProductsFound24h = allRecentProducts.length;
+            const filteredOutCount = totalProductsFound24h - recentDeals.length;
+
             let hero: HeroData;
 
             if (automations.length === 0 && channels.length === 0) {
@@ -241,6 +276,7 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 hero = {
                     type: 'paused',
                     message: 'Le tue automazioni sono in pausa',
+                    subMessage: `${automations.length} automazioni pronte da attivare`,
                     ctaLink: '/dashboard/automations',
                     ctaLabel: 'Attiva'
                 };
@@ -258,6 +294,7 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 hero = {
                     type: 'deals_found',
                     message: `${recentDeals.length} deal trovati nelle ultime 24h`,
+                    subMessage: filteredOutCount > 0 ? `${filteredOutCount} scartati (sconto < ${minScoreThreshold}%)` : undefined,
                     metric: recentDeals.length,
                     ctaLink: '/dashboard/deals',
                     ctaLabel: 'Vedi Deal',
@@ -265,10 +302,18 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                     secondaryCtaLabel: 'Gestisci'
                 };
             } else {
-                // Idle
+                // Idle - provide context
+                let idleSubMessage: string | undefined;
+                if (totalProductsFound24h > 0) {
+                    idleSubMessage = `${totalProductsFound24h} prodotti analizzati, nessuno sopra la soglia (sconto ≥ ${minScoreThreshold}%)`;
+                } else if (activeAutomations > 0) {
+                    idleSubMessage = 'Le automazioni sono attive e in monitoraggio';
+                }
+
                 hero = {
                     type: 'idle',
                     message: 'Nessun deal trovato di recente',
+                    subMessage: idleSubMessage,
                     ctaLink: '/dashboard/automations',
                     ctaLabel: 'Configura Filtri'
                 };
@@ -408,8 +453,10 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 // Legacy data (backward compatibility)
                 onboardingProgress,
                 accountData: {
-                    plan: user?.plan || 'PRO',
+                    plan: user?.plan || 'FREE',
+                    planDisplay: getPlanDisplayName(user?.plan),
                     ttl: 72,
+                    ttlDisplay: '3 giorni', // Human-readable TTL
                     limits: {
                         rules: { used: automations.length, max: 10 },
                         offers: { used: affiliateLinks.length, max: 500 },

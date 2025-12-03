@@ -42,7 +42,9 @@ interface DashboardData {
     activities: ActivityItem[];
     accountData: {
         plan: string;
+        planDisplay?: string;
         ttl: number;
+        ttlDisplay?: string;
         limits: {
             rules: { used: number; max: number };
             offers: { used: number; max: number };
@@ -54,6 +56,11 @@ interface DashboardData {
             remaining: number;
             daysRemaining: number;
         };
+    };
+    onboardingProgress?: {
+        channelConnected: boolean;
+        credentialsSet: boolean;
+        automationCreated: boolean;
     };
 }
 
@@ -176,10 +183,12 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-3">
                                     <Shield className="w-5 h-5 text-afflyt-plasma-400" />
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase">{tAccount('plan')} {dashboardData.accountData.plan}</p>
+                                        <p className="text-xs text-gray-500 uppercase">{tAccount('plan')} {dashboardData.accountData.planDisplay || dashboardData.accountData.plan}</p>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-lg font-bold text-white font-mono">{dashboardData.accountData.ttl}h</span>
-                                            <span className="text-xs text-afflyt-cyan-400">TTL</span>
+                                            <span className="text-lg font-bold text-white font-mono">
+                                                {dashboardData.accountData.ttlDisplay || `${dashboardData.accountData.ttl}h`}
+                                            </span>
+                                            <span className="text-xs text-afflyt-cyan-400">{tAccount('remaining')}</span>
                                         </div>
                                     </div>
                                 </div>

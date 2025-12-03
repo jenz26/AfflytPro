@@ -76,12 +76,43 @@ export const CommandBar = () => {
         fetchUserProfile();
     }, []);
 
-    // Check if onboarding is completed
+    // Check if onboarding is completed (from API or localStorage fallback)
     useEffect(() => {
-        const checkOnboardingStatus = () => {
+        const checkOnboardingStatus = async () => {
             if (typeof window !== 'undefined') {
-                const completed = localStorage.getItem('onboarding_completed');
-                setOnboardingCompleted(completed === 'true');
+                // First check localStorage for quick display
+                const localCompleted = localStorage.getItem('onboarding_completed');
+                if (localCompleted === 'true') {
+                    setOnboardingCompleted(true);
+                    return;
+                }
+
+                // Also check if user has channels and automations (more reliable)
+                try {
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        const res = await fetch(`${API_BASE}/user/dashboard/stats`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            // Consider onboarding complete if user has at least 1 channel OR 1 automation
+                            const hasChannel = data.channels && data.channels.length > 0;
+                            const hasAutomation = data.automations && data.automations.length > 0;
+                            const fromProgress = data.onboardingProgress?.channelConnected || data.onboardingProgress?.automationCreated;
+
+                            if (hasChannel || hasAutomation || fromProgress) {
+                                setOnboardingCompleted(true);
+                                localStorage.setItem('onboarding_completed', 'true');
+                            } else {
+                                setOnboardingCompleted(false);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    // Fallback to localStorage value
+                    setOnboardingCompleted(localCompleted === 'true');
+                }
             }
         };
         checkOnboardingStatus();

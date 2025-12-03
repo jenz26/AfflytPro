@@ -16,6 +16,7 @@ export type HeroType = 'welcome' | 'deals_found' | 'hot_deal' | 'warning' | 'idl
 export interface HeroData {
     type: HeroType;
     message: string;
+    subMessage?: string;
     metric?: number;
     ctaLink: string;
     ctaLabel: string;
@@ -120,9 +121,9 @@ export function HeroSection({ data, userName }: HeroSectionProps) {
                         <h2 className="text-xl font-bold text-white">
                             {data.message}
                         </h2>
-                        {data.metric !== undefined && (
-                            <p className="text-sm text-gray-400 mt-1">
-                                {t('lastUpdate', { time: '5 min' })}
+                        {data.subMessage && (
+                            <p className="text-sm text-gray-500 mt-1">
+                                {data.subMessage}
                             </p>
                         )}
                     </div>

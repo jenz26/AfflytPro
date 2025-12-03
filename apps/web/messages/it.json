@@ -221,7 +221,8 @@
       "plan": "Piano",
       "weeklyActive": "Weekly Active",
       "automations": "Automazioni",
-      "systemActive": "Sistema Attivo"
+      "systemActive": "Sistema Attivo",
+      "remaining": "rimanenti"
     },
     "kpi": {
       "totalPerformance": "Performance Totale",
