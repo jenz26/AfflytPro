@@ -10,6 +10,7 @@ export const PlanType = {
   FREE: 'FREE',
   PRO: 'PRO',
   BUSINESS: 'BUSINESS',
+  BETA_TESTER: 'BETA_TESTER',
 } as const;
 
 export type PlanType = typeof PlanType[keyof typeof PlanType];
@@ -118,6 +119,30 @@ export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
       analytics: 'enterprise',
     },
   },
+
+  // BETA_TESTER = Same as PRO (full access to test all features)
+  [PlanType.BETA_TESTER]: {
+    automations: {
+      active: 7,        // Up to 7 active automations
+      total: 10,        // Can create up to 10 rules
+    },
+    channels: 5,
+    minScore: 35,       // User can adjust 35-100
+    execution: {
+      cron: '0 */2 * * *',      // Every 2-3 hours
+      intervalMinutes: 150,
+    },
+    keepa: {
+      refreshInterval: 120,      // 2h average
+      forceRefreshIfOlderThan: 720,  // Force refresh if data > 12 hours old
+    },
+    features: {
+      aiCopy: true,
+      abTesting: true,
+      customTemplates: true,
+      analytics: 'advanced',
+    },
+  },
 };
 
 // ==================== HELPER FUNCTIONS ====================
@@ -202,6 +227,7 @@ export function getNextPlan(currentPlan: string): PlanType | null {
     [PlanType.FREE]: PlanType.PRO,
     [PlanType.PRO]: PlanType.BUSINESS,
     [PlanType.BUSINESS]: null,
+    [PlanType.BETA_TESTER]: PlanType.BUSINESS, // Beta testers can upgrade to Business
   };
 
   if (!isValidPlan(currentPlan)) return null;
@@ -216,6 +242,7 @@ export function getPlanLabel(plan: string): string {
     [PlanType.FREE]: 'Free',
     [PlanType.PRO]: 'Pro',
     [PlanType.BUSINESS]: 'Business',
+    [PlanType.BETA_TESTER]: 'Beta Tester',
   };
 
   if (!isValidPlan(plan)) return 'Unknown';
@@ -230,6 +257,7 @@ export function getPlanPrice(plan: string): number | null {
     [PlanType.FREE]: null,
     [PlanType.PRO]: 79,
     [PlanType.BUSINESS]: 199,
+    [PlanType.BETA_TESTER]: null, // Free during beta
   };
 
   if (!isValidPlan(plan)) return null;

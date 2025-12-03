@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
+import { getPlanLimits, getPlanLabel, isValidPlan } from '../config/planLimits';
 
 const prisma = new PrismaClient();
 
@@ -110,7 +111,7 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
             ] = await Promise.all([
                 prisma.user.findUnique({
                     where: { id: userId },
-                    select: { id: true, name: true, plan: true }
+                    select: { id: true, name: true, plan: true, ttl: true }
                 }),
                 prisma.channel.findMany({
                     where: { userId },
@@ -452,18 +453,34 @@ prisma.product.findMany({
 
                 // Legacy data (backward compatibility)
                 onboardingProgress,
-                accountData: {
-                    plan: user?.plan || 'FREE',
-                    planDisplay: getPlanDisplayName(user?.plan),
-                    ttl: 72,
-                    ttlDisplay: '3 giorni', // Human-readable TTL
-                    limits: {
-                        rules: { used: automations.length, max: 10 },
-                        offers: { used: affiliateLinks.length, max: 500 },
-                        channels: { used: channels.length, max: 5 }
-                    },
-                    credits: keepaBudgetData
-                },
+                accountData: (() => {
+                    const userPlan = user?.plan || 'FREE';
+                    const planLimits = isValidPlan(userPlan) ? getPlanLimits(userPlan) : getPlanLimits('FREE');
+
+                    return {
+                        plan: userPlan,
+                        planDisplay: isValidPlan(userPlan) ? getPlanLabel(userPlan) : getPlanDisplayName(userPlan),
+                        ttl: user?.ttl || 72,
+                        ttlDisplay: `${Math.ceil((user?.ttl || 72) / 24)} giorni`,
+                        limits: {
+                            rules: {
+                                used: automations.length,
+                                max: planLimits.automations.total === -1 ? '∞' : planLimits.automations.total
+                            },
+                            activeRules: {
+                                used: activeAutomations,
+                                max: planLimits.automations.active === -1 ? '∞' : planLimits.automations.active
+                            },
+                            offers: { used: affiliateLinks.length, max: 500 }, // Not in planLimits yet
+                            channels: {
+                                used: channels.length,
+                                max: planLimits.channels === -1 ? '∞' : planLimits.channels
+                            }
+                        },
+                        features: planLimits.features,
+                        credits: keepaBudgetData
+                    };
+                })(),
                 // Legacy performance format
                 legacyPerformance: {
                     totalClicks,

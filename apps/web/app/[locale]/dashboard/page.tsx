@@ -46,9 +46,16 @@ interface DashboardData {
         ttl: number;
         ttlDisplay?: string;
         limits: {
-            rules: { used: number; max: number };
-            offers: { used: number; max: number };
-            channels: { used: number; max: number };
+            rules: { used: number; max: number | string };
+            activeRules?: { used: number; max: number | string };
+            offers: { used: number; max: number | string };
+            channels: { used: number; max: number | string };
+        };
+        features?: {
+            aiCopy: boolean;
+            abTesting: boolean;
+            customTemplates: boolean;
+            analytics: string;
         };
         credits: {
             used: number;
