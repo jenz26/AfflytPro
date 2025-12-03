@@ -615,6 +615,11 @@ model Click {
   isUniqueVisitor Boolean @default(false) // First click from this visitor on this link
   isBot      Boolean @default(false) // Detected as bot/crawler
 
+  // Telegram Source Tracking
+  telegramChannelId  String?   // Channel ID or username where link was posted
+  telegramMessageId  String?   // Message ID of the post containing the link
+  postTimestamp      DateTime? // When the post was published (for time analysis)
+
   // Metadata
   clickedAt DateTime @default(now())
 
@@ -625,6 +630,8 @@ model Click {
   @@index([utmSource])
   @@index([visitorId])
   @@index([isBot])
+  @@index([telegramChannelId])
+  @@index([telegramMessageId])
 }
 
 model Conversion {

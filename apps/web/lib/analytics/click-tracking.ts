@@ -37,6 +37,11 @@ export interface ClickTrackingData {
   // Visitor Tracking
   visitorId: string;
   sessionId: string;
+
+  // Telegram Source Tracking
+  telegramChannelId: string | null;  // ch param
+  telegramMessageId: string | null;  // mid param
+  postTimestamp: string | null;      // t param (ISO timestamp)
 }
 
 /**
@@ -221,6 +226,45 @@ function getUTMParams(): {
 }
 
 /**
+ * Extract Telegram source tracking parameters from URL
+ * - ch: Channel ID or username
+ * - mid: Message ID of the post
+ * - t: Timestamp when post was published (Unix timestamp in seconds)
+ */
+function getTelegramParams(): {
+  telegramChannelId: string | null;
+  telegramMessageId: string | null;
+  postTimestamp: string | null;
+} {
+  if (typeof window === 'undefined') {
+    return { telegramChannelId: null, telegramMessageId: null, postTimestamp: null };
+  }
+
+  const params = new URLSearchParams(window.location.search);
+
+  const ch = params.get('ch');
+  const mid = params.get('mid');
+  const t = params.get('t');
+
+  // Convert Unix timestamp to ISO string if provided
+  let postTimestamp: string | null = null;
+  if (t) {
+    const timestamp = parseInt(t, 10);
+    if (!isNaN(timestamp)) {
+      // Handle both seconds and milliseconds
+      const ms = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+      postTimestamp = new Date(ms).toISOString();
+    }
+  }
+
+  return {
+    telegramChannelId: ch,
+    telegramMessageId: mid,
+    postTimestamp,
+  };
+}
+
+/**
  * Collect all tracking data
  */
 export function collectClickTrackingData(): ClickTrackingData {
@@ -228,6 +272,7 @@ export function collectClickTrackingData(): ClickTrackingData {
   const osInfo = getOSInfo();
   const connectionInfo = getConnectionInfo();
   const utmParams = getUTMParams();
+  const telegramParams = getTelegramParams();
 
   return {
     // Device & Browser
@@ -259,5 +304,8 @@ export function collectClickTrackingData(): ClickTrackingData {
     // Visitor Tracking
     visitorId: getVisitorId(),
     sessionId: getSessionId(),
+
+    // Telegram Source Tracking
+    ...telegramParams,
   };
 }

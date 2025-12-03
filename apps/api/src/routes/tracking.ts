@@ -40,6 +40,11 @@ interface ClickTrackingData {
     // Visitor Tracking
     visitorId?: string;
     sessionId?: string;
+
+    // Telegram Source Tracking
+    telegramChannelId?: string;  // ch param - Channel ID or username
+    telegramMessageId?: string;  // mid param - Message ID
+    postTimestamp?: string;      // t param - ISO timestamp of when post was published
 }
 
 interface GeoIPResponse {
@@ -252,6 +257,11 @@ const trackingRoutes: FastifyPluginAsync = async (fastify) => {
                     sessionId: trackingData.sessionId || null,
                     isUniqueVisitor,
                     isBot: isBotRequest,
+
+                    // Telegram Source Tracking
+                    telegramChannelId: trackingData.telegramChannelId || null,
+                    telegramMessageId: trackingData.telegramMessageId || null,
+                    postTimestamp: trackingData.postTimestamp ? new Date(trackingData.postTimestamp) : null,
                 }
             });
 
