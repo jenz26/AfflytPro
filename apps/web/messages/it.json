@@ -154,7 +154,7 @@
       "title": "Modalità Beta Testing",
       "description": "Durante la beta, è disponibile solo il login con Magic Link per maggiore sicurezza.",
       "codeLabel": "Codice Invito Beta",
-      "codeHint": "Inserisci il codice che ti abbiamo fornito"
+      "codeHint": "Hai ricevuto un codice? Inseriscilo qui"
     }
   },
   "common": {
@@ -176,7 +176,11 @@
   },
   "stats": {
     "averageROI": "ROI Medio",
-    "dealsPerDay": "Deal/Giorno"
+    "dealsPerDay": "Deal/Giorno",
+    "dealsAnalyzed": "Deal Analizzati",
+    "channelsTracked": "Canali Attivi",
+    "betaAccess": "Accesso Anticipato",
+    "betaAccessDesc": "Prova le funzionalità in anteprima"
   },
   "brand": {
     "name": "AFFLYT PRO",
@@ -489,7 +493,7 @@
       "subtitle": "L'automazione intelligente per l'affiliate marketing che lavora per te 24/7",
       "stats": {
         "automatic": "Automatico",
-        "avgRoi": "ROI Medio",
+        "setupTime": "Setup",
         "active": "Attivo"
       },
       "answerQuestions": "Rispondi a 5 domande per personalizzare la tua esperienza",

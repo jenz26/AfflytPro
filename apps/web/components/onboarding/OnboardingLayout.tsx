@@ -104,12 +104,14 @@ export const OnboardingLayout = ({
                         </div>
                     </main>
 
-                    {/* Right Sidebar - 30% - Preview - Desktop Only */}
-                    <aside className="hidden xl:block w-[30%] border-l border-afflyt-glass-border bg-afflyt-dark-50/50">
-                        <div className="h-full overflow-y-auto p-6">
-                            {rightPreview}
-                        </div>
-                    </aside>
+                    {/* Right Sidebar - 30% - Preview - Desktop Only - Hidden when no preview */}
+                    {rightPreview && (
+                        <aside className="hidden xl:block w-[30%] border-l border-afflyt-glass-border bg-afflyt-dark-50/50">
+                            <div className="h-full overflow-y-auto p-6">
+                                {rightPreview}
+                            </div>
+                        </aside>
+                    )}
                 </div>
             </div>
 

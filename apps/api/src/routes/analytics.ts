@@ -15,6 +15,88 @@ function getTrend(change: number): 'up' | 'down' | 'stable' {
   return 'stable';
 }
 
+// Filter params interface
+interface AnalyticsFilterParams {
+  channelId?: string;
+  amazonTag?: string;
+  category?: string;
+  dealScoreMin?: number;
+  dealScoreMax?: number;
+}
+
+// Helper to parse filter params from query
+function parseFilterParams(query: any): AnalyticsFilterParams {
+  return {
+    channelId: query.channelId || undefined,
+    amazonTag: query.amazonTag || undefined,
+    category: query.category || undefined,
+    dealScoreMin: query.dealScoreMin ? Number(query.dealScoreMin) : undefined,
+    dealScoreMax: query.dealScoreMax ? Number(query.dealScoreMax) : undefined
+  };
+}
+
+// Helper to build link filter with params
+async function getFilteredLinkIds(
+  prismaClient: typeof prisma,
+  userId: string,
+  filters: AnalyticsFilterParams
+): Promise<string[]> {
+  const whereClause: any = { userId };
+
+  if (filters.channelId) {
+    whereClause.channelId = filters.channelId;
+  }
+
+  if (filters.amazonTag) {
+    whereClause.amazonTag = filters.amazonTag;
+  }
+
+  // For category and dealScore (using dealConfidence), we need to filter through the product relation
+  const needsProductFilter = filters.category || filters.dealScoreMin !== undefined || filters.dealScoreMax !== undefined;
+
+  const links = await prismaClient.affiliateLink.findMany({
+    where: whereClause,
+    select: {
+      id: true
+    },
+    ...(needsProductFilter ? {
+      include: {
+        product: {
+          select: {
+            category: true,
+            dealConfidence: true
+          }
+        }
+      }
+    } : {})
+  }) as Array<{ id: string; product?: { category: string; dealConfidence: number | null } | null }>;
+
+  // Apply category and dealScore filters in memory
+  let filteredLinks = links;
+
+  if (filters.category) {
+    filteredLinks = filteredLinks.filter(l => l.product?.category === filters.category);
+  }
+
+  if (filters.dealScoreMin !== undefined) {
+    filteredLinks = filteredLinks.filter(l =>
+      l.product?.dealConfidence !== null &&
+      l.product?.dealConfidence !== undefined &&
+      l.product.dealConfidence >= filters.dealScoreMin!
+    );
+  }
+
+  if (filters.dealScoreMax !== undefined) {
+    filteredLinks = filteredLinks.filter(l =>
+      l.product?.dealConfidence !== null &&
+      l.product?.dealConfidence !== undefined &&
+      l.product.dealConfidence <= filters.dealScoreMax!
+    );
+  }
+
+  return filteredLinks.map(l => l.id);
+}
+
 export default async function analyticsRoutes(app: FastifyInstance) {
   // Track event (allow anonymous)
   app.post('/track', async (req, reply) => {
@@ -75,12 +157,14 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   /**
    * GET /analytics/overview
    * Returns KPI overview: revenue, clicks, CVR, EPC with trends
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/overview', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '7d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
 
     // Calculate date ranges
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
@@ -88,12 +172,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
     const prevStartDate = new Date(startDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's affiliate links
-    const userLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
-      select: { id: true }
-    });
-    const linkIds = userLinks.map(l => l.id);
+    // Get filtered affiliate link IDs
+    const linkIds = await getFilteredLinkIds(prisma, userId, filters);
 
     if (linkIds.length === 0) {
       return {
@@ -191,23 +271,21 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   /**
    * GET /analytics/time-series
    * Returns data for charts (revenue and clicks over time)
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/time-series', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '7d', granularity = 'day' } = req.query as { period?: string; granularity?: string };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const now = new Date();
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links
-    const userLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
-      select: { id: true }
-    });
-    const linkIds = userLinks.map(l => l.id);
+    // Get filtered link IDs
+    const linkIds = await getFilteredLinkIds(prisma, userId, filters);
 
     if (linkIds.length === 0) {
       return { data: [], period: periodDays };
@@ -273,6 +351,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   /**
    * GET /analytics/top-links
    * Returns top performing links
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/top-links', {
     onRequest: [app.authenticate]
@@ -283,13 +362,21 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       limit?: number;
       sortBy?: 'clicks' | 'revenue' | 'cvr';
     };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
+    // Get filtered link IDs
+    const filteredLinkIds = await getFilteredLinkIds(prisma, userId, filters);
+
+    if (filteredLinkIds.length === 0) {
+      return { links: [], total: 0, period: periodDays };
+    }
+
     // Get links with aggregated stats
     const links = await prisma.affiliateLink.findMany({
-      where: { userId },
+      where: { id: { in: filteredLinkIds } },
       include: {
         product: {
           select: { title: true, imageUrl: true, asin: true }
@@ -350,19 +437,24 @@ export default async function analyticsRoutes(app: FastifyInstance) {
    * GET /analytics/channels
    * Returns performance breakdown by channel/source
    * Uses UTM params when available, falls back to link's channelId
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/channels', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '7d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links WITH channelId for fallback attribution
+    // Get filtered links WITH channelId for fallback attribution
+    const filteredLinkIds = await getFilteredLinkIds(prisma, userId, filters);
+
+    // Get links with channelId
     const userLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
+      where: { id: { in: filteredLinkIds } },
       select: { id: true, channelId: true }
     });
     const linkIds = userLinks.map(l => l.id);
@@ -540,25 +632,23 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   /**
    * GET /analytics/heatmap
    * Returns click data grouped by hour and day of week
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/heatmap', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '30d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links
-    const userLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
-      select: { id: true }
-    });
-    const linkIds = userLinks.map(l => l.id);
+    // Get filtered link IDs
+    const linkIds = await getFilteredLinkIds(prisma, userId, filters);
 
     if (linkIds.length === 0) {
-      return { heatmap: [], bestTime: null, period: periodDays };
+      return { heatmap: [], bestTime: null, totalClicks: 0, period: periodDays };
     }
 
     // Get all clicks
@@ -626,19 +716,34 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   /**
    * GET /analytics/products
    * Returns product performance by category and price range
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/products', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '7d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links with product info and performance data
+    // Get filtered link IDs
+    const filteredLinkIds = await getFilteredLinkIds(prisma, userId, filters);
+
+    if (filteredLinkIds.length === 0) {
+      return {
+        byCategory: [],
+        byPriceRange: [],
+        topPerformers: [],
+        totals: { products: 0, clicks: 0, revenue: 0 },
+        period: periodDays
+      };
+    }
+
+    // Get links with product info and performance data
     const links = await prisma.affiliateLink.findMany({
-      where: { userId },
+      where: { id: { in: filteredLinkIds } },
       include: {
         product: {
           select: {
@@ -1033,22 +1138,20 @@ export default async function analyticsRoutes(app: FastifyInstance) {
    * GET /analytics/audience
    * Returns audience analytics: device breakdown, geo distribution, browser/OS stats
    * Based on Click tracking data
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
    */
   app.get('/audience', {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
     const { period = '7d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
 
     const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
     const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
 
-    // Get user's links
-    const userLinks = await prisma.affiliateLink.findMany({
-      where: { userId },
-      select: { id: true }
-    });
-    const linkIds = userLinks.map(l => l.id);
+    // Get filtered link IDs
+    const linkIds = await getFilteredLinkIds(prisma, userId, filters);
 
     if (linkIds.length === 0) {
       return {
@@ -1398,6 +1501,266 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     reply.header('Content-Disposition', `attachment; filename="afflyt-analytics-${period}-${new Date().toISOString().split('T')[0]}.csv"`);
 
     return csv;
+  });
+
+  /**
+   * GET /analytics/deal-score
+   * Returns deal score analytics: distribution, correlation with conversions, top deals
+   * Supports filters: channelId, amazonTag, category, dealScoreMin, dealScoreMax
+   */
+  app.get('/deal-score', {
+    onRequest: [app.authenticate]
+  }, async (req, reply) => {
+    const userId = (req.user as any).userId;
+    const { period = '7d' } = req.query as { period?: string };
+    const filters = parseFilterParams(req.query);
+
+    const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
+    const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+
+    // Get filtered link IDs
+    const filteredLinkIds = await getFilteredLinkIds(prisma, userId, filters);
+
+    if (filteredLinkIds.length === 0) {
+      return {
+        distribution: [],
+        scoreConversionCorrelation: [],
+        topScoringDeals: [],
+        scoreTrends: [],
+        summary: {
+          avgScore: 0,
+          totalDeals: 0,
+          dealsAbove80: 0,
+          dealsAbove90: 0,
+          bestPerformingScoreRange: 'N/A'
+        },
+        period: periodDays
+      };
+    }
+
+    // Get links with product deal scores and performance data
+    const links = await prisma.affiliateLink.findMany({
+      where: { id: { in: filteredLinkIds } },
+      include: {
+        product: {
+          select: {
+            asin: true,
+            title: true,
+            dealConfidence: true,
+            discount: true,
+            imageUrl: true
+          }
+        },
+        clickRecords: {
+          where: {
+            clickedAt: { gte: startDate },
+            isBot: false
+          },
+          select: { id: true }
+        },
+        conversions: {
+          where: { convertedAt: { gte: startDate } },
+          select: { revenue: true, commission: true }
+        }
+      }
+    });
+
+    // Filter links with valid deal scores
+    const linksWithScores = links.filter(l => l.product?.dealConfidence !== null && l.product?.dealConfidence !== undefined);
+
+    // Score distribution (0-20, 21-40, 41-60, 61-80, 81-100)
+    const scoreRanges = [
+      { label: '0-20', min: 0, max: 20 },
+      { label: '21-40', min: 21, max: 40 },
+      { label: '41-60', min: 41, max: 60 },
+      { label: '61-80', min: 61, max: 80 },
+      { label: '81-100', min: 81, max: 100 }
+    ];
+
+    const distribution = scoreRanges.map(range => {
+      const count = linksWithScores.filter(l =>
+        l.product!.dealConfidence! >= range.min && l.product!.dealConfidence! <= range.max
+      ).length;
+      return {
+        range: range.label,
+        count,
+        percentage: linksWithScores.length > 0 ? Math.round((count / linksWithScores.length) * 100) : 0
+      };
+    });
+
+    // Score vs conversion correlation
+    const scoreConversionCorrelation = scoreRanges.map(range => {
+      const rangeLinks = linksWithScores.filter(l =>
+        l.product!.dealConfidence! >= range.min && l.product!.dealConfidence! <= range.max
+      );
+
+      const totalClicks = rangeLinks.reduce((sum, l) => sum + l.clickRecords.length, 0);
+      const totalConversions = rangeLinks.reduce((sum, l) => sum + l.conversions.length, 0);
+      const totalRevenue = rangeLinks.reduce((sum, l) =>
+        sum + l.conversions.reduce((s, c) => s + (c.commission || c.revenue * 0.05), 0), 0
+      );
+
+      const avgClicks = rangeLinks.length > 0 ? totalClicks / rangeLinks.length : 0;
+      const avgConversions = rangeLinks.length > 0 ? totalConversions / rangeLinks.length : 0;
+      const avgRevenue = rangeLinks.length > 0 ? totalRevenue / rangeLinks.length : 0;
+      const cvr = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+
+      return {
+        scoreRange: range.label,
+        avgClicks: Math.round(avgClicks * 10) / 10,
+        avgConversions: Math.round(avgConversions * 10) / 10,
+        avgRevenue: Math.round(avgRevenue * 100) / 100,
+        cvr: Math.round(cvr * 100) / 100,
+        totalLinks: rangeLinks.length
+      };
+    });
+
+    // Top scoring deals (sorted by score, with performance data)
+    const topScoringDeals = linksWithScores
+      .map(link => ({
+        productId: link.product!.asin,
+        title: link.product!.title || 'Unknown',
+        asin: link.product!.asin,
+        score: link.product!.dealConfidence!,
+        discount: link.product!.discount || 0,
+        imageUrl: link.product!.imageUrl,
+        clicks: link.clickRecords.length,
+        conversions: link.conversions.length,
+        revenue: Math.round(link.conversions.reduce((s, c) => s + (c.commission || c.revenue * 0.05), 0) * 100) / 100
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    // Score trends over time (from ChannelDealHistory if available, otherwise aggregate by day)
+    const dealHistory = await prisma.channelDealHistory.findMany({
+      where: {
+        channel: { userId },
+        publishedAt: { gte: startDate }
+      },
+      orderBy: { publishedAt: 'asc' }
+    });
+
+    // Get unique ASINs from deal history and fetch their deal confidence scores
+    const historyAsins = [...new Set(dealHistory.map(d => d.asin))];
+    const productsForHistory = await prisma.product.findMany({
+      where: { asin: { in: historyAsins } },
+      select: { asin: true, dealConfidence: true }
+    });
+    const asinToScore = new Map(
+      productsForHistory
+        .filter(p => p.dealConfidence !== null)
+        .map(p => [p.asin, p.dealConfidence!])
+    );
+
+    // Group by day
+    const trendMap = new Map<string, { scores: number[]; count: number }>();
+
+    dealHistory.forEach(deal => {
+      const score = asinToScore.get(deal.asin);
+      if (score !== undefined) {
+        const date = deal.publishedAt.toISOString().split('T')[0];
+        const entry = trendMap.get(date) || { scores: [], count: 0 };
+        entry.scores.push(score);
+        entry.count++;
+        trendMap.set(date, entry);
+      }
+    });
+
+    const scoreTrends = Array.from(trendMap.entries())
+      .map(([date, data]) => ({
+        date,
+        avgScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length),
+        maxScore: Math.max(...data.scores),
+        dealsFound: data.count
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Summary stats
+    const allScores = linksWithScores.map(l => l.product!.dealConfidence!);
+    const avgScore = allScores.length > 0
+      ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length)
+      : 0;
+
+    const dealsAbove80 = allScores.filter(s => s >= 80).length;
+    const dealsAbove90 = allScores.filter(s => s >= 90).length;
+
+    // Find best performing score range (by CVR)
+    const bestRange = scoreConversionCorrelation
+      .filter(r => r.totalLinks > 0)
+      .sort((a, b) => b.cvr - a.cvr)[0];
+
+    return {
+      distribution,
+      scoreConversionCorrelation,
+      topScoringDeals,
+      scoreTrends,
+      summary: {
+        avgScore,
+        totalDeals: linksWithScores.length,
+        dealsAbove80,
+        dealsAbove90,
+        bestPerformingScoreRange: bestRange?.scoreRange || 'N/A'
+      },
+      period: periodDays
+    };
+  });
+
+  /**
+   * GET /analytics/filters
+   * Returns available filter options for the analytics page
+   */
+  app.get('/filters', {
+    onRequest: [app.authenticate]
+  }, async (req, reply) => {
+    const userId = (req.user as any).userId;
+
+    // Get user's channels
+    const channels = await prisma.channel.findMany({
+      where: { userId },
+      select: { id: true, name: true, platform: true },
+      orderBy: { name: 'asc' }
+    });
+
+    // Get unique Amazon tags from user's links
+    const links = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: { amazonTag: true },
+      distinct: ['amazonTag']
+    });
+    const tags = [...new Set(links.map(l => l.amazonTag).filter(Boolean))].sort();
+
+    // Get unique categories from products linked to user's affiliate links
+    const productsWithCategories = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: {
+        product: {
+          select: { category: true }
+        }
+      }
+    });
+    const categories = [...new Set(
+      productsWithCategories
+        .map(l => l.product?.category)
+        .filter(Boolean)
+    )].sort() as string[];
+
+    // Get deal score range from products
+    const productStats = await prisma.product.aggregate({
+      _min: { dealConfidence: true },
+      _max: { dealConfidence: true },
+      _avg: { dealConfidence: true }
+    });
+
+    return {
+      channels,
+      tags,
+      categories,
+      dealScoreRange: {
+        min: productStats._min.dealConfidence ?? 0,
+        max: productStats._max.dealConfidence ?? 100,
+        avg: Math.round(productStats._avg.dealConfidence ?? 50)
+      }
+    };
   });
 
   /**

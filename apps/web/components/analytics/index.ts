@@ -9,3 +9,5 @@ export { ProductAnalytics } from './ProductAnalytics';
 export { AIInsights } from './AIInsights';
 export { ExportDropdown } from './ExportDropdown';
 export { AudienceAnalytics, type AudienceData } from './AudienceAnalytics';
+export { AnalyticsFilters, type AnalyticsFiltersState } from './AnalyticsFilters';
+export { DealScoreAnalytics } from './DealScoreAnalytics';

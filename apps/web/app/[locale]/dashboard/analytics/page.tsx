@@ -18,7 +18,8 @@ import {
     CalendarClock,
     Brain,
     Lock,
-    Users
+    Users,
+    Gauge
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import {
@@ -33,7 +34,10 @@ import {
     AIInsights,
     ExportDropdown,
     AudienceAnalytics,
-    type AudienceData
+    AnalyticsFilters,
+    DealScoreAnalytics,
+    type AudienceData,
+    type AnalyticsFiltersState
 } from '@/components/analytics';
 import { API_BASE } from '@/lib/api/config';
 
@@ -148,6 +152,45 @@ interface InsightsData {
     period: number;
 }
 
+interface FiltersMetadata {
+    channels: Array<{ id: string; name: string; platform: string }>;
+    tags: string[];
+    categories: string[];
+    dealScoreRange: { min: number; max: number; avg: number };
+}
+
+interface DealScoreData {
+    distribution: Array<{ range: string; count: number; percentage: number }>;
+    scoreConversionCorrelation: Array<{
+        scoreRange: string;
+        avgClicks: number;
+        avgConversions: number;
+        avgRevenue: number;
+        cvr: number;
+        totalLinks: number;
+    }>;
+    topScoringDeals: Array<{
+        productId: string;
+        title: string;
+        asin: string;
+        score: number;
+        discount: number;
+        imageUrl?: string;
+        clicks: number;
+        conversions: number;
+        revenue: number;
+    }>;
+    scoreTrends: Array<{ date: string; avgScore: number; maxScore: number; dealsFound: number }>;
+    summary: {
+        avgScore: number;
+        totalDeals: number;
+        dealsAbove80: number;
+        dealsAbove90: number;
+        bestPerformingScoreRange: string;
+    };
+    period: number;
+}
+
 export default function AnalyticsPage() {
     const locale = useLocale();
     const t = useTranslations('analytics');
@@ -169,6 +212,7 @@ export default function AnalyticsPage() {
         { id: 'audience', label: t('tabs.audience'), icon: Users, locked: false },
         { id: 'channels', label: t('tabs.channels'), icon: Radio, locked: false },
         { id: 'products', label: t('tabs.products'), icon: Package, locked: false },
+        { id: 'dealscore', label: 'Deal Score', icon: Gauge, locked: false },
         { id: 'time', label: t('tabs.time'), icon: CalendarClock, locked: false },
         { id: 'ai', label: t('tabs.ai'), icon: Brain, locked: !isPro, tier: t('pro') },
     ];
@@ -184,6 +228,43 @@ export default function AnalyticsPage() {
     const [audienceData, setAudienceData] = useState<AudienceData | null>(null);
     const [audienceLoading, setAudienceLoading] = useState(false);
 
+    // Filter state
+    const [filters, setFilters] = useState<AnalyticsFiltersState>({});
+    const [filtersMetadata, setFiltersMetadata] = useState<FiltersMetadata | null>(null);
+
+    // Deal score state
+    const [dealScoreData, setDealScoreData] = useState<DealScoreData | null>(null);
+    const [dealScoreLoading, setDealScoreLoading] = useState(false);
+
+    // Build filter query string
+    const buildFilterQuery = (baseParams: Record<string, string> = {}) => {
+        const params = new URLSearchParams(baseParams);
+        if (filters.channelId) params.set('channelId', filters.channelId);
+        if (filters.amazonTag) params.set('amazonTag', filters.amazonTag);
+        if (filters.category) params.set('category', filters.category);
+        if (filters.dealScoreMin !== undefined) params.set('dealScoreMin', String(filters.dealScoreMin));
+        if (filters.dealScoreMax !== undefined) params.set('dealScoreMax', String(filters.dealScoreMax));
+        return params.toString();
+    };
+
+    // Fetch filter metadata
+    const fetchFiltersMetadata = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const res = await fetch(`${API_BASE}/analytics/filters`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setFiltersMetadata(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch filters metadata:', err);
+        }
+    };
+
     // Fetch all analytics data
     const fetchAnalytics = async () => {
         setLoading(true);
@@ -198,14 +279,14 @@ export default function AnalyticsPage() {
 
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Fetch all endpoints in parallel
+            // Fetch all endpoints in parallel with filters
             const [overviewRes, timeSeriesRes, topLinksRes, channelsRes, heatmapRes, productsRes] = await Promise.all([
-                fetch(`${API_BASE}/analytics/overview?period=${period}`, { headers }),
-                fetch(`${API_BASE}/analytics/time-series?period=${period}`, { headers }),
-                fetch(`${API_BASE}/analytics/top-links?period=${period}&limit=5`, { headers }),
-                fetch(`${API_BASE}/analytics/channels?period=${period}`, { headers }),
-                fetch(`${API_BASE}/analytics/heatmap?period=${period}`, { headers }),
-                fetch(`${API_BASE}/analytics/products?period=${period}`, { headers })
+                fetch(`${API_BASE}/analytics/overview?${buildFilterQuery({ period })}`, { headers }),
+                fetch(`${API_BASE}/analytics/time-series?${buildFilterQuery({ period })}`, { headers }),
+                fetch(`${API_BASE}/analytics/top-links?${buildFilterQuery({ period, limit: '5' })}`, { headers }),
+                fetch(`${API_BASE}/analytics/channels?${buildFilterQuery({ period })}`, { headers }),
+                fetch(`${API_BASE}/analytics/heatmap?${buildFilterQuery({ period })}`, { headers }),
+                fetch(`${API_BASE}/analytics/products?${buildFilterQuery({ period })}`, { headers })
             ]);
 
             if (!overviewRes.ok || !timeSeriesRes.ok || !topLinksRes.ok || !channelsRes.ok) {
@@ -277,7 +358,7 @@ export default function AnalyticsPage() {
             if (!token) return;
 
             const headers = { 'Authorization': `Bearer ${token}` };
-            const res = await fetch(`${API_BASE}/analytics/audience?period=${period}`, { headers });
+            const res = await fetch(`${API_BASE}/analytics/audience?${buildFilterQuery({ period })}`, { headers });
 
             if (res.ok) {
                 const data = await res.json();
@@ -290,10 +371,36 @@ export default function AnalyticsPage() {
         }
     };
 
-    // Fetch on mount and when period changes
+    // Fetch Deal Score Analytics
+    const fetchDealScoreData = async () => {
+        setDealScoreLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const res = await fetch(`${API_BASE}/analytics/deal-score?${buildFilterQuery({ period })}`, { headers });
+
+            if (res.ok) {
+                const data = await res.json();
+                setDealScoreData(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch deal score data:', err);
+        } finally {
+            setDealScoreLoading(false);
+        }
+    };
+
+    // Fetch filter metadata on mount
+    useEffect(() => {
+        fetchFiltersMetadata();
+    }, []);
+
+    // Fetch on mount and when period or filters change
     useEffect(() => {
         fetchAnalytics();
-    }, [period]);
+    }, [period, filters]);
 
     // Fetch insights when tab changes to AI or when period changes (if PRO)
     useEffect(() => {
@@ -308,6 +415,13 @@ export default function AnalyticsPage() {
             fetchAudienceData();
         }
     }, [activeTab, period]);
+
+    // Fetch deal score data when tab changes to dealscore
+    useEffect(() => {
+        if (activeTab === 'dealscore' && !dealScoreData) {
+            fetchDealScoreData();
+        }
+    }, [activeTab, period, filters]);
 
     // Generate insight based on data
     const generateInsight = () => {
@@ -365,6 +479,18 @@ export default function AnalyticsPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Filters */}
+            {filtersMetadata && (
+                <AnalyticsFilters
+                    channels={filtersMetadata.channels}
+                    tags={filtersMetadata.tags}
+                    categories={filtersMetadata.categories}
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    loading={loading}
+                />
+            )}
 
             {/* Error State */}
             {error && (
@@ -579,6 +705,14 @@ export default function AnalyticsPage() {
                     topPerformers={productsData?.topPerformers || []}
                     totals={productsData?.totals || { totalProducts: 0, totalClicks: 0, totalConversions: 0, totalRevenue: 0 }}
                     loading={loading}
+                />
+            )}
+
+            {/* Tab: Deal Score Analytics */}
+            {activeTab === 'dealscore' && (
+                <DealScoreAnalytics
+                    data={dealScoreData}
+                    loading={dealScoreLoading}
                 />
             )}
 

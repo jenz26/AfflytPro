@@ -154,7 +154,7 @@
       "title": "Beta Testing Mode",
       "description": "During beta, only Magic Link login is available for enhanced security.",
       "codeLabel": "Beta Invite Code",
-      "codeHint": "Enter the code we provided you"
+      "codeHint": "Got a code? Enter it here"
     }
   },
   "common": {
@@ -176,7 +176,11 @@
   },
   "stats": {
     "averageROI": "Average ROI",
-    "dealsPerDay": "Deals/Day"
+    "dealsPerDay": "Deals/Day",
+    "dealsAnalyzed": "Deals Analyzed",
+    "channelsTracked": "Active Channels",
+    "betaAccess": "Early Access",
+    "betaAccessDesc": "Try features before everyone else"
   },
   "brand": {
     "name": "AFFLYT PRO",
@@ -489,7 +493,7 @@
       "subtitle": "Smart automation for affiliate marketing that works for you 24/7",
       "stats": {
         "automatic": "Automatic",
-        "avgRoi": "Avg ROI",
+        "setupTime": "Setup",
         "active": "Active"
       },
       "answerQuestions": "Answer 5 questions to customize your experience",

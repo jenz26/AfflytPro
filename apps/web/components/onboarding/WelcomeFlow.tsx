@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import {
@@ -118,8 +118,6 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
         return defaultData;
     });
 
-    const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
     const { trackOnboardingStep } = useAnalytics();
 
     // Auto-save del progresso ogni volta che cambiano step o dati
@@ -148,35 +146,7 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
         setStep(5);
     };
 
-    // Auto-advance dopo 800ms quando si seleziona un'opzione (solo per step 1, 2, 3, 4)
-    useEffect(() => {
-        // Clear any existing timer
-        if (autoAdvanceTimerRef.current) {
-            clearTimeout(autoAdvanceTimerRef.current);
-        }
-
-        // Check if we should auto-advance
-        const shouldAutoAdvance = () => {
-            if (step === 1 && surveyData.goal) return true;
-            if (step === 2 && surveyData.audienceSize) return true;
-            if (step === 3 && surveyData.experienceLevel) return true;
-            if (step === 4 && surveyData.hasAmazonAssociates !== null) return true;
-            return false;
-        };
-
-        if (shouldAutoAdvance()) {
-            autoAdvanceTimerRef.current = setTimeout(() => {
-                nextStep();
-            }, 800);
-        }
-
-        // Cleanup on unmount
-        return () => {
-            if (autoAdvanceTimerRef.current) {
-                clearTimeout(autoAdvanceTimerRef.current);
-            }
-        };
-    }, [surveyData.goal, surveyData.audienceSize, surveyData.experienceLevel, surveyData.hasAmazonAssociates, step]);
+    // NOTE: Auto-advance removed - users need time to see feedback and may want to change their selection
 
     const updateData = (field: keyof SurveyData, value: any) => {
         setSurveyData(prev => ({ ...prev, [field]: value }));
@@ -257,8 +227,8 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
                                 <div className="text-xs text-gray-400">{t('stats.automatic')}</div>
                             </div>
                             <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
-                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-0.5">+247%</div>
-                                <div className="text-xs text-gray-400">{t('stats.avgRoi')}</div>
+                                <div className="text-2xl font-bold text-afflyt-profit-400 mb-0.5">~5min</div>
+                                <div className="text-xs text-gray-400">{t('stats.setupTime')}</div>
                             </div>
                             <div className="p-3 bg-afflyt-dark-50 rounded-lg border border-afflyt-glass-border">
                                 <div className="text-2xl font-bold text-afflyt-plasma-400 mb-0.5">24/7</div>
@@ -674,15 +644,9 @@ export const WelcomeFlow = ({ onComplete, onSkip }: WelcomeFlowProps) => {
 
     return (
         <GlassCard className="max-w-4xl mx-auto p-4 md:p-6">
-            {/* Progress Indicator */}
+            {/* Progress Indicator - Visual only, no text to avoid confusion with header progress */}
             <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400">{t('step', { current: step + 1, total: 6 })}</span>
-                    <span className="text-xs font-mono text-afflyt-cyan-400">
-                        {Math.round(((step + 1) / 6) * 100)}%
-                    </span>
-                </div>
-                <div className="h-1.5 bg-afflyt-dark-50 rounded-full overflow-hidden">
+                <div className="h-1 bg-afflyt-dark-50 rounded-full overflow-hidden">
                     <motion.div
                         className="h-full bg-gradient-to-r from-afflyt-cyan-500 to-afflyt-cyan-400"
                         initial={{ width: '0%' }}

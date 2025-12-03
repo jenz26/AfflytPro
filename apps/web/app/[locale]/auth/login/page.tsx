@@ -571,9 +571,9 @@ export default function AuthPage() {
                                     </CyberButton>
                                 </form>
 
-                                {/* Mode Switch Links */}
+                                {/* Mode Switch Links - Hidden in beta mode since registration = login with beta code */}
                                 <div className="mt-6 text-center text-sm">
-                                    {(authMode === 'login' || authMode === 'magic-link') && (
+                                    {!betaTestingMode && (authMode === 'login' || authMode === 'magic-link') && (
                                         <p className="text-gray-400">
                                             {t('links.noAccount')}{' '}
                                             <button
@@ -816,17 +816,29 @@ export default function AuthPage() {
                             </GlassCard>
                         ))}
 
-                        {/* Stats Preview */}
-                        <div className="grid grid-cols-2 gap-4 mt-8">
-                            <GlassCard className="p-4">
-                                <p className="text-xs text-gray-500 uppercase mb-1">{tStats('averageROI')}</p>
-                                <p className="text-2xl font-bold text-afflyt-profit-400 font-mono">+247%</p>
+                        {/* Stats Preview - Show generic messaging in beta mode */}
+                        {betaTestingMode ? (
+                            <GlassCard className="p-4 mt-8">
+                                <div className="flex items-center gap-3">
+                                    <FlaskConical className="w-5 h-5 text-afflyt-plasma-400" />
+                                    <div>
+                                        <p className="text-sm font-medium text-white">{tStats('betaAccess')}</p>
+                                        <p className="text-xs text-gray-500">{tStats('betaAccessDesc')}</p>
+                                    </div>
+                                </div>
                             </GlassCard>
-                            <GlassCard className="p-4">
-                                <p className="text-xs text-gray-500 uppercase mb-1">{tStats('dealsPerDay')}</p>
-                                <p className="text-2xl font-bold text-afflyt-cyan-400 font-mono">1.2K</p>
-                            </GlassCard>
-                        </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4 mt-8">
+                                <GlassCard className="p-4">
+                                    <p className="text-xs text-gray-500 uppercase mb-1">{tStats('dealsAnalyzed')}</p>
+                                    <p className="text-2xl font-bold text-afflyt-cyan-400 font-mono">50K+</p>
+                                </GlassCard>
+                                <GlassCard className="p-4">
+                                    <p className="text-xs text-gray-500 uppercase mb-1">{tStats('channelsTracked')}</p>
+                                    <p className="text-2xl font-bold text-afflyt-plasma-400 font-mono">500+</p>
+                                </GlassCard>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

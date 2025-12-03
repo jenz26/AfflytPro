@@ -586,6 +586,9 @@ export default function OnboardingPage() {
         );
     }
 
+    // Hide right preview in welcome step - user doesn't have context yet
+    const showRightPreview = currentStep !== 'welcome';
+
     return (
         <OnboardingLayout
             currentStep={getCurrentStepNumber()}
@@ -598,10 +601,12 @@ export default function OnboardingPage() {
                 />
             }
             rightPreview={
-                <ContextPreview
-                    context={getPreviewContext()}
-                    data={surveyData}
-                />
+                showRightPreview ? (
+                    <ContextPreview
+                        context={getPreviewContext()}
+                        data={surveyData}
+                    />
+                ) : null
             }
         >
             {currentStep === 'welcome' && (
