@@ -103,8 +103,12 @@ export async function checkActiveAutomationLimit(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userId = request.user.id;
-  const userPlan = request.user.plan as string;
+  const userId = request.user?.id;
+  const userPlan = (request.user?.plan as string) || 'FREE';
+
+  if (!userId) {
+    throw new PlanGuardError('User not authenticated', 'FREE', 'authentication');
+  }
 
   const activeCount = await prisma.automationRule.count({
     where: { userId, isActive: true },
@@ -127,8 +131,13 @@ export function checkMinScore(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
-  const requestedScore = (request.body as any).minScore;
+  const userPlan = (request.user?.plan as string) || 'FREE';
+  const requestedScore = (request.body as any)?.minScore;
+
+  // Skip check if minScore not provided in request
+  if (requestedScore === undefined || requestedScore === null) {
+    return;
+  }
 
   if (!isScoreAllowed(userPlan, requestedScore)) {
     const limits = PLAN_LIMITS[userPlan as PlanType];
@@ -147,8 +156,12 @@ export async function checkChannelLimit(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userId = request.user.id;
-  const userPlan = request.user.plan as string;
+  const userId = request.user?.id;
+  const userPlan = (request.user?.plan as string) || 'FREE';
+
+  if (!userId) {
+    throw new PlanGuardError('User not authenticated', 'FREE', 'authentication');
+  }
 
   const count = await prisma.channel.count({
     where: { userId },
@@ -171,7 +184,7 @@ export function checkAIFeature(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
+  const userPlan = (request.user?.plan as string) || 'FREE';
 
   if (!hasFeature(userPlan, 'aiCopy')) {
     throw new PlanGuardError(
@@ -224,14 +237,20 @@ export function checkCustomTemplates(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
+  if (!request.user) {
+    reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+    return;
+  }
+
+  const userPlan = (request.user.plan as string) || 'FREE';
 
   if (!hasFeature(userPlan, 'customTemplates')) {
-    throw new PlanGuardError(
+    reply.code(403).send(new PlanGuardError(
       'Custom Templates are available from PRO plan',
       userPlan,
       'custom_templates'
-    );
+    ).toJSON());
+    return;
   }
 }
 
@@ -242,14 +261,20 @@ export function checkAPIAccess(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
+  if (!request.user) {
+    reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+    return;
+  }
+
+  const userPlan = (request.user.plan as string) || 'FREE';
 
   if (!hasFeature(userPlan, 'apiAccess')) {
-    throw new PlanGuardError(
+    reply.code(403).send(new PlanGuardError(
       'API Access is available from BUSINESS plan',
       userPlan,
       'api_access'
-    );
+    ).toJSON());
+    return;
   }
 }
 
@@ -260,14 +285,20 @@ export function checkWebhooks(
   request: FastifyRequest,
   reply: FastifyReply
 ) {
-  const userPlan = request.user.plan as string;
+  if (!request.user) {
+    reply.code(401).send({ error: 'Unauthorized', message: 'User not authenticated' });
+    return;
+  }
+
+  const userPlan = (request.user.plan as string) || 'FREE';
 
   if (!hasFeature(userPlan, 'webhooks')) {
-    throw new PlanGuardError(
+    reply.code(403).send(new PlanGuardError(
       'Webhooks are available from BUSINESS plan',
       userPlan,
       'webhooks'
-    );
+    ).toJSON());
+    return;
   }
 }
 
@@ -293,7 +324,7 @@ export function setupPlanGuardErrorHandler(app: any) {
 export async function decorateRequestWithPlan(request: FastifyRequest) {
   if (!request.user) return;
 
-  const userPlan = request.user.plan as string;
+  const userPlan = (request.user.plan as string) || 'FREE';
   (request as any).planLimits = PLAN_LIMITS[userPlan as PlanType];
   (request as any).planType = userPlan;
 }
