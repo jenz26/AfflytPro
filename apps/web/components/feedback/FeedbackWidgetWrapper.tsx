@@ -17,7 +17,7 @@ export function FeedbackWidgetWrapper() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
+        const res = await fetch(`${API_BASE}/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
