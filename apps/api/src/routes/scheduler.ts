@@ -3,7 +3,7 @@ import { ScheduledPostType, ExecutionStatus, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { calculateNextRunAt } from '../lib/scheduler-utils';
-import { TelegramBotService } from '../services/TelegramBotService';
+import { TelegramBotService, convertLLMToMarkdownV2 } from '../services/TelegramBotService';
 import { SecurityService } from '../services/SecurityService';
 
 // ==================== VALIDATION SCHEMAS ====================
@@ -578,13 +578,16 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
       // Add test prefix
       testContent = `🧪 TEST - ${post.name}\n\n${testContent}\n\n⚠️ Questo è un messaggio di test`;
 
+      // Convert to MarkdownV2 format
+      const formattedContent = convertLLMToMarkdownV2(testContent);
+
       // Send to channel
       const result = await TelegramBotService.sendMessage(
         post.channel.channelId,
         botToken,
         {
-          text: testContent,
-          parseMode: 'HTML',
+          text: formattedContent,
+          parseMode: 'MarkdownV2',
         }
       );
 
@@ -702,13 +705,16 @@ export async function schedulerRoutes(fastify: FastifyInstance) {
       // Add test prefix
       testContent = `🧪 TEST - Anteprima Post\n\n${testContent}\n\n⚠️ Questo è un messaggio di test`;
 
+      // Convert to MarkdownV2 format
+      const formattedContent = convertLLMToMarkdownV2(testContent);
+
       // Send to channel
       const result = await TelegramBotService.sendMessage(
         channel.channelId,
         botToken,
         {
-          text: testContent,
-          parseMode: 'HTML',
+          text: formattedContent,
+          parseMode: 'MarkdownV2',
         }
       );
 

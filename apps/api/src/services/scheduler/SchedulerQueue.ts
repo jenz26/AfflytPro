@@ -11,7 +11,7 @@ import { Queue, Worker, Job, QueueEvents, type ConnectionOptions } from 'bullmq'
 import type { PrismaClient, ExecutionStatus } from '@prisma/client';
 import type Redis from 'ioredis';
 import { calculateNextRunAt, calculateRetryDelay, RETRY_CONFIG, SchedulerErrorCode } from '../../lib/scheduler-utils';
-import { TelegramBotService } from '../TelegramBotService';
+import { TelegramBotService, convertLLMToMarkdownV2 } from '../TelegramBotService';
 import { SecurityService } from '../SecurityService';
 import { captureException, addBreadcrumb } from '../../lib/sentry';
 
@@ -299,13 +299,14 @@ export class SchedulerQueue {
         throw new SchedulerError('Failed to decrypt credential', SchedulerErrorCode.CHANNEL_DISCONNECTED);
       }
 
-      // 6. Send message to Telegram
+      // 6. Send message to Telegram (convert Markdown to MarkdownV2)
+      const formattedContent = convertLLMToMarkdownV2(scheduledPost.content);
       const result = await TelegramBotService.sendMessage(
         scheduledPost.channel.channelId,
         botToken,
         {
-          text: scheduledPost.content,
-          parseMode: 'HTML',
+          text: formattedContent,
+          parseMode: 'MarkdownV2',
           disableWebPagePreview: false,
         }
       );

@@ -24,7 +24,7 @@ function escapeMarkdownV2(text: string): string {
  * 1. Convert **bold** to *bold* directly (Telegram format)
  * 2. Escape special characters EXCEPT * and _ used for formatting
  */
-function convertLLMToMarkdownV2(text: string): string {
+export function convertLLMToMarkdownV2(text: string): string {
     // Step 1: Convert standard Markdown to Telegram MarkdownV2
     // **bold** → *bold*
     // ~~strikethrough~~ → ~strikethrough~ (Telegram uses single tilde)
