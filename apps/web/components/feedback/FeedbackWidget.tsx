@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageCircle, X, Bug, Lightbulb, HelpCircle, Send, Loader2, Check } from 'lucide-react';
+import { MessageCircle, X, Bug, Lightbulb, HelpCircle, Send, Loader2, Check, Star } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
 import { Analytics } from '@/components/analytics/PostHogProvider';
+import { useBetaSurveyContext } from './BetaSurveyProvider';
 
 type FeedbackType = 'bug' | 'idea' | 'question';
 
@@ -21,6 +22,7 @@ const FEEDBACK_TYPES = [
 export function FeedbackWidget({ userPlan }: FeedbackWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<FeedbackType>('idea');
+  const { triggerSurvey } = useBetaSurveyContext();
   const [message, setMessage] = useState('');
   const [rating, setRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,12 +88,25 @@ export function FeedbackWidget({ userPlan }: FeedbackWidgetProps) {
                 <h3 className="text-lg font-semibold text-white">Lascia un feedback</h3>
                 <p className="text-sm text-gray-400">Aiutaci a migliorare Afflyt</p>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    triggerSurvey('nps');
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-linear-to-r from-afflyt-cyan-500/20 to-afflyt-plasma-500/20 border border-afflyt-cyan-500/30 rounded-lg text-afflyt-cyan-400 hover:border-afflyt-cyan-500 transition-colors"
+                  title="Valutazione rapida NPS"
+                >
+                  <Star className="w-3.5 h-3.5" />
+                  NPS
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 hover:bg-afflyt-glass-white rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
             </div>
 
             {isSubmitted ? (

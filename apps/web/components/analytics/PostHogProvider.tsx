@@ -20,6 +20,13 @@ if (typeof window !== 'undefined' && POSTHOG_KEY) {
     disable_session_recording: true,
     persistence: 'localStorage+cookie',
     respect_dnt: true,
+    // Enable PostHog Surveys for beta feedback
+    disable_surveys: false,
+    // Load surveys immediately for faster display
+    bootstrap: {
+      distinctID: undefined,
+      featureFlags: {},
+    },
   });
 }
 
@@ -306,6 +313,102 @@ export const Analytics = {
    */
   trackBugReported: (context: string) => {
     Analytics.track('bug_reported', { context });
+  },
+
+  // ==================== SURVEY EVENTS (BETA) ====================
+
+  /**
+   * Track first automation milestone - triggers survey
+   */
+  trackFirstAutomationMilestone: () => {
+    Analytics.track('beta_milestone_first_automation', {
+      milestone: 'first_automation',
+      trigger_survey: true,
+    });
+  },
+
+  /**
+   * Track first deal found milestone - triggers survey
+   */
+  trackFirstDealMilestone: (dealScore: number) => {
+    Analytics.track('beta_milestone_first_deal', {
+      milestone: 'first_deal',
+      deal_score: dealScore,
+      trigger_survey: true,
+    });
+  },
+
+  /**
+   * Track first week milestone - triggers NPS survey
+   */
+  trackFirstWeekMilestone: (automationsCount: number, channelsCount: number) => {
+    Analytics.track('beta_milestone_first_week', {
+      milestone: 'first_week',
+      automations_count: automationsCount,
+      channels_count: channelsCount,
+      trigger_nps: true,
+    });
+  },
+
+  /**
+   * Track feature discovery - triggers contextual survey
+   */
+  trackFeatureDiscovery: (feature: string) => {
+    Analytics.track('beta_feature_discovery', {
+      feature,
+      trigger_survey: true,
+    });
+  },
+
+  /**
+   * Track friction point - triggers help survey
+   */
+  trackFrictionPoint: (context: string, errorType?: string) => {
+    Analytics.track('beta_friction_point', {
+      context,
+      error_type: errorType,
+      trigger_survey: true,
+    });
+  },
+
+  /**
+   * Get surveys from PostHog
+   */
+  getSurveys: () => {
+    if (posthog) {
+      return posthog.getActiveMatchingSurveys((surveys) => surveys, false);
+    }
+    return [];
+  },
+
+  /**
+   * Capture survey shown event
+   */
+  captureSurveyShown: (surveyId: string) => {
+    if (posthog) {
+      posthog.capture('survey shown', { $survey_id: surveyId });
+    }
+  },
+
+  /**
+   * Capture survey dismissed event
+   */
+  captureSurveyDismissed: (surveyId: string) => {
+    if (posthog) {
+      posthog.capture('survey dismissed', { $survey_id: surveyId });
+    }
+  },
+
+  /**
+   * Capture survey response
+   */
+  captureSurveyResponse: (surveyId: string, response: Record<string, any>) => {
+    if (posthog) {
+      posthog.capture('survey sent', {
+        $survey_id: surveyId,
+        ...response,
+      });
+    }
   },
 };
 
