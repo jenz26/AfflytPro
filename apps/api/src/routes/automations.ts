@@ -3,7 +3,7 @@ import { TriggerType, ActionType } from '@prisma/client';
 import { getSchedulerInstance } from '../services/keepa';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { checkActiveAutomationLimit, checkMinScore } from '../middleware/planGuard';
+import { checkActiveAutomationLimit, checkMinScore, PlanGuardError } from '../middleware/planGuard';
 
 // ═══════════════════════════════════════════════════════════════
 // VALIDATION SCHEMAS
@@ -632,6 +632,9 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     error: 'Validation error',
                     errors: error.issues.map((e: any) => ({ field: e.path.join('.'), message: e.message }))
                 });
+            }
+            if (error instanceof PlanGuardError) {
+                return reply.code(error.statusCode).send(error.toJSON());
             }
             fastify.log.error(error);
             return reply.code(500).send({
