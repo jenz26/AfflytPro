@@ -1,10 +1,10 @@
 /**
  * Unified Monitoring & Analytics
- * Sets user context across all monitoring services (Sentry, PostHog, Tawk.to)
+ * Sets user context across all monitoring services (Sentry, PostHog)
  */
 
 import * as Sentry from '@sentry/nextjs';
-import { Analytics, posthog } from '@/components/analytics/PostHogProvider';
+import { Analytics } from '@/components/analytics/PostHogProvider';
 
 export interface MonitoringUser {
   id: string;
@@ -32,23 +32,6 @@ export function setMonitoringUser(user: MonitoringUser) {
     username: user.name,
   });
 
-  // Tawk.to - Set visitor info
-  if (typeof window !== 'undefined' && window.Tawk_API?.setAttributes) {
-    window.Tawk_API.setAttributes(
-      {
-        name: user.name || 'User',
-        email: user.email || '',
-        plan: user.plan || 'free',
-        id: user.id,
-      },
-      (error) => {
-        if (error) {
-          console.error('[Tawk] Error setting user attributes:', error);
-        }
-      }
-    );
-  }
-
   console.log('[Monitoring] User context set:', user.id);
 }
 
@@ -61,8 +44,6 @@ export function clearMonitoringUser() {
 
   // Sentry - Clear user
   Sentry.setUser(null);
-
-  // Tawk.to doesn't have a clear method, but will reset on page reload
 
   console.log('[Monitoring] User context cleared');
 }
@@ -81,11 +62,4 @@ export function trackEvent(eventName: string, properties?: Record<string, any>) 
     data: properties,
     level: 'info',
   });
-
-  // Tawk.to custom event
-  if (typeof window !== 'undefined' && window.Tawk_API?.addEvent) {
-    window.Tawk_API.addEvent(eventName, properties);
-  }
 }
-
-// Tawk_API types are declared in TawkChat.tsx

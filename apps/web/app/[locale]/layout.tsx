@@ -3,7 +3,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
-import { TawkChat } from '@/components/support/TawkChat';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
 import { FeedbackWidgetWrapper } from '@/components/feedback/FeedbackWidgetWrapper';
 
@@ -55,7 +54,6 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <PostHogProvider>
             {children}
-            <TawkChat />
             <FeedbackWidgetWrapper />
           </PostHogProvider>
         </NextIntlClientProvider>
