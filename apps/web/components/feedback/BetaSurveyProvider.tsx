@@ -53,18 +53,18 @@ export function BetaSurveyProvider({ children }: BetaSurveyProviderProps) {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetch(`${API_BASE}/user/me`, {
+        const response = await fetch(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.ok) {
           const data = await response.json();
-          setUserPlan(data.plan);
-          setUserId(data.id);
+          setUserPlan(data.user?.plan);
+          setUserId(data.user?.id);
 
           // Store signup date for time-based milestones
-          if (data.createdAt && !localStorage.getItem('afflyt_signup_date')) {
-            localStorage.setItem('afflyt_signup_date', new Date(data.createdAt).getTime().toString());
+          if (data.user?.createdAt && !localStorage.getItem('afflyt_signup_date')) {
+            localStorage.setItem('afflyt_signup_date', new Date(data.user.createdAt).getTime().toString());
           }
         }
       } catch (error) {
