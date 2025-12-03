@@ -347,17 +347,41 @@ export class KeepaEngine {
                     currentPriceCents = stats.current[PRICE_TYPES.NEW];
                 }
 
-                // Get list price for original price
-                if (originalPriceCents <= 0) {
-                    originalPriceCents = stats.current[PRICE_TYPES.LISTPRICE];
-                }
-
-                console.log(`[Keepa] ${keepaData.asin}: Using stats.current price ${currentPriceCents}c, listprice ${originalPriceCents}c`);
+                console.log(`[Keepa] ${keepaData.asin}: Using stats.current price ${currentPriceCents}c`);
             }
 
-            // If no original price yet, use 30-day average as reference
-            if (originalPriceCents <= 0 && stats.avg30) {
-                originalPriceCents = stats.avg30[PRICE_TYPES.AMAZON] || stats.avg30[PRICE_TYPES.NEW];
+            // PRIORITY for ORIGINAL PRICE: Use historical averages first (more realistic than RRP)
+            if (originalPriceCents <= 0) {
+                // Try 30-day average first (most relevant for discount calculation)
+                if (stats.avg30) {
+                    const avg30Price = stats.avg30[PRICE_TYPES.AMAZON] || stats.avg30[PRICE_TYPES.NEW];
+                    if (avg30Price > 0) {
+                        originalPriceCents = avg30Price;
+                        console.log(`[Keepa] ${keepaData.asin}: Using avg30 as original price ${originalPriceCents}c`);
+                    }
+                }
+
+                // Try 90-day average as fallback
+                if (originalPriceCents <= 0 && stats.avg90) {
+                    const avg90Price = stats.avg90[PRICE_TYPES.AMAZON] || stats.avg90[PRICE_TYPES.NEW];
+                    if (avg90Price > 0) {
+                        originalPriceCents = avg90Price;
+                        console.log(`[Keepa] ${keepaData.asin}: Using avg90 as original price ${originalPriceCents}c`);
+                    }
+                }
+
+                // Only use LISTPRICE (RRP) if no average available AND it's reasonable
+                // RRP is often inflated (e.g., €1999 when real price is €400)
+                if (originalPriceCents <= 0 && stats.current) {
+                    const listPrice = stats.current[PRICE_TYPES.LISTPRICE];
+                    // Sanity check: RRP should not be more than 3x current price
+                    if (listPrice > 0 && currentPriceCents > 0 && listPrice <= currentPriceCents * 3) {
+                        originalPriceCents = listPrice;
+                        console.log(`[Keepa] ${keepaData.asin}: Using listprice (RRP) as original ${originalPriceCents}c`);
+                    } else if (listPrice > currentPriceCents * 3) {
+                        console.log(`[Keepa] ${keepaData.asin}: Ignoring inflated RRP ${listPrice}c (>3x current ${currentPriceCents}c)`);
+                    }
+                }
             }
 
             // Get sales rank
