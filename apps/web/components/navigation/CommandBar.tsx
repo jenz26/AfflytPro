@@ -232,7 +232,7 @@ export const CommandBar = () => {
                         {/* Logo */}
                         <Link href={`/${locale}/dashboard`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                             <Image
-                                src="/images/logo.webp"
+                                src="/images/logo-dark-theme.webp"
                                 alt="Afflyt Pro"
                                 width={140}
                                 height={40}

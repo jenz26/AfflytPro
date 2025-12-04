@@ -18,7 +18,7 @@ const APP_NAME = 'Afflyt';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@afflyt.io';
 const FROM_NAME = process.env.FROM_NAME || 'Afflyt';
-const LOGO_URL = 'https://afflyt.io/images/logo.webp';
+const LOGO_URL = 'https://afflyt.io/images/logo-dark-theme.webp';
 
 // Debug logging at startup
 console.log('[AuthEmailService] Configuration:', {
@@ -546,40 +546,119 @@ ${replaceVariables(t.copyright, vars)}
 // ==================== BETA WAITLIST EMAIL ====================
 
 function generateBetaWaitlistHTML(t: any, vars: Record<string, string>, lang: string): string {
-  const listItems = t.whatNextList
-    .map((item: string) => `<li style="color: #4B5563; margin-bottom: 8px;">${replaceVariables(item, vars)}</li>`)
-    .join('');
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Afflyt</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #F3F4F6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F3F4F6; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
 
-  const content = `
-    <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
-      ${replaceVariables(t.intro, vars)}
-    </p>
-    <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-      ${replaceVariables(t.body, vars)}
-    </p>
-    <p style="color: #0A0E1A; font-size: 16px; line-height: 1.6; margin: 0 0 12px 0;">
-      ${t.whatNext}
-    </p>
-    <ul style="margin: 0 0 16px 0; padding-left: 20px;">
-      ${listItems}
-    </ul>
+          <!-- Header with Logo (smaller, less dominant) -->
+          <tr>
+            <td style="background: #0A0E1A; padding: 16px 32px; text-align: left;">
+              <img src="${LOGO_URL}"
+                   alt="Afflyt"
+                   style="height: 24px; width: auto;"
+                   height="24">
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 32px 32px 32px;">
+              <!-- Greeting -->
+              <p style="color: #0A0E1A; font-size: 18px; font-weight: 600; margin: 0 0 24px 0;">
+                ${t.greeting}
+              </p>
+
+              <!-- Intro -->
+              <p style="color: #4B5563; font-size: 16px; line-height: 1.7; margin: 0 0 20px 0;">
+                ${replaceVariables(t.intro, vars)}
+              </p>
+
+              <!-- Founder intro -->
+              <p style="color: #4B5563; font-size: 16px; line-height: 1.7; margin: 0 0 28px 0;">
+                ${t.founderIntro}
+              </p>
+
+              <!-- What happens now -->
+              <p style="color: #0A0E1A; font-size: 16px; font-weight: 600; line-height: 1.6; margin: 0 0 8px 0;">
+                ${t.whatNextTitle}
+              </p>
+              <p style="color: #4B5563; font-size: 16px; line-height: 1.7; margin: 0 0 28px 0;">
+                ${t.whatNextBody}
+              </p>
+
+              <!-- The ask -->
+              <p style="color: #0A0E1A; font-size: 16px; font-weight: 600; line-height: 1.6; margin: 0 0 8px 0;">
+                ${t.askTitle}
+              </p>
+              <p style="color: #4B5563; font-size: 16px; line-height: 1.7; margin: 0 0 32px 0;">
+                ${t.askBody}
+              </p>
+
+              <!-- Signature -->
+              <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin: 0 0 4px 0;">
+                ${t.closing}
+              </p>
+              <p style="color: #0A0E1A; font-size: 16px; font-weight: 600; line-height: 1.4; margin: 0;">
+                ${t.signature}
+              </p>
+              <p style="color: #9CA3AF; font-size: 14px; line-height: 1.4; margin: 0 0 28px 0;">
+                ${t.signatureTitle}
+              </p>
+
+              <!-- P.S. -->
+              <p style="color: #6B7280; font-size: 14px; font-style: italic; line-height: 1.6; margin: 0; padding: 16px; background: #F9FAFB; border-radius: 8px; border-left: 3px solid #06B6D4;">
+                ${t.ps}
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 0 32px 32px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="${t.buttonUrl}"
+                       style="display: inline-block; background: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%); color: #FFFFFF; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                      ${t.buttonText}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background: #F9FAFB; padding: 24px 32px; text-align: center; border-top: 1px solid #E5E7EB;">
+              <p style="color: #6B7280; font-size: 12px; margin: 0;">
+                ${replaceVariables(t.copyright, vars)} ·
+                <a href="https://afflyt.io/privacy" style="color: #06B6D4; text-decoration: none;">${t.links.privacy}</a> ·
+                <a href="mailto:support@afflyt.io" style="color: #06B6D4; text-decoration: none;">${t.links.support}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
   `;
-
-  return generateEmailHTML({
-    greeting: t.greeting,
-    content,
-    buttonText: t.buttonText,
-    buttonUrl: `https://afflyt.io/${lang}`,
-    footer: replaceVariables(t.footer, vars),
-    copyright: replaceVariables(t.copyright, vars),
-  });
 }
 
 function generateBetaWaitlistText(t: any, vars: Record<string, string>): string {
-  const listItems = t.whatNextList
-    .map((item: string) => `- ${replaceVariables(item, vars)}`)
-    .join('\n');
-
   return `
 ${t.greeting}
 
@@ -587,9 +666,20 @@ ${replaceVariables(t.plainIntro, vars)}
 
 ${replaceVariables(t.plainBody, vars)}
 
-${listItems}
+${t.whatNextTitle}
+${t.whatNextBody}
 
-${replaceVariables(t.plainFooter, vars)}
+${t.askTitle}
+${t.askBody}
+
+${t.closing}
+${t.signature}
+${t.signatureTitle}
+
+${t.ps}
+
+---
+${t.buttonText}: ${t.buttonUrl}
 
 ${replaceVariables(t.copyright, vars)}
   `.trim();

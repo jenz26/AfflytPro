@@ -25,7 +25,7 @@ export function LandingNav() {
     }`}>
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Image src="/logo.webp" alt="Afflyt" width={32} height={32} />
+          <Image src="/images/logo-dark-theme.webp" alt="Afflyt" width={32} height={32} />
           <span className="font-space-grotesk font-bold text-xl text-white">Afflyt</span>
         </div>
         <LandingButton onClick={scrollToForm} size="sm">

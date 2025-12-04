@@ -90,7 +90,7 @@ export default function RedirectPage() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <Image
-                        src="/images/logo.webp"
+                        src="/images/logo-dark-theme.webp"
                         alt="Afflyt"
                         width={150}
                         height={50}

@@ -337,7 +337,7 @@ export default function AuthPage() {
                     {/* Logo */}
                     <div className="flex items-center gap-4">
                         <Image
-                            src="/images/logo.webp"
+                            src="/images/logo-dark-theme.webp"
                             alt="Afflyt Pro"
                             width={180}
                             height={50}

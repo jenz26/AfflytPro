@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     description: 'Automate your affiliate marketing with AI-powered deal discovery and multi-channel publishing.',
     images: [
       {
-        url: '/images/logo.webp',
+        url: '/images/logo-dark-theme.webp',
         width: 1200,
         height: 630,
         alt: 'Afflyt Pro',
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Afflyt Pro - Affiliate Marketing Automation',
     description: 'Automate your affiliate marketing with AI-powered deal discovery.',
-    images: ['/images/logo.webp'],
+    images: ['/images/logo-dark-theme.webp'],
   },
   robots: {
     index: true,

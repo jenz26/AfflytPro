@@ -136,44 +136,54 @@ export const emailTranslations = {
   // ==================== BETA WAITLIST CONFIRMATION EMAIL ====================
   betaWaitlist: {
     it: {
-      subject: 'Sei nella lista! - {{appName}} Beta',
-      title: 'Richiesta ricevuta',
-      greeting: 'Ciao,',
-      intro: 'Abbiamo ricevuto la tua richiesta di accesso alla beta di {{appName}}.',
-      body: 'Stiamo selezionando i primi beta tester e ti contatteremo presto con le istruzioni per attivare il tuo account.',
-      whatNext: '<strong>Cosa succede ora?</strong>',
-      whatNextList: [
-        'Valuteremo la tua candidatura nelle prossime 48 ore',
-        'Riceverai una email con il codice invito',
-        'Potrai iniziare a usare {{appName}} gratuitamente'
-      ],
-      buttonText: 'Scopri di più su Afflyt',
-      footer: 'Grazie per l\'interesse in {{appName}}. Ci vediamo presto!',
+      subject: '🚀 Ci sei! Benvenuto nella beta di Afflyt',
+      greeting: 'Ciao!',
+      intro: 'Grazie per aver richiesto l\'accesso alla beta di Afflyt. Sei tra i primi a voler provare qualcosa di diverso — e questo mi piace.',
+      founderIntro: 'Sono Marco, il founder. Ho costruito Afflyt perché ero stufo di vedere canali Telegram che sparano offerte a caso senza sapere cosa funziona. Tu probabilmente conosci la sensazione.',
+      whatNextTitle: 'Cosa succede ora:',
+      whatNextBody: 'Ti contatterò personalmente nei prossimi giorni con il tuo codice di accesso. Nel frattempo, se hai domande o vuoi raccontarmi del tuo canale, rispondi direttamente a questa email — la leggo io.',
+      askTitle: 'Una cosa sola ti chiedo:',
+      askBody: 'Quando avrai accesso, usalo davvero e dimmi cosa pensi. Feedback onesto, anche brutale. È l\'unico modo per costruire qualcosa che funziona.',
+      closing: 'A presto,',
+      signature: 'Marco',
+      signatureTitle: 'Founder, Afflyt',
+      ps: 'P.S. Se hai un canale Telegram attivo e non l\'hai inserito nel form, rispondimi con il link — ti metto in cima alla lista.',
+      buttonText: 'Unisciti al canale Afflyt Updates',
+      buttonUrl: 'https://t.me/afflyt',
       copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        support: 'Supporto'
+      },
       // Plain text
-      plainIntro: 'Abbiamo ricevuto la tua richiesta di accesso alla beta di {{appName}}.',
-      plainBody: 'Stiamo selezionando i primi beta tester e ti contatteremo presto.',
-      plainFooter: 'Grazie per l\'interesse!'
+      plainIntro: 'Grazie per aver richiesto l\'accesso alla beta di Afflyt. Sei tra i primi a voler provare qualcosa di diverso.',
+      plainBody: 'Sono Marco, il founder. Ti contatterò personalmente nei prossimi giorni con il tuo codice di accesso.',
+      plainFooter: 'A presto, Marco'
     },
     en: {
-      subject: 'You\'re on the list! - {{appName}} Beta',
-      title: 'Request received',
-      greeting: 'Hi,',
-      intro: 'We received your request to join the {{appName}} beta.',
-      body: 'We\'re selecting our first beta testers and will contact you soon with instructions to activate your account.',
-      whatNext: '<strong>What happens next?</strong>',
-      whatNextList: [
-        'We\'ll review your application within 48 hours',
-        'You\'ll receive an email with your invite code',
-        'You can start using {{appName}} for free'
-      ],
-      buttonText: 'Learn more about Afflyt',
-      footer: 'Thanks for your interest in {{appName}}. See you soon!',
+      subject: '🚀 You\'re in! Welcome to the Afflyt beta',
+      greeting: 'Hey!',
+      intro: 'Thanks for requesting access to the Afflyt beta. You\'re among the first to want to try something different — and I like that.',
+      founderIntro: 'I\'m Marco, the founder. I built Afflyt because I was tired of seeing Telegram channels posting random deals without knowing what actually works. You probably know the feeling.',
+      whatNextTitle: 'What happens now:',
+      whatNextBody: 'I\'ll personally reach out in the next few days with your access code. In the meantime, if you have questions or want to tell me about your channel, just reply to this email — I read them all.',
+      askTitle: 'One thing I ask:',
+      askBody: 'When you get access, actually use it and tell me what you think. Honest feedback, even brutal. It\'s the only way to build something that works.',
+      closing: 'Talk soon,',
+      signature: 'Marco',
+      signatureTitle: 'Founder, Afflyt',
+      ps: 'P.S. If you have an active Telegram channel and didn\'t include it in the form, reply with the link — I\'ll bump you to the top of the list.',
+      buttonText: 'Join Afflyt Updates Channel',
+      buttonUrl: 'https://t.me/afflyt',
       copyright: '© {{year}} {{appName}}',
+      links: {
+        privacy: 'Privacy',
+        support: 'Support'
+      },
       // Plain text
-      plainIntro: 'We received your request to join the {{appName}} beta.',
-      plainBody: 'We\'re selecting our first beta testers and will contact you soon.',
-      plainFooter: 'Thanks for your interest!'
+      plainIntro: 'Thanks for requesting access to the Afflyt beta. You\'re among the first to want to try something different.',
+      plainBody: 'I\'m Marco, the founder. I\'ll personally reach out in the next few days with your access code.',
+      plainFooter: 'Talk soon, Marco'
     }
   },
 
