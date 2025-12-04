@@ -1756,4 +1756,98 @@ export async function authRoutes(fastify: FastifyInstance) {
       }
     }
   );
+
+  /**
+   * POST /auth/beta-signup
+   * Collect email for landing page beta waitlist
+   * Public endpoint - no authentication required
+   */
+  fastify.post<{ Body: { email: string } }>(
+    '/beta-signup',
+    {
+      config: {
+        rateLimit: {
+          max: 5,
+          timeWindow: '1 hour',
+          errorResponseBuilder: () => ({
+            statusCode: 429,
+            error: 'Too Many Requests',
+            message: 'Troppe richieste. Riprova piu tardi.',
+          }),
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const betaSignupSchema = z.object({
+          email: z.string().email('Email non valida'),
+        });
+
+        const { email } = betaSignupSchema.parse(request.body);
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Check for disposable email
+        if (isDisposableEmail(normalizedEmail)) {
+          return reply.code(400).send({
+            success: false,
+            message: 'Gli indirizzi email temporanei non sono consentiti.',
+          });
+        }
+
+        // Check if email already exists in waitlist or as user
+        const existingUser = await prisma.user.findUnique({
+          where: { email: normalizedEmail },
+        });
+
+        if (existingUser) {
+          // Don't reveal if email exists, just return success
+          return reply.send({
+            success: true,
+            message: 'Sei gia nella lista! Ti contatteremo presto.',
+          });
+        }
+
+        // Check if email already in BetaWaitlist (if table exists)
+        // For now, create a user record with a special plan to track waitlist
+        // This allows them to be easily converted to beta testers
+        const waitlistUser = await prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            password: null,
+            emailVerified: false,
+            plan: 'WAITLIST', // Special plan to identify waitlist users
+            isActive: false, // Not active until they get beta access
+          },
+        });
+
+        fastify.log.info({ email: normalizedEmail }, 'Beta waitlist signup');
+
+        return reply.send({
+          success: true,
+          message: 'Perfetto! Ti contatteremo presto con il tuo invito alla beta.',
+        });
+      } catch (err: any) {
+        if (err instanceof z.ZodError) {
+          return reply.code(400).send({
+            success: false,
+            message: 'Email non valida',
+          });
+        }
+
+        // Handle unique constraint violation (email already exists)
+        if (err.code === 'P2002') {
+          return reply.send({
+            success: true,
+            message: 'Sei gia nella lista! Ti contatteremo presto.',
+          });
+        }
+
+        fastify.log.error(err);
+        return reply.code(500).send({
+          success: false,
+          message: 'Si e verificato un errore. Riprova.',
+        });
+      }
+    }
+  );
 }

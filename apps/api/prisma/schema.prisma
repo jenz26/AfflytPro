@@ -14,6 +14,7 @@ enum PlanType {
   PRO
   BUSINESS
   BETA_TESTER
+  WAITLIST  // For landing page waitlist signups
 }
 
 enum UserRole {
