@@ -40,6 +40,13 @@ import { affiliateTagRoutes } from './routes/affiliate-tags';
 import { betaRoutes } from './routes/beta';
 import { securityRoutes } from './routes/security';
 import adminRoutes from './routes/admin';
+import trackingIdsRoutes from './routes/tracking-ids';
+import amazonImportRoutes from './routes/amazon-import';
+import memberTrackingRoutes from './routes/member-tracking';
+import { trackingIdPool } from './services/TrackingIdPoolService';
+import { getScheduledPublisher, SchedulerService } from './services/scheduling';
+import { getInsightsCalculator } from './services/insights';
+import { MemberTrackingService } from './services/MemberTrackingService';
 import { initSentry, captureException, setUser, Sentry } from './lib/sentry';
 
 // ==================== SENTRY INITIALIZATION ====================
@@ -142,6 +149,9 @@ app.register(affiliateTagRoutes, { prefix: '/user/affiliate-tags' });
 app.register(betaRoutes, { prefix: '/beta' });
 app.register(securityRoutes, { prefix: '/security' });
 app.register(adminRoutes, { prefix: '/admin' });
+app.register(trackingIdsRoutes, { prefix: '/user/tracking-ids' });
+app.register(amazonImportRoutes, { prefix: '/user/amazon-import' });
+app.register(memberTrackingRoutes, { prefix: '/user' });
 
 // Health check
 app.get('/health', async () => {
@@ -301,6 +311,184 @@ const start = async () => {
             process.on('SIGINT', emailShutdown);
 
             console.log('[EmailReport] Email report scheduler started successfully');
+
+            // ==================== TRACKING ID CLEANUP CRON ====================
+            // Release expired tracking IDs every 5 minutes
+            console.log('[TrackingIdPool] Starting tracking ID cleanup scheduler...');
+            const trackingIdCleanupInterval = setInterval(async () => {
+                try {
+                    const released = await trackingIdPool.releaseExpiredTrackingIds();
+                    if (released > 0) {
+                        console.log(`[TrackingIdPool] Released ${released} expired tracking IDs`);
+                    }
+                } catch (error) {
+                    console.error('[TrackingIdPool] Cleanup error:', error);
+                }
+            }, 5 * 60 * 1000); // Every 5 minutes
+
+            // Extend graceful shutdown for tracking ID cleanup
+            const emailShutdownRef = emailShutdown;
+            const trackingIdShutdown = async () => {
+                console.log('[TrackingIdPool] Shutting down...');
+                clearInterval(trackingIdCleanupInterval);
+                await emailShutdownRef();
+            };
+
+            process.removeListener('SIGTERM', emailShutdown);
+            process.removeListener('SIGINT', emailShutdown);
+            process.on('SIGTERM', trackingIdShutdown);
+            process.on('SIGINT', trackingIdShutdown);
+
+            console.log('[TrackingIdPool] Tracking ID cleanup scheduler started successfully');
+
+            // ==================== SMART SCHEDULING CRON ====================
+            // Process scheduled deals every minute
+            console.log('[SmartScheduler] Starting scheduled deals processor...');
+            const scheduledPublisher = getScheduledPublisher(redis);
+
+            const scheduledDealsInterval = setInterval(async () => {
+                try {
+                    const stats = await scheduledPublisher.processScheduledDeals();
+                    if (stats.processed > 0) {
+                        console.log(`[SmartScheduler] Processed: ${stats.published} published, ${stats.failed} failed, ${stats.cancelled} cancelled`);
+                    }
+                } catch (error) {
+                    console.error('[SmartScheduler] Error processing scheduled deals:', error);
+                }
+            }, 60 * 1000); // Every minute
+
+            // Cleanup stale deals every hour
+            const staleCleanupInterval = setInterval(async () => {
+                try {
+                    const cleaned = await SchedulerService.cleanupStaleDeals();
+                    if (cleaned > 0) {
+                        console.log(`[SmartScheduler] Cleaned up ${cleaned} stale scheduled deals`);
+                    }
+                } catch (error) {
+                    console.error('[SmartScheduler] Stale cleanup error:', error);
+                }
+            }, 60 * 60 * 1000); // Every hour
+
+            // Extend graceful shutdown for smart scheduler
+            const trackingIdShutdownRef = trackingIdShutdown;
+            const smartSchedulerShutdown = async () => {
+                console.log('[SmartScheduler] Shutting down...');
+                clearInterval(scheduledDealsInterval);
+                clearInterval(staleCleanupInterval);
+                await trackingIdShutdownRef();
+            };
+
+            process.removeListener('SIGTERM', trackingIdShutdown);
+            process.removeListener('SIGINT', trackingIdShutdown);
+            process.on('SIGTERM', smartSchedulerShutdown);
+            process.on('SIGINT', smartSchedulerShutdown);
+
+            console.log('[SmartScheduler] Smart scheduling started successfully');
+
+            // ==================== INSIGHTS CALCULATOR CRON ====================
+            // Recalculate channel insights every 6 hours
+            console.log('[InsightsCalculator] Starting insights recalculation scheduler...');
+            const insightsCalculator = getInsightsCalculator(prisma);
+
+            const insightsInterval = setInterval(async () => {
+                try {
+                    console.log('[InsightsCalculator] Starting scheduled recalculation...');
+                    const result = await insightsCalculator.recalculateAllChannels();
+                    console.log(`[InsightsCalculator] Completed: ${result.processed} channels recalculated (${result.errors} errors)`);
+                } catch (error) {
+                    console.error('[InsightsCalculator] Recalculation error:', error);
+                }
+            }, 6 * 60 * 60 * 1000); // Every 6 hours
+
+            // Cleanup old ProductPriceHistory (older than 180 days) - weekly on Sunday at 3 AM
+            const priceHistoryCleanupInterval = setInterval(async () => {
+                // Only run on Sunday
+                if (new Date().getDay() !== 0) return;
+                // Only run around 3 AM
+                if (new Date().getHours() !== 3) return;
+
+                try {
+                    const cutoffDate = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+                    const deleted = await prisma.productPriceHistory.deleteMany({
+                        where: { recordedAt: { lt: cutoffDate } }
+                    });
+                    if (deleted.count > 0) {
+                        console.log(`[InsightsCalculator] Cleaned up ${deleted.count} old price history records`);
+                    }
+                } catch (error) {
+                    console.error('[InsightsCalculator] Price history cleanup error:', error);
+                }
+            }, 60 * 60 * 1000); // Check every hour (runs only on Sunday at 3 AM)
+
+            // Extend graceful shutdown for insights
+            const smartSchedulerShutdownRef = smartSchedulerShutdown;
+            const insightsShutdown = async () => {
+                console.log('[InsightsCalculator] Shutting down...');
+                clearInterval(insightsInterval);
+                clearInterval(priceHistoryCleanupInterval);
+                await smartSchedulerShutdownRef();
+            };
+
+            process.removeListener('SIGTERM', smartSchedulerShutdown);
+            process.removeListener('SIGINT', smartSchedulerShutdown);
+            process.on('SIGTERM', insightsShutdown);
+            process.on('SIGINT', insightsShutdown);
+
+            console.log('[InsightsCalculator] Insights recalculation scheduler started successfully');
+
+            // ==================== MEMBER TRACKING CRON ====================
+            // Daily member snapshots at 9:00 AM (every day)
+            console.log('[MemberTracking] Starting member tracking scheduler...');
+
+            // Check if it's time for the daily snapshot (runs every hour, triggers at 9 AM)
+            const memberSnapshotInterval = setInterval(async () => {
+                const now = new Date();
+                // Only run at 9 AM (hour 9)
+                if (now.getHours() !== 9) return;
+                // Only run once per day - check if minute is less than 5 (within first 5 minutes of 9 AM)
+                if (now.getMinutes() >= 5) return;
+
+                try {
+                    console.log('[MemberTracking] Starting daily member snapshot...');
+                    const result = await MemberTrackingService.recordAllChannelSnapshots();
+                    console.log(`[MemberTracking] Snapshot complete: ${result.success} success, ${result.failed} failed`);
+                } catch (error) {
+                    console.error('[MemberTracking] Snapshot error:', error);
+                }
+            }, 60 * 60 * 1000); // Check every hour
+
+            // Update growth metrics at 10:00 AM (after snapshots are done)
+            const memberMetricsInterval = setInterval(async () => {
+                const now = new Date();
+                // Only run at 10 AM
+                if (now.getHours() !== 10) return;
+                // Only run once per day
+                if (now.getMinutes() >= 5) return;
+
+                try {
+                    console.log('[MemberTracking] Starting growth metrics update...');
+                    const result = await MemberTrackingService.updateAllChannelMetrics();
+                    console.log(`[MemberTracking] Metrics update complete: ${result.processed} processed, ${result.errors} errors`);
+                } catch (error) {
+                    console.error('[MemberTracking] Metrics update error:', error);
+                }
+            }, 60 * 60 * 1000); // Check every hour
+
+            // Extend graceful shutdown for member tracking
+            const insightsShutdownRef = insightsShutdown;
+            const memberTrackingShutdown = async () => {
+                console.log('[MemberTracking] Shutting down...');
+                clearInterval(memberSnapshotInterval);
+                clearInterval(memberMetricsInterval);
+                await insightsShutdownRef();
+            };
+
+            process.removeListener('SIGTERM', insightsShutdown);
+            process.removeListener('SIGINT', insightsShutdown);
+            process.on('SIGTERM', memberTrackingShutdown);
+            process.on('SIGINT', memberTrackingShutdown);
+
+            console.log('[MemberTracking] Member tracking scheduler started successfully');
         } else {
             if (!process.env.REDIS_URL) {
                 console.log('[Keepa v2] REDIS_URL not configured, queue system disabled');

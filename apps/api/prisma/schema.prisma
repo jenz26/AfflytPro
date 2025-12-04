@@ -264,6 +264,13 @@ model User {
   affiliateTags      AffiliateTag[]
   sessions           Session[]
   telegramUsers      TelegramUser[] // Telegram users linked to this account
+  trackingIds        UserTrackingId[] // Amazon Attribution tracking IDs
+
+  // Amazon Associates Import
+  amazonReportImports AmazonReportImport[]
+  amazonOrders        AmazonOrder[]
+  amazonDailyStats    AmazonDailyStats[]
+  amazonTrackingStats AmazonTrackingStats[]
 
   @@index([email])
   @@index([plan])
@@ -361,15 +368,62 @@ model Channel {
   amazonTag       String? // Tag Amazon specifico per questo canale (override user default)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-  automationRules AutomationRule[]
-  dealHistory     ChannelDealHistory[]
-  scheduledPosts  ScheduledPost[]
+
+  // ═══════════════════════════════════════════════════════════════
+  // AUDIENCE TYPE (per algoritmo scoring dinamico)
+  // ═══════════════════════════════════════════════════════════════
+  /// Tipo di audience: 'product_hunters' | 'deal_explorers' | 'niche_focused' | 'unknown'
+  audienceType           String?
+  /// Come è stato determinato: 'onboarding' | 'inferred'
+  audienceTypeSource     String?
+  /// Confidenza del tipo (0-1)
+  audienceTypeConfidence Float?    @default(0.5)
+
+  // ═══════════════════════════════════════════════════════════════
+  // MEMBER TRACKING (per Smart Scheduling)
+  // ═══════════════════════════════════════════════════════════════
+  /// Numero membri attuali del canale
+  currentMemberCount     Int?
+  /// Ultimo aggiornamento del conteggio membri
+  memberCountUpdatedAt   DateTime?
+  /// Tasso di churn settimanale (es. 0.02 = 2%)
+  weeklyChurnRate        Float?
+  /// Tasso di crescita settimanale
+  weeklyGrowthRate       Float?
+  /// Crescita netta (growth - churn)
+  netGrowthRate          Float?
+  /// Media crescita giornaliera ultimi 30 giorni
+  avgDailyGrowth         Float?
+  /// Trend crescita: 'growing' | 'stable' | 'declining'
+  growthTrend            String?
+  /// Revenue per subscriber (totalRevenue / memberCount)
+  subscriberValue        Float?
+
+  // ═══════════════════════════════════════════════════════════════
+  // CHANNEL HEALTH
+  // ═══════════════════════════════════════════════════════════════
+  /// Health score aggregato (0-100)
+  healthScore            Float?
+  /// Ultimo calcolo health
+  healthCalculatedAt     DateTime?
+
+  // ═══════════════════════════════════════════════════════════════
+  // RELATIONS
+  // ═══════════════════════════════════════════════════════════════
+  automationRules   AutomationRule[]
+  dealHistory       ChannelDealHistory[]
+  scheduledPosts    ScheduledPost[]
+  insights          ChannelInsights?
+  memberSnapshots   ChannelMemberSnapshot[]
+  scheduledDeals    ScheduledDeal[]
 
   @@index([userId])
   @@index([platform])
+  @@index([audienceType])
+  @@index([healthScore])
 }
 
-// === CHANNEL DEAL HISTORY (Deduplication) ===
+// === CHANNEL DEAL HISTORY (Deduplication & Performance Tracking) ===
 
 model ChannelDealHistory {
   id String @id @default(cuid())
@@ -377,41 +431,158 @@ model ChannelDealHistory {
   channelId String
   channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
-  asin String
-
   ruleId String?
   rule   AutomationRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
 
-  publishedAt DateTime @default(now())
-  expiresAt   DateTime // Auto-cleanup: publishedAt + dedupeWindowHours
+  // ═══════════════════════════════════════════════════════════════
+  // PRODUCT IDENTIFICATION
+  // ═══════════════════════════════════════════════════════════════
+  asin          String
+  productTitle  String?
+  category      String?
+  subcategory   String?
+  brand         String?
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRICES AT PUBLICATION TIME
+  // ═══════════════════════════════════════════════════════════════
+  dealPrice     Float?    // Current/deal price
+  originalPrice Float?    // List price
+  discount      Float?    // Discount percentage
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRICE HISTORY SNAPSHOT (from Keepa)
+  // ═══════════════════════════════════════════════════════════════
+  avgPrice30       Float?   // Average price last 30 days
+  minPrice30       Float?   // Minimum last 30 days
+  maxPrice30       Float?   // Maximum last 30 days
+  avgPrice90       Float?   // Average price last 90 days
+  minPriceEver     Float?   // Historical minimum
+  priceDropPercent Float?   // % drop vs 30-day average
+  isLowestEver     Boolean  @default(false)  // Is historical minimum?
+  isLowest30       Boolean  @default(false)  // Is 30-day minimum?
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRODUCT METRICS SNAPSHOT
+  // ═══════════════════════════════════════════════════════════════
+  salesRank         Int?     // BSR at publication time
+  salesRankCategory String?  // BSR category
+  rating            Float?   // Average rating (1-5)
+  reviewCount       Int?     // Number of reviews
+
+  // ═══════════════════════════════════════════════════════════════
+  // DEAL DETAILS
+  // ═══════════════════════════════════════════════════════════════
+  /// Deal type: 'lightning' | 'deal_of_day' | 'coupon' | 'price_drop' | 'warehouse' | 'subscribe_save'
+  dealType          String?
+  dealStartTime     DateTime?  // When the deal started
+  dealEndTime       DateTime?  // When the deal expires
+  dealStillValid    Boolean    @default(true)   // Deal still active?
+  validityCheckedAt DateTime?  // Last validity check
+  dealExpiredAt     DateTime?  // When it expired
+
+  // ═══════════════════════════════════════════════════════════════
+  // COUPON INFO
+  // ═══════════════════════════════════════════════════════════════
+  hasCoupon    Boolean @default(false)
+  couponValue  Float?   // Coupon value (5 = €5 or 5%)
+  couponType   String?  // 'percent' | 'fixed'
+  couponCode   String?  // Code if manual
+
+  // ═══════════════════════════════════════════════════════════════
+  // SCORING SNAPSHOT
+  // ═══════════════════════════════════════════════════════════════
+  /// Base score calculated (before audience adjustment)
+  baseScore      Int?
+  /// Final score after audience-specific weights
+  finalScore     Int?
+  /// Score breakdown: { discount: 25, rank: 20, rating: 15, priceDrop: 10, ... }
+  scoreBreakdown Json?
+  /// Audience type used for scoring
+  audienceType   String?
+
+  // ═══════════════════════════════════════════════════════════════
+  // KEEPA RAW DATA
+  // ═══════════════════════════════════════════════════════════════
+  /// Complete Keepa data snapshot (for future analysis/ML)
+  keepaSnapshot    Json?
+  /// When Keepa last updated the data
+  keepaLastUpdate  DateTime?
+
+  // ═══════════════════════════════════════════════════════════════
+  // PUBLICATION
+  // ═══════════════════════════════════════════════════════════════
+  publishedAt       DateTime  @default(now())
+  expiresAt         DateTime  // Auto-cleanup: publishedAt + dedupeWindowHours
+  telegramMessageId String?
+  /// Message text sent (for copy analysis)
+  messageText       String?
+  /// Message format: 'template_minimal' | 'template_standard' | 'llm_generated'
+  messageFormat     String?
 
   // ═══════════════════════════════════════════════════════════════
   // LLM COPY TRACKING (audit & regeneration)
   // ═══════════════════════════════════════════════════════════════
-
-  /// Testo effettivamente usato per il messaggio
+  /// Text actually used for the message
   generatedCopy String?
-
-  /// Fonte del testo: TEMPLATE | LLM | LLM_CACHE | LLM_FALLBACK_TEMPLATE
+  /// Text source: TEMPLATE | LLM | LLM_CACHE | LLM_FALLBACK_TEMPLATE
   copySource String?
-
-  /// Quando è stato generato il testo (per cache invalidation)
+  /// When text was generated (for cache invalidation)
   copyGeneratedAt DateTime?
-
-  /// Prezzo al momento della generazione (per rigenerare se cambia)
+  /// Price at generation time (to regenerate if it changes)
   priceAtGeneration Float?
 
   // ═══════════════════════════════════════════════════════════════
-  // TELEGRAM MESSAGE TRACKING
+  // ATTRIBUTION (Amazon ascsubtag)
   // ═══════════════════════════════════════════════════════════════
+  /// ascsubtag used for this deal (format: ch-msg-ts-sc-rl)
+  ascsubtag String?
 
-  /// Telegram message ID returned after publishing
-  telegramMessageId String?
+  // ═══════════════════════════════════════════════════════════════
+  // TRACKING ID (Amazon Attribution per-deal tracking)
+  // ═══════════════════════════════════════════════════════════════
+  /// Amazon Attribution tracking ID used for this deal
+  trackingIdUsed   String?
+  // Relation to UserTrackingId (inverse of dealHistory)
+  trackingIdRecord UserTrackingId?
 
-  @@unique([channelId, asin])
+  // ═══════════════════════════════════════════════════════════════
+  // PERFORMANCE METRICS (populated async via background job)
+  // ═══════════════════════════════════════════════════════════════
+  /// Total clicks on this deal
+  clicks           Int   @default(0)
+  /// Unique clicks
+  uniqueClicks     Int   @default(0)
+  /// Attributed conversions
+  conversions      Int   @default(0)
+  /// Total attributed revenue
+  revenue          Float @default(0)
+  /// Commission earned
+  commissionEarned Float @default(0)
+
+  // ═══════════════════════════════════════════════════════════════
+  // TIMESTAMPS
+  // ═══════════════════════════════════════════════════════════════
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // ═══════════════════════════════════════════════════════════════
+  // AMAZON IMPORT MATCHES
+  // ═══════════════════════════════════════════════════════════════
+  amazonOrders AmazonOrder[] // Ordini Amazon matchati da import CSV
+
+  @@unique([channelId, asin, publishedAt])
+  @@index([channelId, publishedAt])
+  @@index([asin])
+  @@index([dealType])
+  @@index([publishedAt])
+  @@index([category])
   @@index([telegramMessageId])
-  @@index([channelId])
   @@index([expiresAt])
+  @@index([ascsubtag])
+  @@index([finalScore])
+  @@index([trackingIdUsed])
+  @@index([dealStillValid])
 }
 
 // === PRODUCTS & AFFILIATE LINKS ===
@@ -543,6 +714,14 @@ model AffiliateLink {
   totalRevenue    Float @default(0)
   conversionCount Int   @default(0)
 
+  // ═══════════════════════════════════════════════════════════════
+  // ATTRIBUTION (Amazon ascsubtag tracking)
+  // ═══════════════════════════════════════════════════════════════
+  /// ascsubtag per Amazon Attribution (formato: ch-msg-ts-sc-rl)
+  ascsubtag String?
+  /// Deal score al momento della creazione del link
+  dealScore Int?
+
   // Relations
   clickRecords Click[]
   conversions  Conversion[]
@@ -555,6 +734,7 @@ model AffiliateLink {
   @@index([linkType])
   @@index([scheduledPostId])
   @@index([channelId])
+  @@index([ascsubtag])
 }
 
 model KeepaMonthlyBudget {
@@ -655,11 +835,40 @@ model Conversion {
   revenue    Float // Total sale amount
   commission Float? // Commission earned (if provided)
 
+  // Amazon order data
+  orderId  String?
+  asin     String?
+  quantity Int     @default(1)
+
+  // ═══════════════════════════════════════════════════════════════
+  // ATTRIBUTION (from ascsubtag parsing)
+  // ═══════════════════════════════════════════════════════════════
+  /// ascsubtag originale dalla conversione
+  ascsubtag             String?
+  /// Channel ID estratto da ascsubtag
+  sourceChannelId       String?
+  /// Message ID estratto da ascsubtag
+  sourceMessageId       String?
+  /// Timestamp post estratto da ascsubtag
+  sourceTimestamp       DateTime?
+  /// Deal score al momento della pubblicazione
+  sourceDealScore       Int?
+  /// Rule ID estratto da ascsubtag
+  sourceRuleId          String?
+  /// Metodo di attribuzione: 'ascsubtag' | 'asin_match' | 'time_window'
+  attributionMethod     String?
+  /// Confidenza dell'attribuzione (0-1)
+  attributionConfidence Float?
+
   // Metadata
   convertedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@index([linkId])
   @@index([convertedAt])
+  @@index([ascsubtag])
+  @@index([sourceChannelId])
+  @@index([asin])
 }
 
 // === AUTOMATION RULES ===
@@ -788,6 +997,9 @@ model AutomationRule {
   /// Contatore run consecutive senza pubblicare (per notifica)
   emptyRunsCount Int @default(0)
 
+  /// Modalità pubblicazione: 'smart' = usa Smart Scheduling, 'immediate' = pubblica subito
+  publishingMode String @default("smart")
+
   // ═══════════════════════════════════════════════════════════════
   // LLM COPY GENERATION
   // ═══════════════════════════════════════════════════════════════
@@ -843,6 +1055,9 @@ model AutomationRule {
 
   // Telemetry for monitoring and tuning
   runStats AutomationRunStats[]
+
+  // Smart scheduling queue
+  scheduledDeals ScheduledDeal[]
 
   @@index([userId])
   @@index([isActive])
@@ -1643,4 +1858,432 @@ model TelegramInteraction {
   @@index([channelId])
   @@index([asin])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHANNEL INSIGHTS - Analytics aggregati per canale (per Smart Scheduling)
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ChannelInsights {
+  id String @id @default(cuid())
+
+  // Reference (1:1 con Channel)
+  channelId String  @unique
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // ═══════════════════════════════════════════════════════════════
+  // HOURLY STATS (per Smart Scheduling)
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per ora: { "0": { posts, clicks, conversions, ctr, cvr }, ... "23": {...} }
+  hourlyStats Json?
+  /// Top 5 ore migliori per performance
+  bestHours   Int[] @default([])
+
+  // ═══════════════════════════════════════════════════════════════
+  // DAILY STATS
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per giorno: { "monday": {...}, ... "sunday": {...} }
+  dailyStats Json?
+  /// Giorni migliori ordinati per performance
+  bestDays   String[] @default([])
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY STATS
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per categoria: { "electronics": { posts, clicks, conversions, cvr }, ... }
+  categoryStats Json?
+  /// Top categorie per conversione
+  topCategories String[] @default([])
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRICE STATS
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per fascia prezzo: { "0-25": {...}, "25-50": {...}, ... }
+  priceStats        Json?
+  /// Range prezzo ottimale per questo canale
+  optimalPriceRange Json?
+
+  // ═══════════════════════════════════════════════════════════════
+  // DISCOUNT STATS
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per fascia sconto: { "15-25": {...}, "25-40": {...}, ... }
+  discountStats        Json?
+  /// Range sconto ottimale per questo canale
+  optimalDiscountRange Json?
+
+  // ═══════════════════════════════════════════════════════════════
+  // DEAL TYPE STATS
+  // ═══════════════════════════════════════════════════════════════
+  /// Stats per tipo deal: { "lightning": { posts, cvr, avgRevenue }, "coupon": {...} }
+  dealTypeStats Json?
+  /// Migliori tipi di deal per questo canale
+  bestDealTypes String[] @default([])
+
+  // ═══════════════════════════════════════════════════════════════
+  // DYNAMIC WEIGHTS (per audience type - Deal Score personalizzato)
+  // ═══════════════════════════════════════════════════════════════
+  /// Correlazioni calcolate: { discount: 0.45, salesRank: 0.72, rating: 0.38, priceDrop: 0.21 }
+  factorCorrelations Json?
+  /// Pesi per scoring: { discount: 0.15, salesRank: 0.45, rating: 0.28, priceDrop: 0.12 }
+  scoreWeights       Json?
+
+  // ═══════════════════════════════════════════════════════════════
+  // AUDIENCE
+  // ═══════════════════════════════════════════════════════════════
+  /// Tipo audience ereditato o inferito
+  audienceType           String?
+  /// Confidenza del tipo (0-1)
+  audienceTypeConfidence Float?
+
+  // ═══════════════════════════════════════════════════════════════
+  // AGGREGATES
+  // ═══════════════════════════════════════════════════════════════
+  totalPosts       Int   @default(0)
+  totalClicks      Int   @default(0)
+  totalConversions Int   @default(0)
+  totalRevenue     Float @default(0)
+  avgCtr           Float?  // Click-through rate medio
+  avgCvr           Float?  // Conversion rate medio
+  avgEpc           Float?  // Earnings per click
+  avgOrderValue    Float?  // Average order value
+
+  // ═══════════════════════════════════════════════════════════════
+  // MEMBER METRICS
+  // ═══════════════════════════════════════════════════════════════
+  /// Media membri nel periodo
+  avgMemberCount      Int?
+  /// Crescita membri negli ultimi 30 giorni
+  memberGrowth30d     Int?
+  /// % crescita membri
+  memberGrowthPercent Float?
+  /// % churn dopo post (correlazione post → unsubscribe)
+  churnAfterPosts     Float?
+  /// Revenue per subscriber
+  subscriberValue     Float?
+
+  // ═══════════════════════════════════════════════════════════════
+  // META
+  // ═══════════════════════════════════════════════════════════════
+  /// Confidenza complessiva (0-1) basata su volume dati
+  confidence     Float     @default(0)
+  /// Numero di deal analizzati
+  dataPoints     Int       @default(0)
+  /// Periodo di analisi in giorni
+  periodDays     Int       @default(30)
+  /// Ultimo ricalcolo insights
+  lastCalculated DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lastCalculated])
+  @@index([confidence])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHANNEL MEMBER SNAPSHOTS - Storico membri per tracking crescita/churn
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ChannelMemberSnapshot {
+  id String @id @default(cuid())
+
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  /// Numero membri al momento dello snapshot
+  memberCount  Int
+  /// Variazione rispetto allo snapshot precedente
+  delta        Int?
+  /// Variazione percentuale
+  deltaPercent Float?
+
+  /// Sorgente dati: 'telegram_api' | 'manual' | 'estimated'
+  source String @default("telegram_api")
+
+  snapshotAt DateTime @default(now())
+
+  @@index([channelId, snapshotAt])
+  @@index([snapshotAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRODUCT PRICE HISTORY - Tracking price trends over time
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ProductPriceHistory {
+  id String @id @default(cuid())
+
+  asin String
+
+  // Snapshot data
+  recordedAt DateTime @default(now())
+
+  // Prices
+  currentPrice Float
+  listPrice    Float?
+
+  // Deal info
+  isDeal    Boolean @default(false)
+  dealType  String?
+  dealPrice Float?
+
+  // Metrics
+  salesRank   Int?
+  rating      Float?
+  reviewCount Int?
+
+  // Source
+  source String @default("keepa") // 'keepa' | 'manual' | 'api'
+
+  createdAt DateTime @default(now())
+
+  @@index([asin, recordedAt])
+  @@index([asin])
+  @@index([recordedAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCHEDULED DEALS - Coda Smart Scheduling per pubblicazione ottimale
+// ═══════════════════════════════════════════════════════════════════════════
+
+model ScheduledDeal {
+  id String @id @default(cuid())
+
+  // References
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  ruleId    String
+  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  // Product info
+  asin         String
+  productId    String?
+  productTitle String?
+
+  // Scoring
+  baseScore  Int
+  finalScore Int
+
+  // Deal info snapshot
+  /// Tipo deal: 'lightning' | 'deal' | 'price_drop' | 'coupon' | 'deal_of_day'
+  dealType      String?
+  originalPrice Float?
+  dealPrice     Float?
+  discount      Float?
+  category      String?
+  /// When the deal ends (for lightning deals)
+  dealEndTime   DateTime?
+
+  // Scheduling
+  scheduledFor DateTime
+  /// Motivo scheduling: 'best_hour' | 'next_slot' | 'lightning_priority' | 'immediate' | 'fallback'
+  reason       String?
+
+  // Status
+  /// Stato: 'pending' | 'published' | 'cancelled' | 'failed' | 'expired'
+  status String @default("pending")
+
+  // Results
+  publishedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  telegramMessageId String?
+
+  // Error tracking
+  lastError    String?
+  failedAt     DateTime?
+  retryCount   Int      @default(0)
+  maxRetries   Int      @default(3)
+
+  // Tracking
+  trackingIdUsed String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId, status])
+  @@index([scheduledFor])
+  @@index([status, scheduledFor])
+  @@index([ruleId])
+  @@index([asin])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// USER TRACKING ID POOL - Amazon Attribution tracking IDs per user
+// ═══════════════════════════════════════════════════════════════════════════
+
+model UserTrackingId {
+  id              String    @id @default(cuid())
+
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Amazon Attribution tracking ID (e.g., "maui_store-20_tracking_id_12345")
+  trackingId      String
+
+  /// Status: 'available' | 'in_use'
+  status          String    @default("available")
+
+  /// When this tracking ID was assigned to a deal
+  assignedAt      DateTime?
+
+  /// When this tracking ID assignment expires (24h after assignment)
+  expiresAt       DateTime?
+
+  /// Link to the deal using this tracking ID (1:1)
+  dealHistoryId   String?   @unique
+  dealHistory     ChannelDealHistory? @relation(fields: [dealHistoryId], references: [id], onDelete: SetNull)
+
+  /// Total times this tracking ID has been used
+  totalUses       Int       @default(0)
+
+  /// Last time this tracking ID was used
+  lastUsedAt      DateTime?
+
+  createdAt       DateTime  @default(now())
+
+  @@unique([userId, trackingId])
+  @@index([userId, status])
+  @@index([expiresAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AMAZON ASSOCIATES CSV IMPORT - Import storico ordini e guadagni
+// ═══════════════════════════════════════════════════════════════════════════
+
+model AmazonReportImport {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // File info
+  fileName   String
+  reportType String // 'orders' | 'earnings' | 'daily_trends' | 'tracking' | 'link_type'
+  fileSize   Int // bytes
+
+  // Period covered
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  // Results
+  status       String @default("pending") // 'pending' | 'processing' | 'completed' | 'failed'
+  rowsTotal    Int    @default(0)
+  rowsImported Int    @default(0)
+  rowsSkipped  Int    @default(0)
+  rowsFailed   Int    @default(0)
+
+  // Match stats
+  matchedDeals   Int @default(0) // Righe matchate con ChannelDealHistory
+  unmatchedDeals Int @default(0) // Righe non matchate (pre-Afflyt o altri canali)
+
+  // Error tracking
+  errors Json? // Array di errori per riga
+
+  // Timestamps
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  orders AmazonOrder[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AmazonOrder {
+  id String @id @default(cuid())
+
+  userId   String
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importId String?
+  import   AmazonReportImport?  @relation(fields: [importId], references: [id], onDelete: SetNull)
+
+  // Order data
+  asin         String
+  productTitle String?
+  category     String?
+  orderDate    DateTime
+  quantity     Int      @default(1)
+  price        Float
+
+  // Link info
+  linkType   String? // 'ml1', 'ml2', 'Others', 'Text Only Image Only...'
+  trackingId String? // 'topoffertetec-21'
+  orderType  String? // 'di' (direct), 'ndi' (non-direct)
+  deviceType String? // 'PHONE', 'DESKTOP', 'TABLET'
+
+  // Shipping/Earnings (from Fee-Earnings)
+  shippedDate      DateTime?
+  shippedQuantity  Int?
+  returns          Int       @default(0)
+  revenue          Float?
+  commission       Float?
+  seller           String? // 'Amazon.it', '3rd Party'
+  isDirectPurchase Boolean? // 'Acquisto idoneo diretto' Y/N
+
+  // Match with Afflyt
+  matchedDealId   String? // ID di ChannelDealHistory se matchato
+  matchedDeal     ChannelDealHistory? @relation(fields: [matchedDealId], references: [id], onDelete: SetNull)
+  matchConfidence Float? // 0-1, quanto siamo sicuri del match
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, asin, orderDate, trackingId])
+  @@index([userId])
+  @@index([asin])
+  @@index([trackingId])
+  @@index([orderDate])
+  @@index([matchedDealId])
+}
+
+model AmazonDailyStats {
+  id String @id @default(cuid())
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importId String?
+
+  // Daily data
+  date           DateTime @db.Date
+  clicks         Int      @default(0)
+  ordersAmazon   Int      @default(0) // Articoli ordinati (Amazon)
+  orders3rdParty Int      @default(0) // Articoli ordinati (3rd Party)
+  ordersTotal    Int      @default(0)
+  conversionRate Float? // % dal report
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model AmazonTrackingStats {
+  id String @id @default(cuid())
+
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  importId String?
+
+  // Tracking summary
+  trackingId  String
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  clicks       Int   @default(0)
+  orderedItems Int   @default(0)
+  shippedItems Int   @default(0)
+  revenue      Float @default(0)
+  commission   Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, trackingId, periodStart, periodEnd])
+  @@index([userId])
+  @@index([trackingId])
 }

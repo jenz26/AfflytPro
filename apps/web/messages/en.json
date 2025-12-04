@@ -941,7 +941,8 @@
       "templates": "Templates",
       "notifications": "Notifications",
       "security": "Security",
-      "tester": "Beta Tester"
+      "tester": "Beta Tester",
+      "amazonAssociates": "Amazon Associates"
     },
     "hub": {
       "memberSince": "Member since {date}",
@@ -959,7 +960,8 @@
         "templates": "Message templates",
         "notifications": "Notification preferences",
         "security": "Password and security settings",
-        "tester": "Redeem your beta code"
+        "tester": "Redeem your beta code",
+        "amazonAssociates": "Import and analyze Amazon reports"
       },
       "actions": {
         "exportData": "Export Data",

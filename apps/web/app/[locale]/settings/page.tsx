@@ -14,7 +14,8 @@ import {
     Zap,
     Loader2,
     Tag,
-    Sparkles
+    Sparkles,
+    BarChart3
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { API_BASE } from '@/lib/api/config';
@@ -190,6 +191,12 @@ export default function SettingsHubPage() {
             path: `/${locale}/settings/affiliate-tags`,
             color: 'from-orange-500 to-amber-500',
             stat: userStats.affiliateTags.toString()
+        },
+        {
+            key: 'amazonAssociates',
+            icon: BarChart3,
+            path: `/${locale}/settings/amazon-associates`,
+            color: 'from-amber-500 to-yellow-500',
         },
         {
             key: 'notifications',
