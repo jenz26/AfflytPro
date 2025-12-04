@@ -45,7 +45,7 @@ export function CTASection() {
         </div>
 
         {/* CTA Button - scrolls to #beta-signup */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-center">
           <CTAButton targetId="beta-signup">Richiedi Accesso alla Beta</CTAButton>
         </div>
 

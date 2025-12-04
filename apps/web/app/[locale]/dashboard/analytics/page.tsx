@@ -322,7 +322,8 @@ export default function AnalyticsPage() {
                 const profileRes = await fetch(`${API_BASE}/auth/me`, { headers });
                 if (profileRes.ok) {
                     const profile = await profileRes.json();
-                    setUserTier(profile.plan || 'FREE');
+                    // API returns { user: { plan: ... } }
+                    setUserTier(profile.user?.plan || 'FREE');
                 }
             } catch (e) {
                 console.error('Failed to fetch user profile:', e);

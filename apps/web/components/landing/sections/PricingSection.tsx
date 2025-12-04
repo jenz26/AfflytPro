@@ -1,5 +1,4 @@
 import { LandingSection } from '../LandingSection';
-import { LandingBadge } from '../LandingBadge';
 import { AnimatedCard } from '../client/AnimatedCard';
 import { BetaSignupForm } from '../client/BetaSignupForm';
 import { Check, Rocket } from 'lucide-react';
@@ -28,12 +27,12 @@ export function PricingSection() {
       {/* Single Beta Card - Centered */}
       <AnimatedCard className="max-w-lg mx-auto">
         <div className="relative rounded-2xl p-8 md:p-10 bg-afflyt-glass-white backdrop-blur-md border border-afflyt-cyan-500/50 shadow-[0_0_60px_rgba(0,229,224,0.15)]">
-          {/* Badge */}
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <LandingBadge>
-              <Rocket className="w-3.5 h-3.5 mr-1" />
+          {/* Badge - centered on top border with solid bg to mask card border */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold bg-[#0a0a0f] text-afflyt-cyan-400 shadow-lg ring-2 ring-afflyt-cyan-500/50">
+              <Rocket className="w-4 h-4" />
               Beta Tester
-            </LandingBadge>
+            </span>
           </div>
 
           {/* Price - SEO visible */}

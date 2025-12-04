@@ -22,7 +22,7 @@ export function HeroContent() {
           onClick={() => scrollToSection('beta-signup')}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-afflyt-dark-900 font-semibold text-lg transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-black font-semibold text-lg transition-colors"
         >
           Richiedi Accesso alla Beta
           <ArrowRight className="w-5 h-5" />

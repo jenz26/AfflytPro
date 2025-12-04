@@ -25,7 +25,7 @@ export function LandingButton({
   className = '',
 }: LandingButtonProps) {
   const variants = {
-    primary: 'bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-afflyt-dark-900 font-semibold',
+    primary: 'bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-black font-semibold',
     secondary: 'bg-white/10 hover:bg-white/20 text-white border border-white/20',
     ghost: 'bg-transparent hover:bg-white/5 text-white',
   };

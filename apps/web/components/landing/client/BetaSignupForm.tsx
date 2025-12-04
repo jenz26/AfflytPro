@@ -163,7 +163,7 @@ export function BetaSignupForm({ spotsRemaining = 7 }: BetaSignupFormProps) {
         disabled={status === 'loading'}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full py-4 rounded-xl bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-afflyt-dark-900 font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full py-4 rounded-xl bg-afflyt-cyan-500 hover:bg-afflyt-cyan-400 text-black font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {status === 'loading' ? (
           <>

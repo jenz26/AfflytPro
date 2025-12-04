@@ -1,32 +1,37 @@
+import Image from 'next/image';
 import { LandingSection } from '../LandingSection';
 import { AnimatedCard } from '../client/AnimatedCard';
-import { ShoppingCart, Send, LineChart, Sparkles, CreditCard } from 'lucide-react';
 
 const integrations = [
   {
-    icon: ShoppingCart,
+    logo: '/logos/amazon.svg',
     name: 'Amazon',
     description: 'Programma Affiliazione ufficiale',
+    invert: true,
   },
   {
-    icon: Send,
+    logo: '/logos/telegram.svg',
     name: 'Telegram',
     description: 'Bot API sicura',
+    invert: false, // già colorato
   },
   {
-    icon: LineChart,
+    logo: '/logos/keepa.svg',
     name: 'Keepa',
     description: 'Storico prezzi verificato',
+    invert: false, // ha icona colorata con croce bianca
   },
   {
-    icon: Sparkles,
+    logo: '/logos/openai.svg',
     name: 'OpenAI',
     description: 'Copy ottimizzati con AI',
+    invert: true,
   },
   {
-    icon: CreditCard,
+    logo: '/logos/stripe.svg',
     name: 'Stripe',
     description: 'Pagamenti sicuri',
+    invert: false, // viola originale
   },
 ];
 
@@ -51,12 +56,18 @@ export function TrustSection() {
               key={integration.name}
               className="flex flex-col items-center text-center group"
             >
-              {/* Icon */}
-              <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10 group-hover:border-white/20 transition-all">
-                <integration.icon className="w-7 h-7 text-gray-400 group-hover:text-white transition-colors" />
-              </div>
+              {/* Logo */}
+              <Image
+                src={integration.logo}
+                alt={integration.name}
+                width={120}
+                height={60}
+                className={`h-12 w-auto mb-4 opacity-70 group-hover:opacity-100 transition-opacity ${
+                  integration.invert ? 'brightness-0 invert' : ''
+                }`}
+              />
               {/* Name */}
-              <span className="text-white font-medium text-sm mb-1">
+              <span className="text-white font-medium text-base mb-1">
                 {integration.name}
               </span>
               {/* Description */}
