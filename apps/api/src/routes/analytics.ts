@@ -1834,7 +1834,7 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       where: { userId },
       select: {
         product: {
-          select: { category: true }
+          select: { id: true, category: true }
         }
       }
     });
@@ -1844,12 +1844,19 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         .filter(Boolean)
     )].sort() as string[];
 
-    // Get deal score range from products
-    const productStats = await prisma.product.aggregate({
-      _min: { dealConfidence: true },
-      _max: { dealConfidence: true },
-      _avg: { dealConfidence: true }
-    });
+    // Get deal score range from user's products only
+    const userProductIds = productsWithCategories
+      .map(l => l.product?.id)
+      .filter((id): id is string => Boolean(id));
+
+    const productStats = userProductIds.length > 0
+      ? await prisma.product.aggregate({
+          where: { id: { in: userProductIds } },
+          _min: { dealConfidence: true },
+          _max: { dealConfidence: true },
+          _avg: { dealConfidence: true }
+        })
+      : { _min: { dealConfidence: null }, _max: { dealConfidence: null }, _avg: { dealConfidence: null } };
 
     return {
       channels,

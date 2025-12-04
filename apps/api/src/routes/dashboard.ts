@@ -105,8 +105,6 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                 channels,
                 automations,
                 affiliateLinks,
-                recentProducts,
-                allRecentProducts, // All products to show what was filtered
                 keepaBudget
             ] = await Promise.all([
                 prisma.user.findUnique({
@@ -131,8 +129,33 @@ export async function dashboardRoutes(fastify: FastifyInstance) {
                     where: { userId },
                     select: { clicks: true, createdAt: true }
                 }),
-prisma.product.findMany({
-                    where: { discount: { gte: 40 } },
+                prisma.keepaMonthlyBudget.findUnique({
+                    where: {
+                        userId_month: { userId, month: new Date().toISOString().slice(0, 7) }
+                    }
+                })
+            ]);
+
+            // ═══════════════════════════════════════════════════════════════
+            // 1b. FETCH USER'S PRODUCTS (security: filter by user's linked products)
+            // ═══════════════════════════════════════════════════════════════
+
+            // Get user's product IDs from their affiliate links
+            const userProductLinks = await prisma.affiliateLink.findMany({
+                where: { userId },
+                select: { productId: true }
+            });
+            const userProductIds = userProductLinks
+                .map(l => l.productId)
+                .filter((id): id is string => Boolean(id));
+
+            // Fetch user's products with high discount
+            const recentProducts = userProductIds.length > 0
+                ? await prisma.product.findMany({
+                    where: {
+                        id: { in: userProductIds },
+                        discount: { gte: 40 }
+                    },
                     orderBy: { lastPriceCheckAt: 'desc' },
                     take: 10,
                     select: {
@@ -143,10 +166,14 @@ prisma.product.findMany({
                         lastPriceCheckAt: true,
                         scoreComponents: true
                     }
-                }),
-                // Get ALL recent products in last 24h (to show filtering stats)
-                prisma.product.findMany({
+                })
+                : [];
+
+            // Get user's recent products for stats
+            const allRecentProducts = userProductIds.length > 0
+                ? await prisma.product.findMany({
                     where: {
+                        id: { in: userProductIds },
                         lastPriceCheckAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
                     },
                     orderBy: { lastPriceCheckAt: 'desc' },
@@ -156,13 +183,8 @@ prisma.product.findMany({
                         discount: true,
                         scoreComponents: true
                     }
-                }),
-                prisma.keepaMonthlyBudget.findUnique({
-                    where: {
-                        userId_month: { userId, month: new Date().toISOString().slice(0, 7) }
-                    }
                 })
-            ]);
+                : [];
 
             // ═══════════════════════════════════════════════════════════════
             // 2. CALCULATE METRICS
