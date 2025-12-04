@@ -12,7 +12,8 @@ import {
     ArrowLeft,
     Settings,
     Tag,
-    Sparkles
+    Sparkles,
+    BarChart3
 } from 'lucide-react';
 import { CommandBar } from '@/components/navigation/CommandBar';
 import { NotificationWrapper } from '@/components/notifications';
@@ -37,6 +38,7 @@ export default function SettingsLayout({
         { key: 'billing', icon: CreditCard, path: `/${locale}/settings/billing` },
         { key: 'apiKeys', icon: Key, path: `/${locale}/settings/api-keys` },
         { key: 'affiliateTags', icon: Tag, path: `/${locale}/settings/affiliate-tags` },
+        { key: 'amazonAssociates', icon: BarChart3, path: `/${locale}/settings/amazon-associates` },
         { key: 'notifications', icon: Bell, path: `/${locale}/settings/notifications` },
         { key: 'security', icon: Shield, path: `/${locale}/settings/security` },
         { key: 'tester', icon: Sparkles, path: `/${locale}/settings/tester` },
