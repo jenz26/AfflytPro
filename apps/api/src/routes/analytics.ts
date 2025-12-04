@@ -1764,6 +1764,361 @@ export default async function analyticsRoutes(app: FastifyInstance) {
   });
 
   /**
+   * GET /analytics/telegram-channels
+   * Returns detailed analytics per Telegram channel
+   * Uses telegramChannelId tracking from clicks
+   */
+  app.get('/telegram-channels', {
+    onRequest: [app.authenticate]
+  }, async (req, reply) => {
+    const userId = (req.user as any).userId;
+    const { period = '7d' } = req.query as { period?: string };
+
+    const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
+    const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+
+    // Get user's links
+    const userLinks = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: { id: true }
+    });
+    const linkIds = userLinks.map(l => l.id);
+
+    if (linkIds.length === 0) {
+      return {
+        channels: [],
+        totals: { clicks: 0, uniqueClicks: 0, conversions: 0, revenue: 0 },
+        period: periodDays
+      };
+    }
+
+    // Get clicks with Telegram tracking data
+    const clicks = await prisma.click.findMany({
+      where: {
+        linkId: { in: linkIds },
+        clickedAt: { gte: startDate },
+        telegramChannelId: { not: null },
+        isBot: false
+      },
+      select: {
+        telegramChannelId: true,
+        telegramMessageId: true,
+        postTimestamp: true,
+        clickedAt: true,
+        isUniqueVisitor: true,
+        linkId: true
+      }
+    });
+
+    // Get conversions for these links
+    const conversions = await prisma.conversion.findMany({
+      where: {
+        linkId: { in: linkIds },
+        convertedAt: { gte: startDate }
+      },
+      select: {
+        linkId: true,
+        revenue: true,
+        commission: true
+      }
+    });
+
+    // Build conversion map by linkId
+    const conversionMap = new Map<string, { count: number; revenue: number }>();
+    conversions.forEach(c => {
+      const entry = conversionMap.get(c.linkId) || { count: 0, revenue: 0 };
+      entry.count++;
+      entry.revenue += c.commission || c.revenue * 0.05;
+      conversionMap.set(c.linkId, entry);
+    });
+
+    // Get user's channels for name lookup
+    const userChannels = await prisma.channel.findMany({
+      where: { userId, platform: 'TELEGRAM' },
+      select: { channelId: true, name: true }
+    });
+    const channelNameMap = new Map(userChannels.map(c => [c.channelId, c.name]));
+
+    // Group by Telegram channel
+    const channelMap = new Map<string, {
+      clicks: number;
+      uniqueClicks: number;
+      linkIds: Set<string>;
+      messageIds: Set<string>;
+      timeToClicks: number[]; // in minutes
+      clicksByHour: number[];
+    }>();
+
+    clicks.forEach(click => {
+      const chId = click.telegramChannelId!;
+      const entry = channelMap.get(chId) || {
+        clicks: 0,
+        uniqueClicks: 0,
+        linkIds: new Set(),
+        messageIds: new Set(),
+        timeToClicks: [],
+        clicksByHour: new Array(24).fill(0)
+      };
+
+      entry.clicks++;
+      if (click.isUniqueVisitor) entry.uniqueClicks++;
+      entry.linkIds.add(click.linkId);
+      if (click.telegramMessageId) entry.messageIds.add(click.telegramMessageId);
+      entry.clicksByHour[click.clickedAt.getHours()]++;
+
+      // Calculate time-to-click if we have post timestamp
+      if (click.postTimestamp) {
+        const ttc = (click.clickedAt.getTime() - click.postTimestamp.getTime()) / (1000 * 60);
+        if (ttc >= 0 && ttc < 60 * 24 * 7) { // Only count if within 7 days
+          entry.timeToClicks.push(ttc);
+        }
+      }
+
+      channelMap.set(chId, entry);
+    });
+
+    // Build channel stats
+    const channels = Array.from(channelMap.entries()).map(([channelId, data]) => {
+      // Calculate conversions and revenue for this channel's links
+      let channelConversions = 0;
+      let channelRevenue = 0;
+      data.linkIds.forEach(linkId => {
+        const conv = conversionMap.get(linkId);
+        if (conv) {
+          channelConversions += conv.count;
+          channelRevenue += conv.revenue;
+        }
+      });
+
+      // Calculate average time-to-click
+      const avgTimeToClick = data.timeToClicks.length > 0
+        ? Math.round(data.timeToClicks.reduce((a, b) => a + b, 0) / data.timeToClicks.length)
+        : null;
+
+      // Find best posting hour (most clicks)
+      const bestHour = data.clicksByHour.indexOf(Math.max(...data.clicksByHour));
+
+      // CVR and EPC
+      const cvr = data.clicks > 0 ? (channelConversions / data.clicks) * 100 : 0;
+      const epc = data.clicks > 0 ? channelRevenue / data.clicks : 0;
+
+      return {
+        channelId,
+        channelName: channelNameMap.get(channelId) || channelId,
+        clicks: data.clicks,
+        uniqueClicks: data.uniqueClicks,
+        conversions: channelConversions,
+        revenue: Math.round(channelRevenue * 100) / 100,
+        cvr: Math.round(cvr * 100) / 100,
+        epc: Math.round(epc * 100) / 100,
+        uniqueMessages: data.messageIds.size,
+        linksPromoted: data.linkIds.size,
+        avgClicksPerMessage: data.messageIds.size > 0
+          ? Math.round((data.clicks / data.messageIds.size) * 10) / 10
+          : 0,
+        avgTimeToClickMinutes: avgTimeToClick,
+        bestPostingHour: bestHour,
+        clicksByHour: data.clicksByHour
+      };
+    });
+
+    // Sort by clicks
+    channels.sort((a, b) => b.clicks - a.clicks);
+
+    // Calculate totals
+    const totals = {
+      clicks: channels.reduce((sum, c) => sum + c.clicks, 0),
+      uniqueClicks: channels.reduce((sum, c) => sum + c.uniqueClicks, 0),
+      conversions: channels.reduce((sum, c) => sum + c.conversions, 0),
+      revenue: Math.round(channels.reduce((sum, c) => sum + c.revenue, 0) * 100) / 100
+    };
+
+    return {
+      channels,
+      totals,
+      period: periodDays
+    };
+  });
+
+  /**
+   * GET /analytics/telegram-channel/:channelId
+   * Returns detailed analytics for a specific Telegram channel
+   */
+  app.get('/telegram-channel/:channelId', {
+    onRequest: [app.authenticate]
+  }, async (req, reply) => {
+    const userId = (req.user as any).userId;
+    const { channelId } = req.params as { channelId: string };
+    const { period = '7d' } = req.query as { period?: string };
+
+    const periodDays = period === '30d' ? 30 : period === 'today' ? 1 : 7;
+    const startDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000);
+
+    // Verify user owns this channel
+    const channel = await prisma.channel.findFirst({
+      where: { userId, channelId, platform: 'TELEGRAM' }
+    });
+
+    if (!channel) {
+      return reply.code(404).send({ error: 'Channel not found' });
+    }
+
+    // Get user's links
+    const userLinks = await prisma.affiliateLink.findMany({
+      where: { userId },
+      select: { id: true }
+    });
+    const linkIds = userLinks.map(l => l.id);
+
+    // Get clicks for this specific channel
+    const clicks = await prisma.click.findMany({
+      where: {
+        linkId: { in: linkIds },
+        clickedAt: { gte: startDate },
+        telegramChannelId: channelId,
+        isBot: false
+      },
+      select: {
+        telegramMessageId: true,
+        postTimestamp: true,
+        clickedAt: true,
+        isUniqueVisitor: true,
+        linkId: true,
+        deviceType: true,
+        country: true
+      }
+    });
+
+    // Get deal history for this channel (via ChannelDealHistory)
+    const dealHistory = await prisma.channelDealHistory.findMany({
+      where: {
+        channelId: channel.id,
+        publishedAt: { gte: startDate }
+      },
+      select: {
+        asin: true,
+        publishedAt: true,
+        telegramMessageId: true,
+        generatedCopy: true
+      },
+      orderBy: { publishedAt: 'desc' }
+    });
+
+    // Group clicks by message
+    const messageMap = new Map<string, {
+      clicks: number;
+      uniqueClicks: number;
+      timeToClicks: number[];
+      firstClickAt: Date | null;
+      publishedAt: Date | null;
+    }>();
+
+    clicks.forEach(click => {
+      const msgId = click.telegramMessageId || 'unknown';
+      const entry = messageMap.get(msgId) || {
+        clicks: 0,
+        uniqueClicks: 0,
+        timeToClicks: [],
+        firstClickAt: null,
+        publishedAt: click.postTimestamp
+      };
+
+      entry.clicks++;
+      if (click.isUniqueVisitor) entry.uniqueClicks++;
+
+      if (!entry.firstClickAt || click.clickedAt < entry.firstClickAt) {
+        entry.firstClickAt = click.clickedAt;
+      }
+
+      if (click.postTimestamp) {
+        const ttc = (click.clickedAt.getTime() - click.postTimestamp.getTime()) / (1000 * 60);
+        if (ttc >= 0 && ttc < 60 * 24 * 7) {
+          entry.timeToClicks.push(ttc);
+        }
+      }
+
+      messageMap.set(msgId, entry);
+    });
+
+    // Build message stats
+    const messages = Array.from(messageMap.entries())
+      .filter(([msgId]) => msgId !== 'unknown')
+      .map(([messageId, data]) => ({
+        messageId,
+        clicks: data.clicks,
+        uniqueClicks: data.uniqueClicks,
+        avgTimeToClickMinutes: data.timeToClicks.length > 0
+          ? Math.round(data.timeToClicks.reduce((a, b) => a + b, 0) / data.timeToClicks.length)
+          : null,
+        publishedAt: data.publishedAt?.toISOString() || null,
+        firstClickAt: data.firstClickAt?.toISOString() || null
+      }))
+      .sort((a, b) => b.clicks - a.clicks);
+
+    // Device breakdown
+    const deviceMap = new Map<string, number>();
+    clicks.forEach(c => {
+      const device = c.deviceType || 'unknown';
+      deviceMap.set(device, (deviceMap.get(device) || 0) + 1);
+    });
+
+    const devices = Array.from(deviceMap.entries())
+      .map(([device, count]) => ({
+        device,
+        count,
+        percent: clicks.length > 0 ? Math.round((count / clicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Country breakdown
+    const countryMap = new Map<string, number>();
+    clicks.forEach(c => {
+      if (c.country) {
+        countryMap.set(c.country, (countryMap.get(c.country) || 0) + 1);
+      }
+    });
+
+    const countries = Array.from(countryMap.entries())
+      .map(([country, count]) => ({
+        country,
+        count,
+        percent: clicks.length > 0 ? Math.round((count / clicks.length) * 1000) / 10 : 0
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Time series (clicks by day)
+    const dayMap = new Map<string, number>();
+    clicks.forEach(c => {
+      const day = c.clickedAt.toISOString().split('T')[0];
+      dayMap.set(day, (dayMap.get(day) || 0) + 1);
+    });
+
+    const timeSeries = Array.from(dayMap.entries())
+      .map(([date, clicks]) => ({ date, clicks }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return {
+      channel: {
+        id: channel.id,
+        channelId: channel.channelId,
+        name: channel.name
+      },
+      summary: {
+        totalClicks: clicks.length,
+        uniqueClicks: clicks.filter(c => c.isUniqueVisitor).length,
+        totalMessages: messageMap.size,
+        dealsPublished: dealHistory.length
+      },
+      topMessages: messages.slice(0, 10),
+      devices,
+      countries,
+      timeSeries,
+      period: periodDays
+    };
+  });
+
+  /**
    * GET /analytics/export/summary
    * Export summary report as JSON (for PDF generation on client)
    */

@@ -19,7 +19,8 @@ import {
     Brain,
     Lock,
     Users,
-    Gauge
+    Gauge,
+    Send
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import {
@@ -36,8 +37,10 @@ import {
     AudienceAnalytics,
     AnalyticsFilters,
     DealScoreAnalytics,
+    TelegramChannelsAnalytics,
     type AudienceData,
-    type AnalyticsFiltersState
+    type AnalyticsFiltersState,
+    type TelegramChannelsData
 } from '@/components/analytics';
 import { API_BASE } from '@/lib/api/config';
 
@@ -211,6 +214,7 @@ export default function AnalyticsPage() {
         { id: 'overview', label: t('tabs.overview'), icon: LayoutDashboard, locked: false },
         { id: 'audience', label: t('tabs.audience'), icon: Users, locked: false },
         { id: 'channels', label: t('tabs.channels'), icon: Radio, locked: false },
+        { id: 'telegram', label: 'Telegram', icon: Send, locked: false },
         { id: 'products', label: t('tabs.products'), icon: Package, locked: false },
         { id: 'dealscore', label: 'Deal Score', icon: Gauge, locked: false },
         { id: 'time', label: t('tabs.time'), icon: CalendarClock, locked: false },
@@ -235,6 +239,10 @@ export default function AnalyticsPage() {
     // Deal score state
     const [dealScoreData, setDealScoreData] = useState<DealScoreData | null>(null);
     const [dealScoreLoading, setDealScoreLoading] = useState(false);
+
+    // Telegram channels state
+    const [telegramData, setTelegramData] = useState<TelegramChannelsData | null>(null);
+    const [telegramLoading, setTelegramLoading] = useState(false);
 
     // Build filter query string
     const buildFilterQuery = (baseParams: Record<string, string> = {}) => {
@@ -392,6 +400,27 @@ export default function AnalyticsPage() {
         }
     };
 
+    // Fetch Telegram Channels Analytics
+    const fetchTelegramData = async () => {
+        setTelegramLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const res = await fetch(`${API_BASE}/analytics/telegram-channels?period=${period}`, { headers });
+
+            if (res.ok) {
+                const data = await res.json();
+                setTelegramData(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch telegram data:', err);
+        } finally {
+            setTelegramLoading(false);
+        }
+    };
+
     // Fetch filter metadata on mount
     useEffect(() => {
         fetchFiltersMetadata();
@@ -422,6 +451,13 @@ export default function AnalyticsPage() {
             fetchDealScoreData();
         }
     }, [activeTab, period, filters]);
+
+    // Fetch telegram data when tab changes to telegram
+    useEffect(() => {
+        if (activeTab === 'telegram' && !telegramData) {
+            fetchTelegramData();
+        }
+    }, [activeTab, period]);
 
     // Generate insight based on data
     const generateInsight = () => {
@@ -694,6 +730,14 @@ export default function AnalyticsPage() {
                     channels={channels?.channels || []}
                     totals={channels?.totals || { clicks: 0, revenue: 0 }}
                     loading={loading}
+                />
+            )}
+
+            {/* Tab: Telegram Channels */}
+            {activeTab === 'telegram' && (
+                <TelegramChannelsAnalytics
+                    data={telegramData}
+                    loading={telegramLoading}
                 />
             )}
 

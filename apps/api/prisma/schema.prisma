@@ -262,6 +262,7 @@ model User {
   scheduledPosts     ScheduledPost[]
   affiliateTags      AffiliateTag[]
   sessions           Session[]
+  telegramUsers      TelegramUser[] // Telegram users linked to this account
 
   @@index([email])
   @@index([plan])
@@ -340,6 +341,7 @@ model Credential {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   channels  Channel[]
+  telegramUsers TelegramUser[] // Telegram users tracked by this bot credential
 
   @@index([userId])
   @@index([provider])
@@ -398,7 +400,15 @@ model ChannelDealHistory {
   /// Prezzo al momento della generazione (per rigenerare se cambia)
   priceAtGeneration Float?
 
+  // ═══════════════════════════════════════════════════════════════
+  // TELEGRAM MESSAGE TRACKING
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Telegram message ID returned after publishing
+  telegramMessageId String?
+
   @@unique([channelId, asin])
+  @@index([telegramMessageId])
   @@index([channelId])
   @@index([expiresAt])
 }
@@ -1555,4 +1565,81 @@ model Session {
   @@index([tokenHash])
   @@index([expiresAt])
   @@index([isRevoked])
+}
+
+// === TELEGRAM USER TRACKING ===
+// Tracks Telegram users who interact with affiliate bots for attribution
+
+model TelegramUser {
+  id String @id @default(cuid())
+
+  // Telegram user data
+  telegramUserId   String  // Telegram user ID (BigInt as string)
+  username         String? // @username (may be null)
+  firstName        String?
+  lastName         String?
+  languageCode     String? // e.g., "it", "en"
+  isPremium        Boolean @default(false)
+
+  // Chat for direct messaging (private chat with bot)
+  privateChatId    String? // Chat ID for 1:1 communication
+
+  // Bot relation (which bot they interacted with)
+  credentialId     String?
+  credential       Credential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+
+  // Optional: Link to Afflyt user if they authenticated
+  linkedUserId     String?
+  linkedUser       User?    @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+
+  // Engagement tracking
+  firstSeenAt      DateTime @default(now())
+  lastActiveAt     DateTime @default(now())
+  messageCount     Int      @default(0) // Messages sent to bot
+  clickCount       Int      @default(0) // Affiliate link clicks
+
+  // Source tracking (how they found the bot)
+  sourceChannelId  String? // Channel where they first saw a deal
+  sourceMessageId  String? // Message that brought them
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  interactions TelegramInteraction[]
+
+  @@unique([telegramUserId, credentialId])
+  @@index([telegramUserId])
+  @@index([username])
+  @@index([linkedUserId])
+  @@index([credentialId])
+  @@index([lastActiveAt])
+}
+
+// Track individual interactions from Telegram users
+model TelegramInteraction {
+  id String @id @default(cuid())
+
+  telegramUserId String
+  telegramUser   TelegramUser @relation(fields: [telegramUserId], references: [id], onDelete: Cascade)
+
+  // Interaction type
+  type           String // 'click' | 'message' | 'command' | 'callback'
+
+  // Context
+  channelId      String? // Channel where interaction originated
+  messageId      String? // Message ID if applicable
+  asin           String? // Product ASIN if click
+  linkId         String? // AffiliateLink ID if click
+
+  // Metadata
+  data           Json?   // Additional interaction data
+
+  createdAt DateTime @default(now())
+
+  @@index([telegramUserId])
+  @@index([type])
+  @@index([channelId])
+  @@index([asin])
+  @@index([createdAt])
 }

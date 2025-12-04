@@ -748,14 +748,15 @@ export class KeepaWorker {
       );
 
       if (result.success) {
-        // Record in history with copy metadata
+        // Record in history with copy metadata and Telegram message ID
         await this.recordDealPublished(
           rule.channelId,
           deal.asin,
           rule.ruleId,
           copyResult.text,
           copyResult.source,
-          deal.currentPrice
+          deal.currentPrice,
+          result.messageId // Telegram message ID for tracking
         );
         publishedCount++;
 
@@ -827,7 +828,8 @@ export class KeepaWorker {
     ruleId: string,
     generatedCopy?: string,
     copySource?: string,
-    priceAtGeneration?: number
+    priceAtGeneration?: number,
+    telegramMessageId?: number
   ): Promise<void> {
     // Get rule's dedupeWindowHours
     const rule = await this.prisma.automationRule.findUnique({
@@ -853,7 +855,8 @@ export class KeepaWorker {
         generatedCopy,
         copySource,
         copyGeneratedAt: generatedCopy ? new Date() : undefined,
-        priceAtGeneration
+        priceAtGeneration,
+        telegramMessageId: telegramMessageId?.toString()
       },
       update: {
         ruleId,
@@ -862,7 +865,8 @@ export class KeepaWorker {
         generatedCopy,
         copySource,
         copyGeneratedAt: generatedCopy ? new Date() : undefined,
-        priceAtGeneration
+        priceAtGeneration,
+        telegramMessageId: telegramMessageId?.toString()
       }
     });
   }
