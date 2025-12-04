@@ -1,35 +1,39 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 import { LandingButton } from './LandingButton';
 
 interface LandingFormProps {
-  onSubmit: (email: string) => Promise<{ success: boolean; message?: string }>;
+  onSubmit?: (email: string) => Promise<{ success: boolean; message?: string }>;
   placeholder?: string;
   buttonText?: string;
   successMessage?: string;
   className?: string;
-  variant?: 'default' | 'inline' | 'stacked';
 }
 
-/**
- * LandingForm - Beta signup form for landing pages
- *
- * Variants:
- * - default: Email input + button side by side
- * - inline: Compact inline version
- * - stacked: Vertical layout for mobile
- */
+// Default form handler for beta signup
+const defaultFormSubmit = async (email: string): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const res = await fetch('/api/beta-signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    return { success: res.ok, message: data.message };
+  } catch {
+    return { success: false, message: 'Errore di connessione. Riprova.' };
+  }
+};
+
 export function LandingForm({
-  onSubmit,
+  onSubmit = defaultFormSubmit,
   placeholder = 'La tua email',
   buttonText = 'Richiedi Accesso',
   successMessage = 'Richiesta inviata! Ti contatteremo presto.',
-  className,
-  variant = 'default',
+  className = '',
 }: LandingFormProps) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -63,19 +67,13 @@ export function LandingForm({
     }
   };
 
-  const isStacked = variant === 'stacked';
-
   // Success state
   if (status === 'success') {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={cn(
-          'flex items-center gap-3 p-4 rounded-xl',
-          'bg-emerald-500/10 border border-emerald-500/30',
-          className
-        )}
+        className={`flex items-center gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 ${className}`}
       >
         <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
         <p className="text-emerald-300">{message}</p>
@@ -84,16 +82,8 @@ export function LandingForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={cn(
-        'relative',
-        isStacked ? 'space-y-3' : 'flex gap-3',
-        className
-      )}
-    >
-      {/* Input Container */}
-      <div className={cn('relative', isStacked ? 'w-full' : 'flex-1')}>
+    <form onSubmit={handleSubmit} className={`flex gap-3 ${className}`}>
+      <div className="relative flex-1">
         <input
           type="email"
           value={email}
@@ -103,20 +93,17 @@ export function LandingForm({
           }}
           placeholder={placeholder}
           disabled={status === 'loading'}
-          className={cn(
-            'w-full px-5 py-4 rounded-xl',
-            'bg-white/5 backdrop-blur-sm',
-            'border transition-colors duration-300',
-            'text-white placeholder:text-gray-500',
-            'focus:outline-none focus:ring-2 focus:ring-afflyt-cyan-500/50',
-            status === 'error'
-              ? 'border-red-500/50'
-              : 'border-white/10 hover:border-white/20 focus:border-afflyt-cyan-500/50',
-            status === 'loading' && 'opacity-50 cursor-not-allowed'
-          )}
+          className={`
+            w-full px-5 py-4 rounded-xl
+            bg-white/5 backdrop-blur-sm
+            border transition-colors duration-300
+            text-white placeholder:text-gray-500
+            focus:outline-none focus:ring-2 focus:ring-afflyt-cyan-500/50
+            ${status === 'error' ? 'border-red-500/50' : 'border-white/10 hover:border-white/20 focus:border-afflyt-cyan-500/50'}
+            ${status === 'loading' ? 'opacity-50 cursor-not-allowed' : ''}
+          `}
         />
 
-        {/* Error message */}
         {status === 'error' && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -129,15 +116,7 @@ export function LandingForm({
         )}
       </div>
 
-      {/* Submit Button */}
-      <LandingButton
-        type="submit"
-        disabled={status === 'loading'}
-        className={cn(
-          isStacked && 'w-full',
-          variant === 'inline' && 'px-4'
-        )}
-      >
+      <LandingButton type="submit" disabled={status === 'loading'}>
         {status === 'loading' ? (
           <>
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -146,7 +125,7 @@ export function LandingForm({
         ) : (
           <>
             <span>{buttonText}</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5 ml-2" />
           </>
         )}
       </LandingButton>

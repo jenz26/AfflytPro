@@ -1,25 +1,32 @@
-'use client';
-
 import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
 
 interface LandingSectionProps {
   children: ReactNode;
   className?: string;
   id?: string;
+  background?: 'default' | 'dark' | 'gradient';
 }
 
-export function LandingSection({ children, className = '', id }: LandingSectionProps) {
+export function LandingSection({
+  children,
+  className = '',
+  id,
+  background = 'default'
+}: LandingSectionProps) {
+  const bgClasses = {
+    default: '',
+    dark: 'bg-afflyt-dark-950/50',
+    gradient: 'bg-gradient-to-b from-transparent to-afflyt-dark-950/30',
+  };
+
   return (
-    <motion.section
+    <section
       id={id}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.5 }}
-      className={`px-4 py-16 md:py-24 max-w-6xl mx-auto ${className}`}
+      className={`px-4 py-16 md:py-24 ${bgClasses[background]} ${className}`}
     >
-      {children}
-    </motion.section>
+      <div className="max-w-6xl mx-auto">
+        {children}
+      </div>
+    </section>
   );
 }
