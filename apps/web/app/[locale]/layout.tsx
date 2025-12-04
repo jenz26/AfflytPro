@@ -4,7 +4,6 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
-import { FeedbackWidgetWrapper } from '@/components/feedback/FeedbackWidgetWrapper';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -54,7 +53,6 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <PostHogProvider>
             {children}
-            <FeedbackWidgetWrapper />
           </PostHogProvider>
         </NextIntlClientProvider>
       </body>
