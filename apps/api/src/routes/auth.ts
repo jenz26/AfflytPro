@@ -1808,7 +1808,20 @@ export async function authRoutes(fastify: FastifyInstance) {
 
         if (existingUser) {
           fastify.log.info({ email: normalizedEmail }, '[Beta Signup] User already exists');
-          // Don't reveal if email exists, just return success
+
+          // Send confirmation email anyway (user might not have received it before)
+          AuthEmailService.sendBetaWaitlistConfirmation(normalizedEmail, 'it')
+            .then(result => {
+              if (result.success) {
+                fastify.log.info({ email: normalizedEmail }, '[Beta Signup] Reminder email sent to existing user');
+              } else {
+                fastify.log.warn({ email: normalizedEmail, error: result.error }, '[Beta Signup] Failed to send reminder email');
+              }
+            })
+            .catch(err => {
+              fastify.log.error({ email: normalizedEmail, error: err }, '[Beta Signup] Error sending reminder email');
+            });
+
           return reply.send({
             success: true,
             message: 'Sei gia nella lista! Ti contatteremo presto.',
