@@ -221,6 +221,16 @@ export function useAmazonImport() {
     setFiles([]);
   }, []);
 
+  // Read file content as text
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
   // Start import
   const startImport = useCallback(async () => {
     const readyFiles = files.filter((f) => f.status === 'ready');
@@ -235,19 +245,28 @@ export function useAmazonImport() {
 
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-      readyFiles.forEach((f) => formData.append('files', f.file));
+
+      // Read all file contents as text
+      const fileContents = await Promise.all(
+        readyFiles.map(async (f) => ({
+          content: await readFileAsText(f.file),
+          fileName: f.file.name,
+          reportType: f.type || undefined,
+        }))
+      );
 
       const res = await fetch(`${API_BASE}/user/amazon-import/upload-multiple`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({ files: fileContents }),
       });
 
       if (!res.ok) {
-        throw new Error('Upload failed');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
       }
 
       const data = await res.json();
@@ -258,8 +277,9 @@ export function useAmazonImport() {
           const result = data.results?.find((r: any) => r.fileName === f.file.name);
           return {
             ...f,
-            status: 'done' as const,
+            status: result?.success ? 'done' as const : 'error' as const,
             result,
+            error: result?.error,
           };
         })
       );
