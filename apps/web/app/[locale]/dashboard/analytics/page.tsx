@@ -346,7 +346,7 @@ export default function AnalyticsPage() {
             if (!token) return;
 
             const headers = { 'Authorization': `Bearer ${token}` };
-            const res = await fetch(`${API_BASE}/analytics/insights?period=${period}`, { headers });
+            const res = await fetch(`${API_BASE}/analytics/insights?period=${period}&locale=${locale}`, { headers });
 
             if (res.ok) {
                 const data = await res.json();

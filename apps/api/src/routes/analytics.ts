@@ -864,6 +864,104 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     };
   });
 
+  // Translations for AI Insights
+  const insightTranslations = {
+    en: {
+      getStarted: {
+        title: 'Get Started with Affiliate Links',
+        description: 'Create your first affiliate links to start receiving personalized AI insights.'
+      },
+      revenueGrowing: {
+        title: 'Revenue Growing Strong',
+        description: (percent: number) => `Your revenue has increased by ${percent}% compared to the previous period. Keep promoting the same products and channels!`
+      },
+      revenueDeclining: {
+        title: 'Revenue Declining',
+        description: (percent: number) => `Your revenue has dropped by ${percent}%. Consider refreshing your content or trying different products.`
+      },
+      exceptionalCvr: {
+        title: 'Exceptional Conversion Rate',
+        description: (cvr: number, percent: number) => `Your CVR of ${cvr}% is ${percent}% above the industry benchmark. Your audience trusts your recommendations!`
+      },
+      lowCvr: {
+        title: 'Low Conversion Rate',
+        description: (cvr: number, benchmark: number) => `Your CVR of ${cvr}% is below the ${benchmark}% benchmark. Try promoting products more relevant to your audience.`
+      },
+      focusCategory: {
+        title: (category: string) => `Focus on ${category}`,
+        description: (best: string, multiplier: number, worst: string) => `${best} products convert ${multiplier}x better than ${worst}. Consider shifting focus to higher-converting categories.`
+      },
+      optimalTime: {
+        title: 'Optimal Posting Time',
+        description: (hour: number) => `Your audience is most active around ${hour}:00. Schedule your posts during this window for maximum engagement.`
+      },
+      linksNeedAttention: {
+        title: (count: number) => `${count} Links Need Attention`,
+        description: (count: number) => `You have ${count} link${count > 1 ? 's' : ''} with clicks but no conversions. Consider updating the products or targeting.`
+      },
+      unlockRevenue: {
+        title: 'Unlock More Revenue',
+        description: (amount: number) => `Based on your current performance, you could earn up to €${amount} by expanding to more channels. Try Telegram or Discord for new audiences.`
+      },
+      actions: {
+        createLink: 'Create Link',
+        viewTopProducts: 'View Top Products',
+        analyzeChannels: 'Analyze Channels',
+        viewCategoryStats: 'View Category Stats',
+        viewHeatmap: 'View Heatmap',
+        viewLinks: 'View Links',
+        addChannel: 'Add Channel'
+      }
+    },
+    it: {
+      getStarted: {
+        title: 'Inizia con i Link Affiliati',
+        description: 'Crea i tuoi primi link affiliati per ricevere insights AI personalizzati.'
+      },
+      revenueGrowing: {
+        title: 'Revenue in Crescita',
+        description: (percent: number) => `Le tue revenue sono aumentate del ${percent}% rispetto al periodo precedente. Continua a promuovere gli stessi prodotti e canali!`
+      },
+      revenueDeclining: {
+        title: 'Revenue in Calo',
+        description: (percent: number) => `Le tue revenue sono diminuite del ${percent}%. Considera di aggiornare i tuoi contenuti o provare prodotti diversi.`
+      },
+      exceptionalCvr: {
+        title: 'Tasso di Conversione Eccezionale',
+        description: (cvr: number, percent: number) => `Il tuo CVR del ${cvr}% è ${percent}% sopra il benchmark di settore. Il tuo pubblico si fida dei tuoi consigli!`
+      },
+      lowCvr: {
+        title: 'Tasso di Conversione Basso',
+        description: (cvr: number, benchmark: number) => `Il tuo CVR del ${cvr}% è sotto il benchmark del ${benchmark}%. Prova a promuovere prodotti più rilevanti per il tuo pubblico.`
+      },
+      focusCategory: {
+        title: (category: string) => `Concentrati su ${category}`,
+        description: (best: string, multiplier: number, worst: string) => `I prodotti ${best} convertono ${multiplier}x meglio di ${worst}. Considera di spostare il focus sulle categorie che convertono di più.`
+      },
+      optimalTime: {
+        title: 'Orario Ottimale di Pubblicazione',
+        description: (hour: number) => `Il tuo pubblico è più attivo intorno alle ${hour}:00. Programma i tuoi post in questa fascia oraria per massimizzare l'engagement.`
+      },
+      linksNeedAttention: {
+        title: (count: number) => `${count} Link Richiedono Attenzione`,
+        description: (count: number) => `Hai ${count} link con click ma nessuna conversione. Considera di aggiornare i prodotti o il targeting.`
+      },
+      unlockRevenue: {
+        title: 'Sblocca Più Revenue',
+        description: (amount: number) => `In base alle tue performance attuali, potresti guadagnare fino a €${amount} espandendoti su più canali. Prova Telegram o Discord per nuove audience.`
+      },
+      actions: {
+        createLink: 'Crea Link',
+        viewTopProducts: 'Vedi Top Prodotti',
+        analyzeChannels: 'Analizza Canali',
+        viewCategoryStats: 'Vedi Statistiche Categoria',
+        viewHeatmap: 'Vedi Heatmap',
+        viewLinks: 'Vedi Link',
+        addChannel: 'Aggiungi Canale'
+      }
+    }
+  };
+
   /**
    * GET /analytics/insights
    * Returns AI-generated insights based on user's data patterns
@@ -873,7 +971,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
     onRequest: [app.authenticate]
   }, async (req, reply) => {
     const userId = (req.user as any).userId;
-    const { period = '30d' } = req.query as { period?: string };
+    const { period = '30d', locale = 'en' } = req.query as { period?: string; locale?: string };
+    const t = insightTranslations[locale as keyof typeof insightTranslations] || insightTranslations.en;
 
     // Check user plan (PRO feature)
     const user = await prisma.user.findUnique({
@@ -913,13 +1012,14 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         insights: [{
           type: 'info',
           category: 'getting_started',
-          title: 'Get Started with Affiliate Links',
-          description: 'Create your first affiliate links to start receiving personalized AI insights.',
+          title: t.getStarted.title,
+          description: t.getStarted.description,
           priority: 'high',
           actionable: true,
-          action: { label: 'Create Link', href: '/dashboard/links/new' }
+          action: { label: t.actions.createLink, href: '/dashboard/links/new' }
         }],
         score: 0,
+        summary: { totalLinks: 0, activeLinks: 0, totalClicks: 0, totalConversions: 0, totalRevenue: 0, cvr: 0 },
         period: periodDays
       };
     }
@@ -964,8 +1064,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'success',
         category: 'revenue',
-        title: 'Revenue Growing Strong',
-        description: `Your revenue has increased by ${Math.round(revenueChange)}% compared to the previous period. Keep promoting the same products and channels!`,
+        title: t.revenueGrowing.title,
+        description: t.revenueGrowing.description(Math.round(revenueChange)),
         priority: 'high',
         actionable: false,
         metric: { value: Math.round(revenueChange), unit: '%', trend: 'up' }
@@ -974,11 +1074,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'warning',
         category: 'revenue',
-        title: 'Revenue Declining',
-        description: `Your revenue has dropped by ${Math.abs(Math.round(revenueChange))}%. Consider refreshing your content or trying different products.`,
+        title: t.revenueDeclining.title,
+        description: t.revenueDeclining.description(Math.abs(Math.round(revenueChange))),
         priority: 'high',
         actionable: true,
-        action: { label: 'View Top Products', href: '/dashboard/analytics?tab=products' },
+        action: { label: t.actions.viewTopProducts, href: '/dashboard/analytics?tab=products' },
         metric: { value: Math.abs(Math.round(revenueChange)), unit: '%', trend: 'down' }
       });
     }
@@ -989,8 +1089,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'success',
         category: 'conversion',
-        title: 'Exceptional Conversion Rate',
-        description: `Your CVR of ${currentCvr.toFixed(1)}% is ${Math.round((currentCvr / benchmarkCvr - 1) * 100)}% above the industry benchmark. Your audience trusts your recommendations!`,
+        title: t.exceptionalCvr.title,
+        description: t.exceptionalCvr.description(parseFloat(currentCvr.toFixed(1)), Math.round((currentCvr / benchmarkCvr - 1) * 100)),
         priority: 'medium',
         actionable: false,
         metric: { value: parseFloat(currentCvr.toFixed(1)), unit: '%' }
@@ -999,11 +1099,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'warning',
         category: 'conversion',
-        title: 'Low Conversion Rate',
-        description: `Your CVR of ${currentCvr.toFixed(1)}% is below the ${benchmarkCvr}% benchmark. Try promoting products more relevant to your audience.`,
+        title: t.lowCvr.title,
+        description: t.lowCvr.description(parseFloat(currentCvr.toFixed(1)), benchmarkCvr),
         priority: 'high',
         actionable: true,
-        action: { label: 'Analyze Channels', href: '/dashboard/analytics?tab=channels' }
+        action: { label: t.actions.analyzeChannels, href: '/dashboard/analytics?tab=channels' }
       });
     }
 
@@ -1037,11 +1137,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
         insights.push({
           type: 'opportunity',
           category: 'optimization',
-          title: `Focus on ${bestCategory.category}`,
-          description: `${bestCategory.category} products convert ${Math.round(bestCategory.cvr / worstCategory.cvr)}x better than ${worstCategory.category}. Consider shifting focus to higher-converting categories.`,
+          title: t.focusCategory.title(bestCategory.category),
+          description: t.focusCategory.description(bestCategory.category, Math.round(bestCategory.cvr / worstCategory.cvr), worstCategory.category),
           priority: 'medium',
           actionable: true,
-          action: { label: 'View Category Stats', href: '/dashboard/analytics?tab=products' }
+          action: { label: t.actions.viewCategoryStats, href: '/dashboard/analytics?tab=products' }
         });
       }
     }
@@ -1064,11 +1164,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'info',
         category: 'timing',
-        title: 'Optimal Posting Time',
-        description: `Your audience is most active around ${maxHour}:00. Schedule your posts during this window for maximum engagement.`,
+        title: t.optimalTime.title,
+        description: t.optimalTime.description(maxHour),
         priority: 'low',
         actionable: true,
-        action: { label: 'View Heatmap', href: '/dashboard/analytics?tab=time' }
+        action: { label: t.actions.viewHeatmap, href: '/dashboard/analytics?tab=time' }
       });
     }
 
@@ -1084,11 +1184,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'warning',
         category: 'links',
-        title: `${underperformers.length} Links Need Attention`,
-        description: `You have ${underperformers.length} link${underperformers.length > 1 ? 's' : ''} with clicks but no conversions. Consider updating the products or targeting.`,
+        title: t.linksNeedAttention.title(underperformers.length),
+        description: t.linksNeedAttention.description(underperformers.length),
         priority: 'medium',
         actionable: true,
-        action: { label: 'View Links', href: '/dashboard/links' }
+        action: { label: t.actions.viewLinks, href: '/dashboard/links' }
       });
     }
 
@@ -1098,11 +1198,11 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       insights.push({
         type: 'opportunity',
         category: 'growth',
-        title: 'Unlock More Revenue',
-        description: `Based on your current performance, you could earn up to €${estimatedPotential} by expanding to more channels. Try Telegram or Discord for new audiences.`,
+        title: t.unlockRevenue.title,
+        description: t.unlockRevenue.description(estimatedPotential),
         priority: 'low',
         actionable: true,
-        action: { label: 'Add Channel', href: '/dashboard/channels' }
+        action: { label: t.actions.addChannel, href: '/dashboard/channels' }
       });
     }
 

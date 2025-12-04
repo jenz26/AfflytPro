@@ -2112,6 +2112,75 @@
       "upgrade": "Passa a PRO - €49/mese",
       "note": "Accesso completo ad analytics avanzate, intervalli di date personalizzati e AI insights"
     },
+    "aiInsights": {
+      "healthScore": "Punteggio Salute Performance",
+      "healthScoreDesc": "Analisi AI delle tue performance affiliate",
+      "outOf": "su 100",
+      "activeLinks": "Link Attivi",
+      "totalClicks": "Click Totali",
+      "conversions": "Conversioni",
+      "revenue": "Revenue",
+      "cvr": "CVR",
+      "insightsFound": "Insights Trovati",
+      "recommendations": "Raccomandazioni AI",
+      "insightsCount": "{count} insights",
+      "allGood": "Tutto OK!",
+      "allGoodDesc": "Nessun problema critico al momento. Continua così!",
+      "proTip": "Consiglio Pro",
+      "proTipText": "Controlla i tuoi insights settimanalmente per restare al passo con i trend e ottimizzare la tua strategia affiliate.",
+      "priority": {
+        "high": "alta",
+        "medium": "media",
+        "low": "bassa"
+      },
+      "insights": {
+        "getStarted": {
+          "title": "Inizia con i Link Affiliati",
+          "description": "Crea i tuoi primi link affiliati per ricevere insights AI personalizzati."
+        },
+        "revenueGrowing": {
+          "title": "Revenue in Crescita",
+          "description": "Le tue revenue sono aumentate del {percent}% rispetto al periodo precedente. Continua a promuovere gli stessi prodotti e canali!"
+        },
+        "revenueDeclining": {
+          "title": "Revenue in Calo",
+          "description": "Le tue revenue sono diminuite del {percent}%. Considera di aggiornare i tuoi contenuti o provare prodotti diversi."
+        },
+        "exceptionalCvr": {
+          "title": "Tasso di Conversione Eccezionale",
+          "description": "Il tuo CVR del {cvr}% è {percent}% sopra il benchmark di settore. Il tuo pubblico si fida dei tuoi consigli!"
+        },
+        "lowCvr": {
+          "title": "Tasso di Conversione Basso",
+          "description": "Il tuo CVR del {cvr}% è sotto il benchmark del {benchmark}%. Prova a promuovere prodotti più rilevanti per il tuo pubblico."
+        },
+        "focusCategory": {
+          "title": "Concentrati su {category}",
+          "description": "I prodotti {best} convertono {multiplier}x meglio di {worst}. Considera di spostare il focus sulle categorie che convertono di più."
+        },
+        "optimalTime": {
+          "title": "Orario Ottimale di Pubblicazione",
+          "description": "Il tuo pubblico è più attivo intorno alle {hour}:00. Programma i tuoi post in questa fascia oraria per massimizzare l'engagement."
+        },
+        "linksNeedAttention": {
+          "title": "{count} Link Richiedono Attenzione",
+          "description": "Hai {count} link con click ma nessuna conversione. Considera di aggiornare i prodotti o il targeting."
+        },
+        "unlockRevenue": {
+          "title": "Sblocca Più Revenue",
+          "description": "In base alle tue performance attuali, potresti guadagnare fino a €{amount} espandendoti su più canali. Prova Telegram o Discord per nuove audience."
+        }
+      },
+      "actions": {
+        "createLink": "Crea Link",
+        "viewTopProducts": "Vedi Top Prodotti",
+        "analyzeChannels": "Analizza Canali",
+        "viewCategoryStats": "Vedi Statistiche Categoria",
+        "viewHeatmap": "Vedi Heatmap",
+        "viewLinks": "Vedi Link",
+        "addChannel": "Aggiungi Canale"
+      }
+    },
     "pro": "PRO",
     "audience": {
       "noData": "Nessun dato audience disponibile. I dati appariranno quando i tuoi link riceveranno click.",

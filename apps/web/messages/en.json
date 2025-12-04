@@ -2101,6 +2101,75 @@
       "upgrade": "Upgrade to PRO - €49/month",
       "note": "Full access to advanced analytics, custom date ranges, and AI insights"
     },
+    "aiInsights": {
+      "healthScore": "Performance Health Score",
+      "healthScoreDesc": "AI-powered analysis of your affiliate performance",
+      "outOf": "out of 100",
+      "activeLinks": "Active Links",
+      "totalClicks": "Total Clicks",
+      "conversions": "Conversions",
+      "revenue": "Revenue",
+      "cvr": "CVR",
+      "insightsFound": "Insights Found",
+      "recommendations": "AI-Powered Recommendations",
+      "insightsCount": "{count} insights",
+      "allGood": "All Good!",
+      "allGoodDesc": "No critical insights at this time. Keep up the great work!",
+      "proTip": "Pro Tip",
+      "proTipText": "Check your insights weekly to stay ahead of trends and optimize your affiliate strategy.",
+      "priority": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "insights": {
+        "getStarted": {
+          "title": "Get Started with Affiliate Links",
+          "description": "Create your first affiliate links to start receiving personalized AI insights."
+        },
+        "revenueGrowing": {
+          "title": "Revenue Growing Strong",
+          "description": "Your revenue has increased by {percent}% compared to the previous period. Keep promoting the same products and channels!"
+        },
+        "revenueDeclining": {
+          "title": "Revenue Declining",
+          "description": "Your revenue has dropped by {percent}%. Consider refreshing your content or trying different products."
+        },
+        "exceptionalCvr": {
+          "title": "Exceptional Conversion Rate",
+          "description": "Your CVR of {cvr}% is {percent}% above the industry benchmark. Your audience trusts your recommendations!"
+        },
+        "lowCvr": {
+          "title": "Low Conversion Rate",
+          "description": "Your CVR of {cvr}% is below the {benchmark}% benchmark. Try promoting products more relevant to your audience."
+        },
+        "focusCategory": {
+          "title": "Focus on {category}",
+          "description": "{best} products convert {multiplier}x better than {worst}. Consider shifting focus to higher-converting categories."
+        },
+        "optimalTime": {
+          "title": "Optimal Posting Time",
+          "description": "Your audience is most active around {hour}:00. Schedule your posts during this window for maximum engagement."
+        },
+        "linksNeedAttention": {
+          "title": "{count} Links Need Attention",
+          "description": "You have {count} link(s) with clicks but no conversions. Consider updating the products or targeting."
+        },
+        "unlockRevenue": {
+          "title": "Unlock More Revenue",
+          "description": "Based on your current performance, you could earn up to €{amount} by expanding to more channels. Try Telegram or Discord for new audiences."
+        }
+      },
+      "actions": {
+        "createLink": "Create Link",
+        "viewTopProducts": "View Top Products",
+        "analyzeChannels": "Analyze Channels",
+        "viewCategoryStats": "View Category Stats",
+        "viewHeatmap": "View Heatmap",
+        "viewLinks": "View Links",
+        "addChannel": "Add Channel"
+      }
+    },
     "pro": "PRO",
     "audience": {
       "noData": "No audience data available. Data will appear when your links receive clicks.",
