@@ -66,7 +66,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                   <span>
                     Vai su{' '}
                     <a
-                      href="https://affiliate-program.amazon.it/home/reports"
+                      href="https://programma-affiliazione.amazon.it/p/reporting/earnings"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-orange-400 hover:underline inline-flex items-center gap-1"
@@ -131,6 +131,11 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
               <p className="text-sm text-gray-400">
                 💡 <strong className="text-white">Tip:</strong> Puoi trascinare tutti i file
                 insieme!
+              </p>
+
+              <p className="text-sm text-gray-400 p-3 rounded-lg bg-afflyt-dark-50 border border-afflyt-glass-border">
+                📅 <strong className="text-white">Consiglio:</strong> Importa i report una volta a
+                settimana per analytics sempre aggiornati.
               </p>
             </div>
 

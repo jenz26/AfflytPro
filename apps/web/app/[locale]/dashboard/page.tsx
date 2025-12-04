@@ -9,6 +9,7 @@ import { StatusCard, AutomationsCardData, ChannelsCardData, PerformanceCardData 
 import { ActionSuggestions, Suggestion } from '@/components/dashboard/ActionSuggestions';
 import { DealFeed, Deal } from '@/components/dashboard/DealFeed';
 import { ActivityLog, Activity as ActivityItem } from '@/components/dashboard/ActivityLog';
+import { ImportBanner } from '@/components/settings/amazon-import';
 import { API_BASE } from '@/lib/api/config';
 
 // ═══════════════════════════════════════════════════════════════
@@ -229,6 +230,9 @@ export default function DashboardPage() {
             <div className="p-8">
                 {/* Hero Section */}
                 <HeroSection data={dashboardData.hero} />
+
+                {/* Amazon Import Banner */}
+                <ImportBanner />
 
                 {/* Status Cards Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

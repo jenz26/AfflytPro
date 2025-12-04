@@ -323,13 +323,13 @@ export function useAmazonImport() {
   const lastImport = history?.[0];
   const hasImported = history && history.length > 0;
 
-  // Aggregate results
+  // Aggregate results (with fallback to 0 to prevent NaN)
   const aggregateResults = files.reduce(
     (acc, f) => {
       if (f.result) {
-        acc.totalOrders += f.result.rowsImported;
-        acc.matchedDeals += f.result.matchedDeals;
-        acc.unmatchedDeals += f.result.unmatchedDeals;
+        acc.totalOrders += f.result.rowsImported || 0;
+        acc.matchedDeals += f.result.matchedDeals || 0;
+        acc.unmatchedDeals += f.result.unmatchedDeals || 0;
       }
       return acc;
     },
