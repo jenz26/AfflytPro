@@ -15,6 +15,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, telegramChannel, subscriberCount } = body;
 
+    console.log('[Beta Signup Web] Incoming request:', { email, telegramChannel, subscriberCount });
+    console.log('[Beta Signup Web] API_BASE:', API_BASE);
+
     // Validate email
     if (!email || !email.includes('@')) {
       return NextResponse.json(
@@ -24,13 +27,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward to backend API with all fields
-    const response = await fetch(`${API_BASE}/auth/beta-signup`, {
+    const apiUrl = `${API_BASE}/auth/beta-signup`;
+    console.log('[Beta Signup Web] Forwarding to:', apiUrl);
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ email, telegramChannel, subscriberCount }),
     });
+
+    console.log('[Beta Signup Web] API response status:', response.status);
 
     if (response.ok) {
       return NextResponse.json({

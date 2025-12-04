@@ -1779,6 +1779,8 @@ export async function authRoutes(fastify: FastifyInstance) {
     },
     async (request, reply) => {
       try {
+        fastify.log.info({ body: request.body }, '[Beta Signup] Incoming request');
+
         const betaSignupSchema = z.object({
           email: z.string().email('Email non valida'),
           telegramChannel: z.string().optional(),
@@ -1788,8 +1790,11 @@ export async function authRoutes(fastify: FastifyInstance) {
         const { email, telegramChannel, subscriberCount } = betaSignupSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
+        fastify.log.info({ email: normalizedEmail }, '[Beta Signup] Processing signup');
+
         // Check for disposable email
         if (isDisposableEmail(normalizedEmail)) {
+          fastify.log.warn({ email: normalizedEmail }, '[Beta Signup] Disposable email rejected');
           return reply.code(400).send({
             success: false,
             message: 'Gli indirizzi email temporanei non sono consentiti.',
@@ -1802,6 +1807,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         });
 
         if (existingUser) {
+          fastify.log.info({ email: normalizedEmail }, '[Beta Signup] User already exists');
           // Don't reveal if email exists, just return success
           return reply.send({
             success: true,
