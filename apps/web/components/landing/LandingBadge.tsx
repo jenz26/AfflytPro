@@ -1,5 +1,7 @@
+import { ReactNode } from 'react';
+
 interface LandingBadgeProps {
-  children: string;
+  children: ReactNode;
   variant?: 'cyan' | 'purple' | 'green';
 }
 
