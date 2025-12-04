@@ -1854,10 +1854,10 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const entry = channelMap.get(chId) || {
         clicks: 0,
         uniqueClicks: 0,
-        linkIds: new Set(),
-        messageIds: new Set(),
-        timeToClicks: [],
-        clicksByHour: new Array(24).fill(0)
+        linkIds: new Set<string>(),
+        messageIds: new Set<string>(),
+        timeToClicks: [] as number[],
+        clicksByHour: new Array(24).fill(0) as number[]
       };
 
       entry.clicks++;
@@ -2018,8 +2018,8 @@ export default async function analyticsRoutes(app: FastifyInstance) {
       const entry = messageMap.get(msgId) || {
         clicks: 0,
         uniqueClicks: 0,
-        timeToClicks: [],
-        firstClickAt: null,
+        timeToClicks: [] as number[],
+        firstClickAt: null as Date | null,
         publishedAt: click.postTimestamp
       };
 
