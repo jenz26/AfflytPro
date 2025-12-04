@@ -186,7 +186,7 @@ export class TelegramBotService {
     // Mock for stress test channels - dont actually send to Telegram
     if (channelId.startsWith('TEST_')) {
       console.log(`[Telegram] MOCK: Would send ${deal.asin} to ${channelId}`);
-      return { success: true, shortUrl: `https://mock.test/${deal.asin}`, mocked: true };
+      return { success: true, shortUrl: `https://mock.test/${deal.asin}`, messageId: 0, mocked: true };
     }
 
     try {
@@ -221,14 +221,23 @@ export class TelegramBotService {
             const linkData = await shortLinkResponse.json();
             shortUrl = linkData.shortUrl;
 
+            // Build URL params for tracking
+            const trackingParams = new URLSearchParams();
+
             // Add UTM params for channel attribution tracking
             if (utmParams) {
-              const utmString = new URLSearchParams({
-                utm_source: utmParams.channelName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase(),
-                utm_medium: utmParams.platform.toLowerCase(),
-                utm_campaign: 'afflyt_automation'
-              }).toString();
-              shortUrl = `${shortUrl}?${utmString}`;
+              trackingParams.set('utm_source', utmParams.channelName.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase());
+              trackingParams.set('utm_medium', utmParams.platform.toLowerCase());
+              trackingParams.set('utm_campaign', 'afflyt_automation');
+            }
+
+            // Add Telegram source tracking params
+            trackingParams.set('ch', channelId); // Channel ID
+            trackingParams.set('t', Math.floor(Date.now() / 1000).toString()); // Unix timestamp
+
+            const trackingString = trackingParams.toString();
+            if (trackingString) {
+              shortUrl = `${shortUrl}?${trackingString}`;
             }
           } else {
             console.warn('Failed to create short link, using direct Amazon link');
@@ -320,18 +329,21 @@ _\\#Ad \\| Deal trovato da Afflyt Pro 🤖_
         ? `${message}\n\n⚠️ _Bottone inline disabilitato \\(localhost non supportato da Telegram\\)_`
         : message;
 
-      // 4. Send to channel
+      // 4. Send to channel and capture message ID
+      let messageId: number | undefined;
       if (deal.imageUrl) {
-        await bot.telegram.sendPhoto(channelId, deal.imageUrl, {
+        const sentMessage = await bot.telegram.sendPhoto(channelId, deal.imageUrl, {
           caption: finalMessage,
           parse_mode: 'MarkdownV2',
           ...(keyboard && { reply_markup: keyboard })
         });
+        messageId = sentMessage.message_id;
       } else {
-        await bot.telegram.sendMessage(channelId, finalMessage, {
+        const sentMessage = await bot.telegram.sendMessage(channelId, finalMessage, {
           parse_mode: 'MarkdownV2',
           ...(keyboard && { reply_markup: keyboard })
         });
+        messageId = sentMessage.message_id;
       }
 
       // 5. Send Keepa price history chart if enabled
@@ -347,7 +359,7 @@ _\\#Ad \\| Deal trovato da Afflyt Pro 🤖_
         }
       }
 
-      return { success: true, shortUrl };
+      return { success: true, shortUrl, messageId };
     } catch (error: any) {
       console.error('Telegram send error:', error);
       return { success: false, error: error.message };
