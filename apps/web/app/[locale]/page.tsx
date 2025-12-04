@@ -5,6 +5,7 @@ import { ProblemSection } from '@/components/landing/sections/ProblemSection';
 import { SolutionSection } from '@/components/landing/sections/SolutionSection';
 import { ComparisonSection } from '@/components/landing/sections/ComparisonSection';
 import { HowItWorksSection } from '@/components/landing/sections/HowItWorksSection';
+import { DemoSection } from '@/components/landing/sections/DemoSection';
 import { TrustSection } from '@/components/landing/sections/TrustSection';
 import { PricingSection } from '@/components/landing/sections/PricingSection';
 import { FAQSection } from '@/components/landing/sections/FAQSection';
@@ -50,6 +51,7 @@ export default function LandingPage() {
       <SolutionSection />
       <ComparisonSection />
       <HowItWorksSection />
+      <DemoSection />
       <TrustSection />
       <PricingSection />
       <FAQSection />
