@@ -148,7 +148,14 @@ export interface Deal {
  * Extended Deal with scoring and publishing metadata
  */
 export interface ScoredDeal extends Deal {
-  score: number;                  // 0-100 deal score
+  score: number;                  // 0-100 deal score (legacy, same as baseScore)
+  baseScore: number;              // 0-100 base score (fixed weights)
+  finalScore: number;             // 0-100 final score (dynamic weights per channel)
+  scoreLabel?: {
+    text: string;
+    color: string;
+    emoji: string;
+  };
   scoreComponents?: {
     discount: number;
     price: number;
