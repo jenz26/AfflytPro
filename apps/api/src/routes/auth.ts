@@ -1762,7 +1762,7 @@ export async function authRoutes(fastify: FastifyInstance) {
    * Collect email for landing page beta waitlist
    * Public endpoint - no authentication required
    */
-  fastify.post<{ Body: { email: string } }>(
+  fastify.post<{ Body: { email: string; telegramChannel?: string; subscriberCount?: string } }>(
     '/beta-signup',
     {
       config: {
@@ -1781,9 +1781,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       try {
         const betaSignupSchema = z.object({
           email: z.string().email('Email non valida'),
+          telegramChannel: z.string().optional(),
+          subscriberCount: z.string().optional(),
         });
 
-        const { email } = betaSignupSchema.parse(request.body);
+        const { email, telegramChannel, subscriberCount } = betaSignupSchema.parse(request.body);
         const normalizedEmail = email.toLowerCase().trim();
 
         // Check for disposable email
@@ -1817,10 +1819,17 @@ export async function authRoutes(fastify: FastifyInstance) {
             emailVerified: false,
             plan: 'WAITLIST', // Special plan to identify waitlist users
             isActive: false, // Not active until they get beta access
+            // Store optional waitlist data
+            name: telegramChannel || null, // Store telegram channel in name field for now
+            audienceSize: subscriberCount || null, // Store subscriber count
           },
         });
 
-        fastify.log.info({ email: normalizedEmail }, 'Beta waitlist signup');
+        fastify.log.info({
+          email: normalizedEmail,
+          telegramChannel: telegramChannel || null,
+          subscriberCount: subscriberCount || null,
+        }, 'Beta waitlist signup');
 
         return reply.send({
           success: true,
