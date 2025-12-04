@@ -231,6 +231,43 @@ export class AuthEmailService {
       return { success: false, error: error.message };
     }
   }
+
+  /**
+   * Send beta waitlist confirmation email
+   */
+  static async sendBetaWaitlistConfirmation(
+    to: string,
+    locale?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!resend) {
+      console.warn('Email service not configured. Skipping beta waitlist email.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const lang = normalizeLocale(locale);
+    const t = getEmailTranslation('betaWaitlist', lang);
+    const year = new Date().getFullYear().toString();
+
+    const vars = { appName: APP_NAME, year };
+
+    try {
+      console.log('[AuthEmailService] Sending beta waitlist confirmation:', { to });
+
+      await resend.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject: replaceVariables(t.subject, vars),
+        html: generateBetaWaitlistHTML(t, vars, lang),
+        text: generateBetaWaitlistText(t, vars),
+      });
+
+      console.log('[AuthEmailService] Beta waitlist email sent successfully');
+      return { success: true };
+    } catch (error: any) {
+      console.error('[AuthEmailService] Failed to send beta waitlist email:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // ==================== SHARED EMAIL TEMPLATE ====================
@@ -501,6 +538,58 @@ ${verificationUrl}
 ${t.plainExpiry}
 
 ${t.plainFooter}
+
+${replaceVariables(t.copyright, vars)}
+  `.trim();
+}
+
+// ==================== BETA WAITLIST EMAIL ====================
+
+function generateBetaWaitlistHTML(t: any, vars: Record<string, string>, lang: string): string {
+  const listItems = t.whatNextList
+    .map((item: string) => `<li style="color: #4B5563; margin-bottom: 8px;">${replaceVariables(item, vars)}</li>`)
+    .join('');
+
+  const content = `
+    <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+      ${replaceVariables(t.intro, vars)}
+    </p>
+    <p style="color: #4B5563; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+      ${replaceVariables(t.body, vars)}
+    </p>
+    <p style="color: #0A0E1A; font-size: 16px; line-height: 1.6; margin: 0 0 12px 0;">
+      ${t.whatNext}
+    </p>
+    <ul style="margin: 0 0 16px 0; padding-left: 20px;">
+      ${listItems}
+    </ul>
+  `;
+
+  return generateEmailHTML({
+    greeting: t.greeting,
+    content,
+    buttonText: t.buttonText,
+    buttonUrl: `https://afflyt.io/${lang}`,
+    footer: replaceVariables(t.footer, vars),
+    copyright: replaceVariables(t.copyright, vars),
+  });
+}
+
+function generateBetaWaitlistText(t: any, vars: Record<string, string>): string {
+  const listItems = t.whatNextList
+    .map((item: string) => `- ${replaceVariables(item, vars)}`)
+    .join('\n');
+
+  return `
+${t.greeting}
+
+${replaceVariables(t.plainIntro, vars)}
+
+${replaceVariables(t.plainBody, vars)}
+
+${listItems}
+
+${replaceVariables(t.plainFooter, vars)}
 
 ${replaceVariables(t.copyright, vars)}
   `.trim();

@@ -1831,6 +1831,19 @@ export async function authRoutes(fastify: FastifyInstance) {
           subscriberCount: subscriberCount || null,
         }, 'Beta waitlist signup');
 
+        // Send confirmation email (async, don't block response)
+        AuthEmailService.sendBetaWaitlistConfirmation(normalizedEmail, 'it')
+          .then(result => {
+            if (result.success) {
+              fastify.log.info({ email: normalizedEmail }, 'Beta waitlist confirmation email sent');
+            } else {
+              fastify.log.warn({ email: normalizedEmail, error: result.error }, 'Failed to send beta waitlist email');
+            }
+          })
+          .catch(err => {
+            fastify.log.error({ email: normalizedEmail, error: err }, 'Error sending beta waitlist email');
+          });
+
         return reply.send({
           success: true,
           message: 'Perfetto! Ti contatteremo presto con il tuo invito alla beta.',

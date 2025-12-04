@@ -133,6 +133,50 @@ export const emailTranslations = {
     }
   },
 
+  // ==================== BETA WAITLIST CONFIRMATION EMAIL ====================
+  betaWaitlist: {
+    it: {
+      subject: 'Sei nella lista! - {{appName}} Beta',
+      title: 'Richiesta ricevuta',
+      greeting: 'Ciao,',
+      intro: 'Abbiamo ricevuto la tua richiesta di accesso alla beta di {{appName}}.',
+      body: 'Stiamo selezionando i primi beta tester e ti contatteremo presto con le istruzioni per attivare il tuo account.',
+      whatNext: '<strong>Cosa succede ora?</strong>',
+      whatNextList: [
+        'Valuteremo la tua candidatura nelle prossime 48 ore',
+        'Riceverai una email con il codice invito',
+        'Potrai iniziare a usare {{appName}} gratuitamente'
+      ],
+      buttonText: 'Scopri di più su Afflyt',
+      footer: 'Grazie per l\'interesse in {{appName}}. Ci vediamo presto!',
+      copyright: '© {{year}} {{appName}}',
+      // Plain text
+      plainIntro: 'Abbiamo ricevuto la tua richiesta di accesso alla beta di {{appName}}.',
+      plainBody: 'Stiamo selezionando i primi beta tester e ti contatteremo presto.',
+      plainFooter: 'Grazie per l\'interesse!'
+    },
+    en: {
+      subject: 'You\'re on the list! - {{appName}} Beta',
+      title: 'Request received',
+      greeting: 'Hi,',
+      intro: 'We received your request to join the {{appName}} beta.',
+      body: 'We\'re selecting our first beta testers and will contact you soon with instructions to activate your account.',
+      whatNext: '<strong>What happens next?</strong>',
+      whatNextList: [
+        'We\'ll review your application within 48 hours',
+        'You\'ll receive an email with your invite code',
+        'You can start using {{appName}} for free'
+      ],
+      buttonText: 'Learn more about Afflyt',
+      footer: 'Thanks for your interest in {{appName}}. See you soon!',
+      copyright: '© {{year}} {{appName}}',
+      // Plain text
+      plainIntro: 'We received your request to join the {{appName}} beta.',
+      plainBody: 'We\'re selecting our first beta testers and will contact you soon.',
+      plainFooter: 'Thanks for your interest!'
+    }
+  },
+
   // ==================== VERIFICATION REMINDER EMAIL ====================
   verificationReminder: {
     it: {
