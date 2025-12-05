@@ -8,7 +8,7 @@ const guidesDirectory = path.join(process.cwd(), 'content/guides');
 // Configure marked for better rendering
 marked.setOptions({
   gfm: true, // GitHub Flavored Markdown (tables, strikethrough, etc.)
-  breaks: true, // Convert \n to <br>
+  breaks: false, // Don't convert single \n to <br> (use double newline for paragraphs)
 });
 
 export interface GuideMetadata {
