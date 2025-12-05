@@ -1,0 +1,26 @@
+# Afflyt.io - Robots.txt
+# https://afflyt.io
+
+User-agent: *
+Allow: /
+
+# Block app routes (dashboard, settings, admin)
+Disallow: /*/dashboard/
+Disallow: /*/settings/
+Disallow: /*/admin/
+Disallow: /api/
+
+# Block auth pages from indexing
+Disallow: /*/auth/
+
+# Allow landing pages
+Allow: /it
+Allow: /en
+Allow: /it/
+Allow: /en/
+
+# Allow guide pages
+Allow: /*/guide/
+
+# Sitemaps
+Sitemap: https://afflyt.io/sitemap.xml
