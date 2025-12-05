@@ -392,7 +392,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
         try {
             const parsed = createRuleSchema.parse(request.body);
-            console.log('[POST /rules] Validation passed');
+            console.log('[POST /rules] Validation passed, publishingMode:', parsed.publishingMode);
 
             // Validate filters based on user plan
             const { valid: validFilters, stripped, warnings } = validateFiltersForPlan(parsed, userPlan);
@@ -491,6 +491,9 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
                     dealPublishMode: parsed.dealPublishMode,
                     showKeepaButton: parsed.showKeepaButton,
                     ...(parsed.affiliateTagId && parsed.affiliateTagId.trim() !== '' ? { affiliateTagId: parsed.affiliateTagId } : {}),
+
+                    // Publishing Mode (smart scheduling vs immediate)
+                    publishingMode: parsed.publishingMode,
 
                     // LLM Copy Generation
                     copyMode: parsed.copyMode || 'TEMPLATE',

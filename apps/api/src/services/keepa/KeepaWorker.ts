@@ -696,6 +696,7 @@ export class KeepaWorker {
 
     // Check if smart scheduling is enabled
     const useSmartScheduling = ruleConfig?.publishingMode === 'smart';
+    console.log(`[KeepaWorker] Rule ${rule.ruleId} publishingMode: ${ruleConfig?.publishingMode} -> useSmartScheduling: ${useSmartScheduling}`);
 
     // Decrypt bot token
     let botToken: string;
