@@ -288,8 +288,8 @@ export default async function GuidePage({
           <article
             className="prose prose-lg max-w-none
               prose-headings:text-white prose-headings:font-bold
-              prose-h2:text-3xl prose-h2:mt-14 prose-h2:mb-8 prose-h2:pb-4 prose-h2:border-b prose-h2:border-afflyt-cyan-400/30
-              prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-5 prose-h3:text-gray-100
+              prose-h2:text-4xl prose-h2:mt-16 prose-h2:mb-8 prose-h2:pb-4 prose-h2:border-b-2 prose-h2:border-afflyt-cyan-400/40
+              prose-h3:text-xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-afflyt-cyan-400/90 prose-h3:font-semibold
               prose-p:text-gray-300 prose-p:leading-relaxed prose-p:mb-6
               prose-a:text-afflyt-cyan-400 prose-a:no-underline hover:prose-a:underline
               prose-strong:text-white prose-strong:font-semibold
