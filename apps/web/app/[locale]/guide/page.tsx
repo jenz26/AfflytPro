@@ -1,8 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock, TrendingUp } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock, Sparkles, CheckCircle2, Zap } from 'lucide-react';
 import { LandingLayout } from '@/components/landing/LandingLayout';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { getAllGuides } from '@/lib/content';
 
 export const metadata: Metadata = {
@@ -29,6 +28,16 @@ export const metadata: Metadata = {
   },
 };
 
+// Category icon mapping
+function getCategoryIcon(category: string) {
+  const icons: Record<string, React.ReactNode> = {
+    'Automazione': <Sparkles className="h-5 w-5" />,
+    'Analytics': <CheckCircle2 className="h-5 w-5" />,
+    'Strategia': <BookOpen className="h-5 w-5" />,
+  };
+  return icons[category] || <BookOpen className="h-5 w-5" />;
+}
+
 export default function GuidesPage() {
   const guides = getAllGuides();
   const featuredGuides = guides.filter(g => g.featured);
@@ -36,107 +45,226 @@ export default function GuidesPage() {
 
   return (
     <LandingLayout>
-      <div className="min-h-screen bg-afflyt-dark-100">
-        {/* Hero */}
-        <section className="py-20 px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-afflyt-cyan-400/10 border border-afflyt-cyan-400/20 text-afflyt-cyan-400 text-sm mb-6">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-b from-afflyt-dark-200 via-afflyt-dark-100 to-afflyt-dark-100">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/4 w-[600px] h-[600px] bg-afflyt-cyan-400/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 -left-1/4 w-[500px] h-[500px] bg-afflyt-plasma-500/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-6 pt-16 pb-20">
+          <div className="text-center max-w-3xl mx-auto">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-afflyt-cyan-400/10 border border-afflyt-cyan-400/20 text-afflyt-cyan-400 text-sm font-medium mb-8">
               <BookOpen className="h-4 w-4" />
-              <span>Centro Risorse</span>
+              Centro Risorse Afflyt
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Guide per Affiliate Creator
+
+            {/* Title */}
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Guide per{' '}
+              <span className="bg-gradient-to-r from-afflyt-cyan-400 to-afflyt-plasma-500 bg-clip-text text-transparent">
+                Affiliate Creator
+              </span>
             </h1>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+
+            {/* Description */}
+            <p className="text-xl text-gray-400 mb-10 leading-relaxed">
               Strategie, tutorial e best practice per automatizzare e scalare il tuo business di affiliate marketing su Telegram.
             </p>
-          </div>
-        </section>
 
-        {/* Featured Guides */}
-        {featuredGuides.length > 0 && (
-          <section className="py-12 px-6">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
-                <TrendingUp className="h-6 w-6 text-afflyt-cyan-400" />
-                Guide in Evidenza
-              </h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                {featuredGuides.map((guide) => (
-                  <Link key={guide.slug} href={`/it/guide/${guide.slug}`} className="group">
-                    <GlassCard className="p-6 h-full hover:border-afflyt-cyan-400/50 transition-all">
-                      <div className="flex items-center gap-2 text-sm text-afflyt-cyan-400 mb-3">
-                        <span className="px-2 py-0.5 rounded bg-afflyt-cyan-400/10">{guide.category}</span>
-                        <span className="flex items-center gap-1 text-gray-500">
-                          <Clock className="h-3 w-3" />
-                          {guide.readTime}
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 text-sm">
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-afflyt-cyan-400" />
+                <span><strong className="text-white">{guides.length}</strong> guide</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-afflyt-plasma-500" />
+                <span><strong className="text-white">Gratis</strong> per tutti</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-afflyt-profit-400" />
+                <span><strong className="text-white">Aggiornate</strong> regolarmente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Featured Guides */}
+      {featuredGuides.length > 0 && (
+        <section className="bg-afflyt-dark-100 py-16 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-plasma-500 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Guide in Evidenza</h2>
+                <p className="text-gray-500 text-sm">Le risorse più utili per iniziare</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {featuredGuides.map((guide, index) => (
+                <Link
+                  key={guide.slug}
+                  href={`/it/guide/${guide.slug}`}
+                  className={`group relative overflow-hidden rounded-2xl border border-gray-800 hover:border-afflyt-cyan-400/50 transition-all duration-300 hover:-translate-y-1 ${
+                    index === 0 ? 'md:col-span-2' : ''
+                  }`}
+                >
+                  {/* Gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-afflyt-dark-50 to-afflyt-dark-100" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-afflyt-cyan-400/0 to-afflyt-plasma-500/0 group-hover:from-afflyt-cyan-400/5 group-hover:to-afflyt-plasma-500/5 transition-all duration-300" />
+
+                  <div className={`relative p-8 ${index === 0 ? 'md:flex md:items-center md:gap-8' : ''}`}>
+                    <div className={index === 0 ? 'md:flex-1' : ''}>
+                      {/* Category */}
+                      <div className="flex items-center gap-2 text-afflyt-cyan-400 text-sm font-medium mb-4">
+                        {getCategoryIcon(guide.category)}
+                        {guide.category}
+                        <span className="ml-2 px-2 py-0.5 rounded-full bg-afflyt-cyan-400/20 text-xs">
+                          Consigliata
                         </span>
                       </div>
-                      <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-afflyt-cyan-400 transition-colors">
+
+                      {/* Title */}
+                      <h3 className={`font-bold text-white mb-3 group-hover:text-afflyt-cyan-400 transition-colors ${
+                        index === 0 ? 'text-2xl md:text-3xl' : 'text-xl'
+                      }`}>
                         {guide.title}
                       </h3>
-                      <p className="text-gray-400 mb-4 line-clamp-2">
+
+                      {/* Description */}
+                      <p className={`text-gray-400 mb-6 ${index === 0 ? 'text-lg' : ''}`}>
                         {guide.description}
                       </p>
-                      <span className="inline-flex items-center gap-2 text-afflyt-cyan-400 hover:text-afflyt-cyan-300 font-medium">
-                        Leggi la guida
-                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                    </GlassCard>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
 
-        {/* Other Guides */}
-        {otherGuides.length > 0 && (
-          <section className="py-12 px-6">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-8">
-                Altre Guide
-              </h2>
-              <div className="grid md:grid-cols-3 gap-6">
-                {otherGuides.map((guide) => (
-                  <Link key={guide.slug} href={`/it/guide/${guide.slug}`} className="group">
-                    <GlassCard className="p-5 h-full hover:border-afflyt-cyan-400/50 transition-all">
-                      <span className="text-xs text-afflyt-cyan-400 mb-2 block">{guide.category}</span>
-                      <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-afflyt-cyan-400 transition-colors line-clamp-2">
-                        {guide.title}
-                      </h3>
-                      <p className="text-sm text-gray-400 line-clamp-2">
-                        {guide.description}
-                      </p>
-                    </GlassCard>
-                  </Link>
-                ))}
-              </div>
+                      {/* Meta */}
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {guide.readTime}
+                        </span>
+                        <span className="flex items-center gap-1 text-afflyt-cyan-400 group-hover:gap-2 transition-all font-medium">
+                          Leggi la guida
+                          <ArrowRight className="h-4 w-4" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-          </section>
-        )}
-
-        {/* CTA */}
-        <section className="py-16 px-6">
-          <div className="max-w-4xl mx-auto">
-            <GlassCard className="p-8 text-center bg-gradient-to-br from-afflyt-cyan-400/10 to-afflyt-purple-400/10">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Vuoi mettere in pratica quello che impari?
-              </h2>
-              <p className="text-gray-400 mb-6 max-w-xl mx-auto">
-                Afflyt ti aiuta ad automatizzare tutto il processo. Dalla ricerca dei deal alla pubblicazione, tutto in un&apos;unica piattaforma.
-              </p>
-              <Link
-                href="/it/auth/register"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-afflyt-cyan-400 text-afflyt-dark-100 font-semibold hover:bg-afflyt-cyan-300 transition-colors"
-              >
-                Prova Afflyt Gratis
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </GlassCard>
           </div>
         </section>
-      </div>
+      )}
+
+      {/* All Guides */}
+      <section className="bg-afflyt-dark-200 border-t border-gray-800 py-16 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Tutte le Guide
+              </h2>
+              <p className="text-gray-400">
+                Esplora tutte le nostre risorse educative
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
+              <span>{guides.length} guide disponibili</span>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {(otherGuides.length > 0 ? otherGuides : guides).map((guide) => (
+              <Link
+                key={guide.slug}
+                href={`/it/guide/${guide.slug}`}
+                className="group relative overflow-hidden rounded-2xl bg-afflyt-dark-50 border border-gray-800 hover:border-afflyt-cyan-400/50 transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Gradient overlay on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-afflyt-cyan-400/0 to-afflyt-plasma-500/0 group-hover:from-afflyt-cyan-400/5 group-hover:to-afflyt-plasma-500/5 transition-all duration-300" />
+
+                <div className="relative p-6">
+                  {/* Category */}
+                  <div className="flex items-center gap-2 text-afflyt-cyan-400 text-sm font-medium mb-4">
+                    {getCategoryIcon(guide.category)}
+                    {guide.category}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-lg font-semibold text-white mb-3 group-hover:text-afflyt-cyan-400 transition-colors line-clamp-2">
+                    {guide.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-400 text-sm line-clamp-2 mb-4">
+                    {guide.description}
+                  </p>
+
+                  {/* Meta */}
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {guide.readTime}
+                    </span>
+                    <span className="flex items-center gap-1 text-afflyt-cyan-400 group-hover:gap-2 transition-all">
+                      Leggi
+                      <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-afflyt-dark-100 border-t border-gray-800 py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-afflyt-cyan-400/20 via-afflyt-dark-50 to-afflyt-plasma-500/20" />
+            <div className="absolute inset-0 bg-afflyt-dark-50/80" />
+
+            <div className="relative text-center p-12 md:p-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-afflyt-cyan-400 to-afflyt-plasma-500 mb-8">
+                <Sparkles className="h-8 w-8 text-white" />
+              </div>
+
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Pronto a mettere in pratica?
+              </h2>
+
+              <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+                Afflyt ti aiuta ad automatizzare tutto il processo. Dalla ricerca dei deal alla pubblicazione, tutto in un&apos;unica piattaforma.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/it/auth/register"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-afflyt-cyan-400 text-afflyt-dark-100 font-semibold hover:bg-afflyt-cyan-300 transition-all hover:scale-105 shadow-lg shadow-afflyt-cyan-400/25"
+                >
+                  Inizia Gratis
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+                <Link
+                  href="/it"
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white/5 text-white font-medium hover:bg-white/10 transition-all"
+                >
+                  Scopri Afflyt
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </LandingLayout>
   );
 }
