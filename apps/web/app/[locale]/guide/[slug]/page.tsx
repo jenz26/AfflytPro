@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { ShareButton } from '@/components/guides/ShareButton';
-import { getAllGuideSlugs, getGuideBySlug, getAllGuides, markdownToHtml } from '@/lib/content';
+import { MDXContent } from '@/components/guides/MDXContent';
+import { getAllGuideSlugs, getGuideBySlug, getAllGuides, markdownToHtml, serializeMdx } from '@/lib/content';
 
 // Generate static params for all guides
 export async function generateStaticParams() {
@@ -146,8 +147,9 @@ export default async function GuidePage({
     notFound();
   }
 
-  // Convert markdown to HTML
-  const htmlContent = markdownToHtml(guide.content);
+  // Convert content based on file type
+  const mdxSource = guide.isMdx ? await serializeMdx(guide.content) : null;
+  const htmlContent = !guide.isMdx ? markdownToHtml(guide.content) : null;
 
   // Get related guides (same category first, then others)
   const allGuides = getAllGuides();
@@ -267,8 +269,13 @@ export default async function GuidePage({
               prose-hr:border-gray-700 prose-hr:my-12
               prose-img:rounded-xl prose-img:shadow-2xl
             "
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+          >
+            {mdxSource ? (
+              <MDXContent source={mdxSource} />
+            ) : (
+              <div dangerouslySetInnerHTML={{ __html: htmlContent || '' }} />
+            )}
+          </article>
 
           {/* Tags */}
           {guide.keywords.length > 0 && (

@@ -11,6 +11,9 @@ marked.setOptions({
   breaks: false, // Don't convert single \n to <br> (use double newline for paragraphs)
 });
 
+// Supported file extensions
+const SUPPORTED_EXTENSIONS = ['.mdx', '.md'];
+
 export interface GuideMetadata {
   slug: string;
   title: string;
@@ -26,6 +29,14 @@ export interface GuideMetadata {
 
 export interface Guide extends GuideMetadata {
   content: string;
+  isMdx: boolean;
+}
+
+/**
+ * Check if file has supported extension
+ */
+function isSupportedFile(filename: string): boolean {
+  return SUPPORTED_EXTENSIONS.some(ext => filename.endsWith(ext));
 }
 
 /**
@@ -37,7 +48,7 @@ export function getAllGuideSlugs(): string[] {
     const slugs: string[] = [];
 
     for (const filename of files) {
-      if (!filename.endsWith('.md')) continue;
+      if (!isSupportedFile(filename)) continue;
 
       const filePath = path.join(guidesDirectory, filename);
       const fileContents = fs.readFileSync(filePath, 'utf8');
@@ -64,7 +75,7 @@ export function getAllGuides(): GuideMetadata[] {
     const guides: GuideMetadata[] = [];
 
     for (const filename of files) {
-      if (!filename.endsWith('.md')) continue;
+      if (!isSupportedFile(filename)) continue;
 
       const filePath = path.join(guidesDirectory, filename);
       const fileContents = fs.readFileSync(filePath, 'utf8');
@@ -104,7 +115,7 @@ export function getGuideBySlug(slug: string): Guide | null {
     const files = fs.readdirSync(guidesDirectory);
 
     for (const filename of files) {
-      if (!filename.endsWith('.md')) continue;
+      if (!isSupportedFile(filename)) continue;
 
       const filePath = path.join(guidesDirectory, filename);
       const fileContents = fs.readFileSync(filePath, 'utf8');
@@ -123,6 +134,7 @@ export function getGuideBySlug(slug: string): Guide | null {
           keywords: data.keywords || [],
           featured: data.featured || false,
           content,
+          isMdx: filename.endsWith('.mdx'),
         };
       }
     }
@@ -139,4 +151,17 @@ export function getGuideBySlug(slug: string): Guide | null {
  */
 export function markdownToHtml(markdown: string): string {
   return marked.parse(markdown) as string;
+}
+
+/**
+ * Serialize MDX content for rendering
+ * This needs to be called from a server component/action
+ */
+export async function serializeMdx(source: string) {
+  const { serialize } = await import('next-mdx-remote/serialize');
+  return serialize(source, {
+    mdxOptions: {
+      development: process.env.NODE_ENV === 'development',
+    },
+  });
 }
