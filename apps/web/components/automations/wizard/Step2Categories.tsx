@@ -1,8 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Target, Lock, AlertTriangle } from 'lucide-react';
+import { Target, Lock, AlertTriangle, Tag, TrendingDown, Zap } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
+
+type DealPublishMode = 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
 
 interface Category {
     id: string;
@@ -18,7 +20,9 @@ interface Step2CategoriesProps {
     selected: string[];
     categories: Category[];
     maxCategories: number;
+    dealPublishMode: DealPublishMode;
     onChange: (categories: string[]) => void;
+    onDealModeChange: (mode: DealPublishMode) => void;
 }
 
 const categoryEmojis: Record<string, string> = {
@@ -60,7 +64,14 @@ function getCompetitionColor(competition: string): string {
     }
 }
 
-export function Step2Categories({ selected, categories, maxCategories, onChange }: Step2CategoriesProps) {
+export function Step2Categories({
+    selected,
+    categories,
+    maxCategories,
+    dealPublishMode,
+    onChange,
+    onDealModeChange
+}: Step2CategoriesProps) {
     const t = useTranslations('automations.wizard.step2');
 
     const toggleCategory = (categoryId: string) => {
@@ -165,6 +176,110 @@ export function Step2Categories({ selected, categories, maxCategories, onChange 
                         </button>
                     );
                 })}
+            </div>
+
+            {/* Deal Publish Mode */}
+            <div className="space-y-3 pt-4 border-t border-afflyt-glass-border">
+                <label className="block text-sm font-medium text-gray-300">
+                    {t('dealMode.title')}
+                </label>
+                <div className="space-y-2">
+                    {/* Discounted Only */}
+                    <button
+                        type="button"
+                        onClick={() => onDealModeChange('DISCOUNTED_ONLY')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'DISCOUNTED_ONLY'
+                                ? 'bg-green-500/10 border-green-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-green-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'DISCOUNTED_ONLY' ? 'bg-green-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <Tag className={`w-5 h-5 ${dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-green-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'DISCOUNTED_ONLY' ? 'text-white' : 'text-gray-300'}`}>
+                                    {t('dealMode.discountedOnly')}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {t('dealMode.discountedOnlyDesc')}
+                                </p>
+                            </div>
+                            {dealPublishMode === 'DISCOUNTED_ONLY' && (
+                                <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Lowest Price */}
+                    <button
+                        type="button"
+                        onClick={() => onDealModeChange('LOWEST_PRICE')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'LOWEST_PRICE'
+                                ? 'bg-blue-500/10 border-blue-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-blue-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'LOWEST_PRICE' ? 'bg-blue-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <TrendingDown className={`w-5 h-5 ${dealPublishMode === 'LOWEST_PRICE' ? 'text-blue-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'LOWEST_PRICE' ? 'text-white' : 'text-gray-300'}`}>
+                                    {t('dealMode.lowestPrice')}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {t('dealMode.lowestPriceDesc')}
+                                </p>
+                            </div>
+                            {dealPublishMode === 'LOWEST_PRICE' && (
+                                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Both */}
+                    <button
+                        type="button"
+                        onClick={() => onDealModeChange('BOTH')}
+                        className={`w-full p-4 rounded-lg border transition-all text-left ${
+                            dealPublishMode === 'BOTH'
+                                ? 'bg-purple-500/10 border-purple-500/40'
+                                : 'bg-afflyt-glass-white border-afflyt-glass-border hover:border-purple-500/30'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                dealPublishMode === 'BOTH' ? 'bg-purple-500/20' : 'bg-afflyt-dark-100'
+                            }`}>
+                                <Zap className={`w-5 h-5 ${dealPublishMode === 'BOTH' ? 'text-purple-400' : 'text-gray-500'}`} />
+                            </div>
+                            <div className="flex-1">
+                                <p className={`font-medium ${dealPublishMode === 'BOTH' ? 'text-white' : 'text-gray-300'}`}>
+                                    {t('dealMode.both')}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {t('dealMode.bothDesc')}
+                                </p>
+                            </div>
+                            {dealPublishMode === 'BOTH' && (
+                                <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-afflyt-dark-100 font-bold">✓</span>
+                                </div>
+                            )}
+                        </div>
+                    </button>
+                </div>
             </div>
 
             {/* Gated Categories Warning */}

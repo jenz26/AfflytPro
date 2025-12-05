@@ -964,8 +964,8 @@ model AutomationRule {
   /// BOTH = entrambi
   dealPublishMode DealPublishMode @default(DISCOUNTED_ONLY)
 
-  /// Includere il grafico storico prezzi Keepa nel messaggio
-  includeKeepaChart Boolean @default(false)
+  /// Mostrare il bottone "Storico Prezzi" (link a Keepa) nel post
+  showKeepaButton Boolean @default(true)
 
   /// Override del tag affiliato Amazon per questa automazione (sovrascrive quello del canale)
   /// DEPRECATED: Use affiliateTagId instead

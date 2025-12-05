@@ -227,7 +227,7 @@ export interface WaitingRule {
   dealsPerRun: number;
   minScore: number;
   dealPublishMode: DealPublishMode;
-  includeKeepaChart: boolean;
+  showKeepaButton: boolean;
   templateId?: string;
   triggersAt: Date;
 }

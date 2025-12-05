@@ -45,7 +45,7 @@ export class KeepaQueue {
       dealsPerRun: number;
       minScore: number;
       dealPublishMode: DealPublishMode;
-      includeKeepaChart: boolean;
+      showKeepaButton: boolean;
       templateId?: string;
       nextRunAt: Date;
     }
@@ -79,7 +79,7 @@ export class KeepaQueue {
       dealsPerRun: number;
       minScore: number;
       dealPublishMode: DealPublishMode;
-      includeKeepaChart: boolean;
+      showKeepaButton: boolean;
       templateId?: string;
       nextRunAt: Date;
     }
@@ -102,7 +102,7 @@ export class KeepaQueue {
           dealsPerRun: rule.dealsPerRun,
           minScore: rule.minScore,
           dealPublishMode: rule.dealPublishMode,
-          includeKeepaChart: rule.includeKeepaChart,
+          showKeepaButton: rule.showKeepaButton,
           templateId: rule.templateId,
           triggersAt: rule.nextRunAt
         };
@@ -149,7 +149,7 @@ export class KeepaQueue {
       dealsPerRun: number;
       minScore: number;
       dealPublishMode: DealPublishMode;
-      includeKeepaChart: boolean;
+      showKeepaButton: boolean;
       templateId?: string;
       nextRunAt: Date;
     },
@@ -165,7 +165,7 @@ export class KeepaQueue {
       dealsPerRun: rule.dealsPerRun,
       minScore: rule.minScore,
       dealPublishMode: rule.dealPublishMode,
-      includeKeepaChart: rule.includeKeepaChart,
+      showKeepaButton: rule.showKeepaButton,
       templateId: rule.templateId,
       triggersAt: rule.nextRunAt
     };
@@ -213,7 +213,7 @@ export class KeepaQueue {
       dealsPerRun: number;
       minScore: number;
       dealPublishMode: DealPublishMode;
-      includeKeepaChart: boolean;
+      showKeepaButton: boolean;
       templateId?: string;
       nextRunAt: Date;
     }>
@@ -228,7 +228,7 @@ export class KeepaQueue {
       dealsPerRun: r.dealsPerRun,
       minScore: r.minScore,
       dealPublishMode: r.dealPublishMode,
-      includeKeepaChart: r.includeKeepaChart,
+      showKeepaButton: r.showKeepaButton,
       templateId: r.templateId,
       triggersAt: r.nextRunAt
     }));

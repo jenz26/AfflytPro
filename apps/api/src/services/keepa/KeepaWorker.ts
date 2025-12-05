@@ -814,7 +814,23 @@ export class KeepaWorker {
       }
 
       // Immediate Mode: Publish directly
-      const affiliateLink = this.buildAffiliateLink(deal.asin, amazonTag);
+      // Acquire tracking ID BEFORE building link (for precise attribution)
+      let trackingIdUsed: string | undefined;
+      let trackingRecordId: string | undefined;
+      if (hasTrackingIds) {
+        // Use a temporary reference - we'll update with real dealHistoryId after recording
+        const tempRef = `temp_${deal.asin}_${Date.now()}`;
+        const trackingAssignment = await trackingIdPool.acquireTrackingId(channel.user.id, tempRef);
+        if (trackingAssignment) {
+          trackingIdUsed = trackingAssignment.trackingId;
+          trackingRecordId = trackingAssignment.trackingRecordId;
+          console.log(`[KeepaWorker] Acquired tracking ID ${trackingIdUsed} for ${deal.asin}`);
+        }
+      }
+
+      // Build affiliate link with tracking ID if available (otherwise fallback to main tag)
+      const tagToUse = trackingIdUsed || amazonTag;
+      const affiliateLink = this.buildAffiliateLink(deal.asin, tagToUse);
 
       // Generate copy (LLM or template)
       const copyPayload: DealCopyPayload = {
@@ -851,7 +867,7 @@ export class KeepaWorker {
           dealType: deal.hasVisibleDiscount ? 'discounted' : 'lowest_price',
           hasVisibleDiscount: deal.hasVisibleDiscount,
           isLowestEver: deal.isHistoricalLow,
-          includeKeepaChart: rule.includeKeepaChart,
+          showKeepaButton: rule.showKeepaButton,
           customCopy: copyResult.text, // Pass LLM-generated copy
           // V3: Price source for message formatting
           priceSource: deal.priceSource,
@@ -902,23 +918,19 @@ export class KeepaWorker {
             hasVisibleDiscount: deal.hasVisibleDiscount || false,
             // Message info
             messageText: copyResult.text,
-            messageFormat: copyResult.source === 'LLM' ? 'llm_generated' : 'template_standard'
+            messageFormat: copyResult.source === 'LLM' ? 'llm_generated' : 'template_standard',
+            // Tracking (already acquired before publishing)
+            trackingIdUsed
           }
         );
 
-        // Try to acquire a tracking ID for this deal (if available)
-        let trackingIdUsed: string | undefined;
-        if (dealHistoryId && hasTrackingIds) {
-          const trackingAssignment = await trackingIdPool.acquireTrackingId(channel.user.id, dealHistoryId);
-          if (trackingAssignment) {
-            trackingIdUsed = trackingAssignment.trackingId;
-            // Update deal history with tracking ID
-            await this.prisma.channelDealHistory.update({
-              where: { id: dealHistoryId },
-              data: { trackingIdUsed: trackingAssignment.trackingId }
-            });
-            console.log(`[KeepaWorker] Assigned tracking ID ${trackingAssignment.trackingId} to deal ${deal.asin}`);
-          }
+        // Update UserTrackingId.dealHistoryId with the real ID (if we acquired one)
+        if (trackingRecordId && dealHistoryId) {
+          await this.prisma.userTrackingId.update({
+            where: { id: trackingRecordId },
+            data: { dealHistoryId }
+          });
+          console.log(`[KeepaWorker] Linked tracking ID ${trackingIdUsed} to deal history ${dealHistoryId}`);
         }
 
         publishedCount++;
@@ -1022,6 +1034,8 @@ export class KeepaWorker {
       // Message info
       messageText?: string;
       messageFormat?: string;
+      // Tracking
+      trackingIdUsed?: string;
     }
   ): Promise<string | null> {
     // Get rule's dedupeWindowHours
@@ -1080,7 +1094,9 @@ export class KeepaWorker {
       dealEndTime: dealInfo?.dealEndTime,
       // Message info
       messageText: dealInfo?.messageText,
-      messageFormat: dealInfo?.messageFormat
+      messageFormat: dealInfo?.messageFormat,
+      // Tracking
+      trackingIdUsed: dealInfo?.trackingIdUsed
     };
 
     if (existing) {

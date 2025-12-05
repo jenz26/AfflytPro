@@ -227,7 +227,7 @@ export class KeepaPrefetch {
         dealsPerRun: rule.dealsPerRun,
         minScore: rule.minScore,
         dealPublishMode: rule.dealPublishMode as DealPublishMode,
-        includeKeepaChart: rule.includeKeepaChart,
+        showKeepaButton: rule.showKeepaButton,
         templateId: rule.templateId ?? undefined,
         nextRunAt: rule.nextRunAt ?? new Date()
       };

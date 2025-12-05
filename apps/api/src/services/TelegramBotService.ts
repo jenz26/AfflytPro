@@ -168,7 +168,7 @@ export class TelegramBotService {
       dealType?: 'discounted' | 'lowest_price';
       hasVisibleDiscount?: boolean;
       isLowestEver?: boolean;
-      includeKeepaChart?: boolean;
+      showKeepaButton?: boolean;
       // LLM-generated custom copy
       customCopy?: string;
       // V3: Price source for message formatting
@@ -252,8 +252,8 @@ export class TelegramBotService {
       const savings = (deal.originalPrice - deal.price).toFixed(2);
 
       // Keepa chart URL (via our proxy to protect API key)
-      console.log(`[Telegram] Deal ${deal.asin}: includeKeepaChart=${deal.includeKeepaChart}, API_BASE_PUBLIC=${API_BASE_PUBLIC}`);
-      const keepaChartUrl = deal.includeKeepaChart
+      console.log(`[Telegram] Deal ${deal.asin}: showKeepaButton=${deal.showKeepaButton}, API_BASE_PUBLIC=${API_BASE_PUBLIC}`);
+      const keepaChartUrl = deal.showKeepaButton
         ? `${API_BASE_PUBLIC}/keepa/graph/${deal.asin}?domain=it&range=180&bb=1&salesrank=0`
         : null;
 

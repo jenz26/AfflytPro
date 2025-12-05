@@ -296,7 +296,7 @@ export class SchedulerService {
                         messageTemplate: true,
                         customStylePrompt: true,
                         llmModel: true,
-                        includeKeepaChart: true
+                        showKeepaButton: true
                     }
                 }
             },

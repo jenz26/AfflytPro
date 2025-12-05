@@ -47,7 +47,7 @@ interface AutomationRule {
     schedulePreset?: string;
     // Deal publish options
     dealPublishMode?: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
-    includeKeepaChart?: boolean;
+    showKeepaButton?: boolean;
 }
 
 export default function AutomationStudioPage() {
@@ -109,7 +109,7 @@ export default function AutomationStudioPage() {
                         schedulePreset: ruleData.schedulePreset,
                         // Deal publish options
                         dealPublishMode: ruleData.dealPublishMode,
-                        includeKeepaChart: ruleData.includeKeepaChart,
+                        showKeepaButton: ruleData.showKeepaButton,
                         affiliateTagId: ruleData.affiliateTagId || undefined,
                         // LLM Copy options
                         copyMode: ruleData.copyMode,
@@ -500,8 +500,12 @@ export default function AutomationStudioPage() {
                         brandInclude: [],
                         brandExclude: [],
                         dealPublishMode: editingRule.dealPublishMode || 'DISCOUNTED_ONLY',
-                        includeKeepaChart: editingRule.includeKeepaChart || false,
-                        affiliateTagId: (editingRule as any).affiliateTagId || '',
+                        showKeepaButton: editingRule.showKeepaButton || false,
+                        // Schedule fields
+                        schedulePreset: (editingRule as any).schedulePreset || 'active',
+                        publishingMode: (editingRule as any).publishingMode || 'smart',
+                        intervalMinutes: (editingRule as any).intervalMinutes || 120,
+                        dealsPerRun: (editingRule as any).dealsPerRun || 3,
                         // LLM Copy fields
                         copyMode: (editingRule as any).copyMode || 'TEMPLATE',
                         messageTemplate: (editingRule as any).messageTemplate || undefined,

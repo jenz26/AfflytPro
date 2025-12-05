@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
     Rocket, ChevronRight, ChevronLeft, X, Sparkles,
-    Target, Filter, Gauge, Send, CheckCircle
+    Target, Filter, Gauge, Send, CheckCircle, Clock, Wand2
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CyberButton } from '@/components/ui/CyberButton';
@@ -13,8 +13,10 @@ import { Step1Mission } from './wizard/Step1Mission';
 import { Step2Categories } from './wizard/Step2Categories';
 import { Step3Filters } from './wizard/Step3Filters';
 import { Step4Quality } from './wizard/Step4Quality';
+import { Step4Schedule } from './wizard/Step4Schedule';
 import { Step5Destination } from './wizard/Step5Destination';
-import { Step6Review } from './wizard/Step6Review';
+import { Step6Copy } from './wizard/Step6Copy';
+import { Step7Review } from './wizard/Step7Review';
 import { API_BASE } from '@/lib/api/config';
 import { Analytics } from '@/components/analytics/PostHogProvider';
 
@@ -27,8 +29,9 @@ export interface MissionConfig {
     name: string;
     description: string;
 
-    // Step 2: Categories
+    // Step 2: Categories + Deal Mode
     categories: string[];
+    dealPublishMode: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
 
     // Step 3: Filters (PRO/BUSINESS)
     minPrice?: number;
@@ -45,16 +48,20 @@ export interface MissionConfig {
     brandExclude: string[];
     listedAfter?: string;
 
-    // Step 4: Quality
+    // Step 3b: Quality Score
     minScore: number;
+
+    // Step 4: Schedule
+    schedulePreset: 'relaxed' | 'active' | 'intensive' | 'custom';
+    publishingMode: 'smart' | 'immediate';
+    intervalMinutes?: number;
+    dealsPerRun?: number;
 
     // Step 5: Destination
     channelId: string;
-    dealPublishMode: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
-    includeKeepaChart: boolean;
-    affiliateTagId: string;
+    showKeepaButton: boolean;
 
-    // Step 5b: Copy Mode (LLM)
+    // Step 6: Copy Mode (LLM)
     copyMode: 'TEMPLATE' | 'LLM';
     messageTemplate?: string;
     customStylePrompt?: string;
@@ -106,9 +113,13 @@ interface CreateMissionWizardProps {
 // ═══════════════════════════════════════════════════════════════
 
 const initialMissionConfig: MissionConfig = {
+    // Step 1
     name: '',
     description: '',
+    // Step 2
     categories: [],
+    dealPublishMode: 'DISCOUNTED_ONLY',
+    // Step 3
     minPrice: undefined,
     maxPrice: undefined,
     minDiscount: undefined,
@@ -123,14 +134,20 @@ const initialMissionConfig: MissionConfig = {
     brandExclude: [],
     listedAfter: undefined,
     minScore: 35,
+    // Step 4
+    schedulePreset: 'active',
+    publishingMode: 'smart',
+    intervalMinutes: 120,
+    dealsPerRun: 3,
+    // Step 5
     channelId: '',
-    dealPublishMode: 'DISCOUNTED_ONLY',
-    includeKeepaChart: false,
-    affiliateTagId: '',
+    showKeepaButton: true,
+    // Step 6
     copyMode: 'TEMPLATE',
     messageTemplate: undefined,
     customStylePrompt: undefined,
     llmModel: 'gpt-4o-mini',
+    // Activation
     isActive: true,
 };
 
@@ -211,9 +228,9 @@ export function CreateMissionWizard({
         },
         {
             id: 4,
-            icon: Gauge,
-            title: t('steps.quality.title'),
-            description: t('steps.quality.description'),
+            icon: Clock,
+            title: t('steps.schedule.title'),
+            description: t('steps.schedule.description'),
         },
         {
             id: 5,
@@ -223,6 +240,12 @@ export function CreateMissionWizard({
         },
         {
             id: 6,
+            icon: Wand2,
+            title: t('steps.copy.title'),
+            description: t('steps.copy.description'),
+        },
+        {
+            id: 7,
             icon: CheckCircle,
             title: t('steps.review.title'),
             description: t('steps.review.description'),
@@ -240,13 +263,15 @@ export function CreateMissionWizard({
             case 2:
                 return mission.categories.length >= 1;
             case 3:
-                return true; // Filters are optional
+                return mission.minScore >= 0 && mission.minScore <= 100; // Filters + minScore
             case 4:
-                return mission.minScore >= 0 && mission.minScore <= 100;
+                return !!mission.schedulePreset; // Schedule must be selected
             case 5:
                 return true; // Channel is optional (testing mode)
             case 6:
-                return true;
+                return !!mission.copyMode; // Copy mode must be selected
+            case 7:
+                return true; // Review step
             default:
                 return false;
         }
@@ -328,48 +353,60 @@ export function CreateMissionWizard({
                         selected={mission.categories}
                         categories={wizardConfig.categories}
                         maxCategories={wizardConfig.planLimits.maxCategories}
+                        dealPublishMode={mission.dealPublishMode}
                         onChange={(categories) => updateMission({ categories })}
+                        onDealModeChange={(dealPublishMode) => updateMission({ dealPublishMode })}
                     />
                 );
             case 3:
                 return (
-                    <Step3Filters
-                        mission={mission}
-                        userPlan={wizardConfig.planLimits.plan}
-                        filterTiers={wizardConfig.filterTiers}
-                        onChange={updateMission}
-                    />
+                    <div className="space-y-8">
+                        <Step4Quality
+                            minScore={mission.minScore}
+                            presets={wizardConfig.scorePresets}
+                            onChange={(minScore) => updateMission({ minScore })}
+                        />
+                        <Step3Filters
+                            mission={mission}
+                            userPlan={wizardConfig.planLimits.plan}
+                            filterTiers={wizardConfig.filterTiers}
+                            onChange={updateMission}
+                        />
+                    </div>
                 );
             case 4:
                 return (
-                    <Step4Quality
-                        minScore={mission.minScore}
-                        presets={wizardConfig.scorePresets}
-                        onChange={(minScore) => updateMission({ minScore })}
+                    <Step4Schedule
+                        schedulePreset={mission.schedulePreset}
+                        publishingMode={mission.publishingMode}
+                        intervalMinutes={mission.intervalMinutes}
+                        dealsPerRun={mission.dealsPerRun}
+                        userPlan={wizardConfig.planLimits.plan}
+                        onChange={(updates) => updateMission(updates)}
                     />
                 );
             case 5:
                 return (
                     <Step5Destination
                         channelId={mission.channelId}
-                        userPlan={wizardConfig.planLimits.plan}
-                        frequencyLabel={wizardConfig.planLimits.frequencyLabel}
-                        dealPublishMode={mission.dealPublishMode}
-                        includeKeepaChart={mission.includeKeepaChart}
-                        affiliateTagId={mission.affiliateTagId}
-                        copyMode={mission.copyMode}
-                        customStylePrompt={mission.customStylePrompt || ''}
+                        showKeepaButton={mission.showKeepaButton}
                         onChange={(channelId) => updateMission({ channelId })}
-                        onDealModeChange={(dealPublishMode) => updateMission({ dealPublishMode })}
-                        onKeepaChartChange={(includeKeepaChart) => updateMission({ includeKeepaChart })}
-                        onAffiliateTagChange={(affiliateTagId) => updateMission({ affiliateTagId })}
-                        onCopyModeChange={(copyMode) => updateMission({ copyMode })}
-                        onStylePromptChange={(customStylePrompt) => updateMission({ customStylePrompt })}
+                        onKeepaButtonChange={(showKeepaButton) => updateMission({ showKeepaButton })}
                     />
                 );
             case 6:
                 return (
-                    <Step6Review
+                    <Step6Copy
+                        copyMode={mission.copyMode}
+                        llmModel={mission.llmModel as 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo'}
+                        customStylePrompt={mission.customStylePrompt || ''}
+                        userPlan={wizardConfig.planLimits.plan}
+                        onChange={(updates) => updateMission(updates)}
+                    />
+                );
+            case 7:
+                return (
+                    <Step7Review
                         mission={mission}
                         wizardConfig={wizardConfig}
                         onSubmit={handleSubmit}

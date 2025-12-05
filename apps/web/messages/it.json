@@ -722,6 +722,14 @@
         "review": {
           "title": "Revisione",
           "description": "Conferma missione"
+        },
+        "schedule": {
+          "title": "Frequenza",
+          "description": "Quando pubblicare"
+        },
+        "copy": {
+          "title": "Copy",
+          "description": "Come scrivere"
         }
       },
       "step1": {
@@ -738,7 +746,16 @@
         "categoriesLabel": "Seleziona Categorie Target *",
         "selectedCount": "{count} categorie selezionate",
         "maxReached": "Massimo {max} categorie per il tuo piano",
-        "upgradeHint": "Passa a PRO per più categorie"
+        "upgradeHint": "Passa a PRO per più categorie",
+        "dealMode": {
+          "title": "Tipo di Deal da Pubblicare",
+          "discountedOnly": "Solo Scontati",
+          "discountedOnlyDesc": "Pubblica solo offerte con prezzo barrato visibile",
+          "lowestPrice": "Solo Minimi Storici",
+          "lowestPriceDesc": "Pubblica solo quando il prezzo è al minimo storico",
+          "both": "Entrambi",
+          "bothDesc": "Pubblica sia sconti visibili che minimi storici"
+        }
       },
       "step3": {
         "minScoreLabel": "Deal Score Minimo:",
@@ -810,20 +827,53 @@
         }
       },
       "step4": {
-        "title": "Soglia Qualità Deal",
-        "subtitle": "Imposta il punteggio minimo per i deal",
-        "scoreLabel": "Deal Score Minimo",
-        "scoreValue": "{score}/100",
-        "recommended": "Consigliato",
-        "explanation": {
-          "title": "Come Funziona il Deal Score",
-          "description": "La nostra AI combina diversi fattori per valutare ogni deal:",
-          "factors": {
-            "discount": "Sconto",
-            "popularity": "Popolarità",
-            "rating": "Valutazione",
-            "trend": "Tendenza"
+        "title": "Quando Pubblicare",
+        "subtitle": "Imposta la frequenza e la modalità di pubblicazione",
+        "frequency": {
+          "title": "Frequenza di Controllo",
+          "presets": {
+            "relaxed": {
+              "label": "Rilassato",
+              "desc": "Ogni {interval}h, {deals} deal/run"
+            },
+            "active": {
+              "label": "Attivo",
+              "desc": "Ogni {interval}h, {deals} deal/run"
+            },
+            "intensive": {
+              "label": "Intensivo",
+              "desc": "Ogni {interval}h, {deals} deal/run"
+            },
+            "custom": {
+              "label": "Personalizzato",
+              "desc": "Configura intervallo e deal per run"
+            }
+          },
+          "custom": {
+            "title": "Impostazioni Personalizzate",
+            "interval": "Intervallo (minuti)",
+            "minutes": "min",
+            "minInterval": "Minimo: {min} minuti",
+            "dealsPerRun": "Deal per Run",
+            "deals": "deal",
+            "maxDeals": "Max: {max} deal"
           }
+        },
+        "publishingMode": {
+          "title": "Modalità di Pubblicazione",
+          "smart": {
+            "label": "Smart Timing",
+            "desc": "Pubblica negli orari migliori per il tuo canale (basato su analytics)"
+          },
+          "immediate": {
+            "label": "Immediato",
+            "desc": "Pubblica subito appena trova un deal valido"
+          }
+        },
+        "estimate": {
+          "title": "Stima Output",
+          "desc": "Con questa configurazione",
+          "perDay": "post/giorno"
         }
       },
       "step5": {
@@ -837,6 +887,19 @@
         "testingMode": {
           "label": "Modalità Test",
           "description": "Non pubblicare - traccia solo nella dashboard"
+        },
+        "buttons": {
+          "title": "Bottoni nel Post",
+          "buy": {
+            "label": "Acquista su Amazon",
+            "desc": "Link diretto al prodotto"
+          },
+          "keepa": {
+            "label": "Storico Prezzi",
+            "desc": "Mostra il grafico Keepa con l'andamento dei prezzi"
+          },
+          "alwaysEnabled": "Sempre attivo",
+          "preview": "Anteprima bottoni"
         },
         "frequency": {
           "title": "Frequenza Esecuzione",
@@ -898,6 +961,35 @@
         }
       },
       "step6": {
+        "title": "Generazione Testo",
+        "subtitle": "Scegli come scrivere i messaggi dei post",
+        "mode": {
+          "title": "Modalità di Generazione",
+          "template": {
+            "label": "Template Standard",
+            "desc": "Formato collaudato, veloce, zero costi aggiuntivi"
+          },
+          "llm": {
+            "label": "AI Generated",
+            "desc": "Copy unico e persuasivo per ogni deal"
+          }
+        },
+        "preview": {
+          "title": "Anteprima"
+        },
+        "llm": {
+          "model": {
+            "title": "Modello AI"
+          },
+          "style": {
+            "title": "Stile Personalizzato (opzionale)",
+            "placeholder": "Descrivi come vuoi che scriva l'AI. Es: Tono informale, poche emoji, evidenzia sempre il risparmio...",
+            "hint": "Suggerisci tono, stile e cosa enfatizzare nei messaggi"
+          },
+          "info": "L'AI genererà copy unici per ogni deal. Limite: 50 post AI/giorno."
+        }
+      },
+      "step7": {
         "title": "Riepilogo Missione",
         "subtitle": "Pronti? Partiamo!",
         "summary": {
@@ -910,7 +1002,9 @@
           "minScore": "Score Minimo",
           "destination": "Destinazione",
           "testingMode": "Modalità Test (nessuna pubblicazione)",
-          "frequency": "Frequenza"
+          "frequency": "Frequenza",
+          "schedule": "Frequenza",
+          "copy": "Copy"
         },
         "actions": {
           "createActive": "Crea e Attiva",

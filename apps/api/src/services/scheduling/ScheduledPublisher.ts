@@ -156,11 +156,12 @@ export class ScheduledPublisher {
                 trackingId = trackingAssignment.trackingId;
             }
 
-            // 3. Resolve Amazon tag
+            // 3. Resolve Amazon tag (use tracking ID if available for attribution)
             const amazonTag = deal.channel.user?.brandId || 'afflyt-21';
+            const tagToUse = trackingId || amazonTag;
 
-            // 4. Build affiliate link
-            const affiliateLink = `https://www.amazon.it/dp/${deal.asin}?tag=${amazonTag}&linkCode=ll1&language=it_IT`;
+            // 4. Build affiliate link with tracking ID for precise attribution
+            const affiliateLink = `https://www.amazon.it/dp/${deal.asin}?tag=${tagToUse}&linkCode=ll1&language=it_IT`;
 
             // 5. Generate copy (LLM or template)
             const copyPayload: DealCopyPayload = {
@@ -213,7 +214,7 @@ export class ScheduledPublisher {
                     dealType: mapDealType(deal.dealType),
                     hasVisibleDiscount: (deal.discount || 0) > 0,
                     isLowestEver: false,
-                    includeKeepaChart: deal.rule.includeKeepaChart,
+                    showKeepaButton: deal.rule.showKeepaButton,
                     customCopy: copyResult.text
                 },
                 userId,

@@ -164,6 +164,6 @@ export interface ScheduledDealWithRelations {
         messageTemplate: string | null;
         customStylePrompt: string | null;
         llmModel: string;
-        includeKeepaChart: boolean;
+        showKeepaButton: boolean;
     };
 }

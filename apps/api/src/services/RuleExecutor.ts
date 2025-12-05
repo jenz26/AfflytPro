@@ -651,7 +651,7 @@ export class RuleExecutor {
                             dealType: deal.dealType,
                             hasVisibleDiscount: deal.hasVisibleDiscount,
                             isLowestEver: deal.isLowestEver,
-                            includeKeepaChart: rule.includeKeepaChart,
+                            showKeepaButton: rule.showKeepaButton,
                             // V3: priceSource (list_price for legacy RuleExecutor)
                             priceSource: 'list_price'
                         },

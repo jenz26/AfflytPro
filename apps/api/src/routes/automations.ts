@@ -74,8 +74,11 @@ const createRuleSchema = z.object({
 
     // Deal Publish Mode
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).default('DISCOUNTED_ONLY'),
-    includeKeepaChart: z.boolean().default(false),
+    showKeepaButton: z.boolean().default(true),
     affiliateTagId: z.string().uuid().optional().or(z.literal('')),
+
+    // Publishing Mode (smart scheduling vs immediate)
+    publishingMode: z.enum(['smart', 'immediate']).default('smart'),
 
     // LLM Copy Generation
     copyMode: z.enum(['TEMPLATE', 'LLM']).default('TEMPLATE'),
@@ -126,10 +129,13 @@ const updateRuleSchema = z.object({
     channelId: z.string().uuid().optional().or(z.literal('')),
     splitId: z.string().uuid().optional().or(z.literal('')),
 
-    // Deal Publish Mode (NEW)
+    // Deal Publish Mode
     dealPublishMode: z.enum(['DISCOUNTED_ONLY', 'LOWEST_PRICE', 'BOTH']).optional(),
-    includeKeepaChart: z.boolean().optional(),
+    showKeepaButton: z.boolean().optional(),
     affiliateTagId: z.string().uuid().optional().or(z.literal('')),
+
+    // Publishing Mode (smart scheduling vs immediate)
+    publishingMode: z.enum(['smart', 'immediate']).optional(),
 
     // LLM Copy Generation
     copyMode: z.enum(['TEMPLATE', 'LLM']).optional(),
@@ -483,7 +489,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
                     // Deal Publish Mode
                     dealPublishMode: parsed.dealPublishMode,
-                    includeKeepaChart: parsed.includeKeepaChart,
+                    showKeepaButton: parsed.showKeepaButton,
                     ...(parsed.affiliateTagId && parsed.affiliateTagId.trim() !== '' ? { affiliateTagId: parsed.affiliateTagId } : {}),
 
                     // LLM Copy Generation
@@ -588,7 +594,7 @@ const automationRoutes: FastifyPluginAsync = async (fastify) => {
 
             console.log('[PUT /rules/:id] Parsed updateData:', JSON.stringify(updateData, null, 2));
             console.log('[PUT /rules/:id] dealPublishMode:', updateData.dealPublishMode);
-            console.log('[PUT /rules/:id] includeKeepaChart:', updateData.includeKeepaChart);
+            console.log('[PUT /rules/:id] showKeepaButton:', updateData.showKeepaButton);
 
             // Verify ownership
             const existing = await prisma.automationRule.findFirst({

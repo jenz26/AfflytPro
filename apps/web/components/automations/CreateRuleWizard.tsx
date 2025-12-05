@@ -41,7 +41,7 @@ interface WizardProps {
         schedulePreset?: string;
         // Deal publish options
         dealPublishMode?: 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH';
-        includeKeepaChart?: boolean;
+        showKeepaButton?: boolean;
     } | null;
 }
 
@@ -69,7 +69,7 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
         schedulePreset: editingRule?.schedulePreset || 'relaxed' as string,
         // Deal publish mode
         dealPublishMode: editingRule?.dealPublishMode || 'DISCOUNTED_ONLY' as 'DISCOUNTED_ONLY' | 'LOWEST_PRICE' | 'BOTH',
-        includeKeepaChart: editingRule?.includeKeepaChart ?? false
+        showKeepaButton: editingRule?.showKeepaButton ?? false
     });
 
     // Schedule presets data
@@ -580,13 +580,13 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => setRule({ ...rule, includeKeepaChart: !rule.includeKeepaChart })}
+                                    onClick={() => setRule({ ...rule, showKeepaButton: !rule.showKeepaButton })}
                                     className={`w-12 h-6 rounded-full transition-all ${
-                                        rule.includeKeepaChart ? 'bg-orange-500' : 'bg-gray-600'
+                                        rule.showKeepaButton ? 'bg-orange-500' : 'bg-gray-600'
                                     }`}
                                 >
                                     <div className={`w-5 h-5 bg-white rounded-full transition-all transform ${
-                                        rule.includeKeepaChart ? 'translate-x-6' : 'translate-x-0.5'
+                                        rule.showKeepaButton ? 'translate-x-6' : 'translate-x-0.5'
                                     }`} />
                                 </button>
                             </div>
@@ -652,8 +652,8 @@ export const CreateRuleWizard = ({ onComplete, onCancel, editingRule }: WizardPr
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-400">Grafico Keepa</span>
-                                <span className={rule.includeKeepaChart ? 'text-orange-400' : 'text-gray-500'}>
-                                    {rule.includeKeepaChart ? '📊 Incluso' : 'Non incluso'}
+                                <span className={rule.showKeepaButton ? 'text-orange-400' : 'text-gray-500'}>
+                                    {rule.showKeepaButton ? '📊 Incluso' : 'Non incluso'}
                                 </span>
                             </div>
                         </GlassCard>
