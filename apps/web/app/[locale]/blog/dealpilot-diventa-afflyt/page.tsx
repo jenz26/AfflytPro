@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     tags: ['rebrand', 'dealpilot', 'afflyt', 'migrazione'],
     images: [
       {
-        url: 'https://afflyt.io/og-image.png',
+        url: 'https://afflyt.io/og-migration.png',
         width: 1200,
         height: 630,
         alt: 'DealPilot diventa Afflyt - Annuncio Ufficiale della Migrazione',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'DealPilot diventa Afflyt',
     description: 'La piattaforma che ami si evolve. Scopri cosa cambia.',
-    images: ['https://afflyt.io/og-image.png'],
+    images: ['https://afflyt.io/og-migration.png'],
   },
   robots: {
     index: true,
@@ -61,7 +61,7 @@ function MigrationJsonLd() {
     '@type': 'Article',
     headline: 'DealPilot diventa Afflyt - Annuncio Ufficiale',
     description: 'DealPilot evolve e diventa Afflyt, la piattaforma di automazione per affiliate creators e canali Telegram.',
-    image: 'https://afflyt.io/og-image.png',
+    image: 'https://afflyt.io/og-migration.png',
     datePublished: '2024-12-01T00:00:00Z',
     dateModified: new Date().toISOString(),
     author: {
