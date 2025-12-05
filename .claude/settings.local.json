@@ -3,7 +3,17 @@
     "allow": [
       "Bash(node:*)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm install:*)",
+      "Bash(taskkill //F //PID 46268)",
+      "Bash(curl -s \"http://localhost:3000/it/guide/guadagnare-automatico-canale-telegram-affiliate\")",
+      "Bash(for file in Steps.tsx StatsGrid.tsx ComparisonTable.tsx CTA.tsx ScoreBreakdown.tsx BeforeAfter.tsx Timeline.tsx)",
+      "Bash(do sed -i \"s/''use client'';//g\" \"$file\")",
+      "Bash(done)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

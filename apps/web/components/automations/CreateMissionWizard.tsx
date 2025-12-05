@@ -102,10 +102,20 @@ export interface WizardConfig {
     }>;
 }
 
+interface TemplateConfig {
+    name: string;
+    description: string;
+    categories: string[];
+    minScore: number;
+    maxPrice?: number;
+    schedulePreset?: 'relaxed' | 'active' | 'intensive';
+}
+
 interface CreateMissionWizardProps {
     onComplete: (mission: MissionConfig) => void;
     onCancel: () => void;
     editingMission?: MissionConfig & { id: string } | null;
+    initialTemplate?: TemplateConfig | null;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -158,13 +168,30 @@ const initialMissionConfig: MissionConfig = {
 export function CreateMissionWizard({
     onComplete,
     onCancel,
-    editingMission
+    editingMission,
+    initialTemplate
 }: CreateMissionWizardProps) {
     const t = useTranslations('automations.wizard');
     const [currentStep, setCurrentStep] = useState(1);
-    const [mission, setMission] = useState<MissionConfig>(
-        editingMission || initialMissionConfig
-    );
+
+    // Initialize mission state from editing, template, or defaults
+    const getInitialMission = (): MissionConfig => {
+        if (editingMission) return editingMission;
+        if (initialTemplate) {
+            return {
+                ...initialMissionConfig,
+                name: initialTemplate.name,
+                description: initialTemplate.description,
+                categories: initialTemplate.categories,
+                minScore: initialTemplate.minScore,
+                maxPrice: initialTemplate.maxPrice,
+                schedulePreset: initialTemplate.schedulePreset || 'active',
+            };
+        }
+        return initialMissionConfig;
+    };
+
+    const [mission, setMission] = useState<MissionConfig>(getInitialMission());
     const [wizardConfig, setWizardConfig] = useState<WizardConfig | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);

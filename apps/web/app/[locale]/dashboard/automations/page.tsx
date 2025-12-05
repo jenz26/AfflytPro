@@ -17,7 +17,6 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { RuleCard } from '@/components/automations/RuleCard';
 import { CreateMissionWizard } from '@/components/automations/CreateMissionWizard';
 import { EmptyState } from '@/components/automations/EmptyState';
-import { TemplateWizard } from '@/components/automations/TemplateWizard';
 import { AutomationTemplate } from '@/components/automations/TemplateCard';
 import { API_BASE } from '@/lib/api/config';
 import { Analytics } from '@/components/analytics/PostHogProvider';
@@ -482,7 +481,7 @@ export default function AutomationStudioPage() {
             </div>
 
             {/* Create/Edit Wizard Modal */}
-            {showWizard && (
+            {(showWizard || selectedTemplate) && (
                 <CreateMissionWizard
                     editingMission={editingRule ? {
                         id: editingRule.id,
@@ -512,10 +511,19 @@ export default function AutomationStudioPage() {
                         customStylePrompt: (editingRule as any).customStylePrompt || undefined,
                         llmModel: (editingRule as any).llmModel || 'gpt-4o-mini',
                     } : null}
+                    initialTemplate={selectedTemplate ? {
+                        name: selectedTemplate.name,
+                        description: selectedTemplate.description,
+                        categories: selectedTemplate.categories,
+                        minScore: selectedTemplate.minScore,
+                        maxPrice: selectedTemplate.maxPrice,
+                        schedulePreset: selectedTemplate.difficulty === 'beginner' ? 'relaxed' : 'active',
+                    } : null}
                     onComplete={handleCreateRule}
                     onCancel={() => {
                         setShowWizard(false);
                         setEditingRule(null);
+                        setSelectedTemplate(null);
                     }}
                 />
             )}
@@ -551,14 +559,6 @@ export default function AutomationStudioPage() {
                 isLoading={isDeleting}
             />
 
-            {/* Template Wizard Modal */}
-            {selectedTemplate && (
-                <TemplateWizard
-                    template={selectedTemplate}
-                    onComplete={handleCreateRule}
-                    onCancel={() => setSelectedTemplate(null)}
-                />
-            )}
         </div>
     );
 }
