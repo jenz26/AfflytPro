@@ -39,6 +39,15 @@ export function LandingNav() {
 
         {/* Nav Actions */}
         <div className="flex items-center gap-3">
+          {/* Link Guide */}
+          <Link
+            href="/it/guide"
+            className={`font-medium text-gray-400 hover:text-white transition-colors ${
+              scrolled ? 'text-sm' : 'text-base'
+            }`}
+          >
+            Guide
+          </Link>
           {/* Link Accedi per utenti esistenti */}
           <Link
             href="/it/auth/login"

@@ -1,8 +1,18 @@
 import { MetadataRoute } from 'next';
+import { getAllGuides } from '@/lib/content';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://afflyt.io';
   const lastModified = new Date();
+
+  // Get all guides dynamically
+  const guides = getAllGuides();
+  const guideUrls = guides.map((guide) => ({
+    url: `${baseUrl}/it/guide/${guide.slug}`,
+    lastModified: guide.updatedAt ? new Date(guide.updatedAt) : new Date(guide.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: guide.featured ? 0.8 : 0.7,
+  }));
 
   return [
     // Landing IT (principale - priorità massima per 301 da DealPilot)
@@ -19,20 +29,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
-    // Cornerstone: Guida Telegram Automation
+    // Guide Index Page
     {
-      url: `${baseUrl}/it/guide/automatizzare-canale-telegram-affiliate`,
+      url: `${baseUrl}/it/guide`,
       lastModified,
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
-    // Cornerstone: Guida Scegliere Prodotti
-    {
-      url: `${baseUrl}/it/guide/scegliere-prodotti-migliori-automazione`,
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
+    // All guides (dynamic)
+    ...guideUrls,
     // Migration page - DealPilot → Afflyt (SEO continuity)
     {
       url: `${baseUrl}/it/blog/dealpilot-diventa-afflyt`,
