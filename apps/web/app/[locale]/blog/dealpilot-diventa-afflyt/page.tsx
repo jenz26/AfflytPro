@@ -5,39 +5,104 @@ import { LandingLayout } from '@/components/landing/LandingLayout';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 export const metadata: Metadata = {
-  title: 'DealPilot diventa Afflyt - Nuova Era per l\'Affiliate Marketing',
-  description: 'DealPilot si evolve e diventa Afflyt. Stessa missione, nuove funzionalità potenti. Scopri cosa cambia e perché questa evoluzione è una grande notizia per te.',
-  keywords: ['dealpilot', 'afflyt', 'migrazione', 'affiliate marketing', 'telegram bot', 'amazon affiliati'],
+  title: 'DealPilot diventa Afflyt - Annuncio Ufficiale | Afflyt',
+  description: 'DealPilot evolve e diventa Afflyt, la piattaforma di automazione per affiliate creators e canali Telegram. Scopri cosa cambia, le nuove funzionalita come Deal Score e Analytics, e come accedere subito al nuovo sistema.',
+  keywords: ['dealpilot', 'afflyt', 'migrazione', 'rebrand', 'affiliate marketing', 'telegram bot', 'amazon affiliati', 'deal score', 'automazione telegram'],
   alternates: {
     canonical: 'https://afflyt.io/it/blog/dealpilot-diventa-afflyt',
+    languages: {
+      'it': 'https://afflyt.io/it/blog/dealpilot-diventa-afflyt',
+      'x-default': 'https://afflyt.io/it/blog/dealpilot-diventa-afflyt',
+    },
   },
   openGraph: {
-    title: 'DealPilot diventa Afflyt',
-    description: 'La piattaforma che ami si evolve con nuove funzionalità potenti.',
+    title: 'DealPilot diventa Afflyt - Annuncio Ufficiale',
+    description: 'DealPilot evolve e diventa Afflyt. Stessa missione, nuove funzionalita potenti per il tuo affiliate marketing su Telegram.',
     type: 'article',
     locale: 'it_IT',
     siteName: 'Afflyt',
     url: 'https://afflyt.io/it/blog/dealpilot-diventa-afflyt',
     publishedTime: '2024-12-01T00:00:00Z',
+    modifiedTime: new Date().toISOString(),
     authors: ['Afflyt Team'],
+    section: 'Annunci',
+    tags: ['rebrand', 'dealpilot', 'afflyt', 'migrazione'],
     images: [
       {
         url: 'https://afflyt.io/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'DealPilot diventa Afflyt',
+        alt: 'DealPilot diventa Afflyt - Annuncio Ufficiale della Migrazione',
       },
     ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DealPilot diventa Afflyt',
+    description: 'La piattaforma che ami si evolve. Scopri cosa cambia.',
+    images: ['https://afflyt.io/og-image.png'],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
+
+// JSON-LD Schema for the migration announcement
+function MigrationJsonLd() {
+  const article = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'DealPilot diventa Afflyt - Annuncio Ufficiale',
+    description: 'DealPilot evolve e diventa Afflyt, la piattaforma di automazione per affiliate creators e canali Telegram.',
+    image: 'https://afflyt.io/og-image.png',
+    datePublished: '2024-12-01T00:00:00Z',
+    dateModified: new Date().toISOString(),
+    author: {
+      '@type': 'Organization',
+      name: 'Afflyt',
+      url: 'https://afflyt.io',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Afflyt',
+      url: 'https://afflyt.io',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://afflyt.io/logo.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': 'https://afflyt.io/it/blog/dealpilot-diventa-afflyt',
+    },
+    about: {
+      '@type': 'Brand',
+      name: 'Afflyt',
+      alternateName: 'DealPilot',
+      description: 'Piattaforma di automazione per affiliate marketing su Telegram',
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(article) }}
+    />
+  );
+}
 
 export default function MigrationPage() {
   return (
     <LandingLayout>
+      {/* JSON-LD Schema for SEO */}
+      <MigrationJsonLd />
       <div className="min-h-screen bg-afflyt-dark-100">
         <article className="max-w-4xl mx-auto px-6 py-20">
           {/* Header */}
@@ -189,6 +254,43 @@ export default function MigrationPage() {
                   </div>
                 </div>
               </GlassCard>
+            </section>
+
+            {/* Internal links section */}
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold text-white mb-6">Approfondisci</h2>
+              <div className="grid md:grid-cols-3 gap-4 not-prose">
+                <Link href="/it" className="group">
+                  <GlassCard className="p-5 h-full hover:border-afflyt-cyan-400/50 transition-all">
+                    <h3 className="font-semibold text-white mb-2 group-hover:text-afflyt-cyan-400 transition-colors">
+                      Scopri tutte le funzionalità
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Esplora Deal Score, Analytics, Automazioni e molto altro.
+                    </p>
+                  </GlassCard>
+                </Link>
+                <Link href="/it/guide/automatizzare-canale-telegram-affiliate" className="group">
+                  <GlassCard className="p-5 h-full hover:border-afflyt-cyan-400/50 transition-all">
+                    <h3 className="font-semibold text-white mb-2 group-hover:text-afflyt-cyan-400 transition-colors">
+                      Guida: Automatizza Telegram
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Come creare un canale affiliate automatizzato.
+                    </p>
+                  </GlassCard>
+                </Link>
+                <Link href="/it/auth/register" className="group">
+                  <GlassCard className="p-5 h-full hover:border-afflyt-cyan-400/50 transition-all">
+                    <h3 className="font-semibold text-white mb-2 group-hover:text-afflyt-cyan-400 transition-colors">
+                      Inizia gratis oggi
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Crea il tuo account e prova Afflyt senza impegno.
+                    </p>
+                  </GlassCard>
+                </Link>
+              </div>
             </section>
 
           </div>
