@@ -33,5 +33,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    // Migration page - DealPilot → Afflyt (SEO continuity)
+    {
+      url: `${baseUrl}/it/blog/dealpilot-diventa-afflyt`,
+      lastModified,
+      changeFrequency: 'yearly',
+      priority: 0.9,
+    },
   ];
 }
