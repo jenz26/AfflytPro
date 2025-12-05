@@ -11,10 +11,47 @@ import {
   CheckCircle2,
   User
 } from 'lucide-react';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import remarkGfm from 'remark-gfm';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { ShareButton } from '@/components/guides/ShareButton';
-import { MDXContent } from '@/components/guides/MDXContent';
-import { getAllGuideSlugs, getGuideBySlug, getAllGuides, markdownToHtml, serializeMdx } from '@/lib/content';
+import {
+  Callout,
+  Steps,
+  Step,
+  StatsGrid,
+  Stat,
+  ComparisonTable,
+  CTA,
+  ScoreBreakdown,
+  BeforeAfter,
+  BeforeAfterHorizontal,
+  Timeline,
+  TimelineItem,
+  QuickAnswer,
+  FAQ,
+  VideoEmbed,
+} from '@/components/mdx';
+import { getAllGuideSlugs, getGuideBySlug, getAllGuides, markdownToHtml } from '@/lib/content';
+
+// MDX components for RSC rendering
+const mdxComponents = {
+  Callout,
+  Steps,
+  Step,
+  StatsGrid,
+  Stat,
+  ComparisonTable,
+  CTA,
+  ScoreBreakdown,
+  BeforeAfter,
+  BeforeAfterHorizontal,
+  Timeline,
+  TimelineItem,
+  QuickAnswer,
+  FAQ,
+  VideoEmbed,
+};
 
 // Generate static params for all guides
 export async function generateStaticParams() {
@@ -147,8 +184,7 @@ export default async function GuidePage({
     notFound();
   }
 
-  // Convert content based on file type
-  const mdxSource = guide.isMdx ? await serializeMdx(guide.content) : null;
+  // Convert markdown content to HTML (only for non-MDX files)
   const htmlContent = !guide.isMdx ? markdownToHtml(guide.content) : null;
 
   // Get related guides (same category first, then others)
@@ -270,8 +306,16 @@ export default async function GuidePage({
               prose-img:rounded-xl prose-img:shadow-2xl
             "
           >
-            {mdxSource ? (
-              <MDXContent source={mdxSource} />
+            {guide.isMdx ? (
+              <MDXRemote
+                source={guide.content}
+                components={mdxComponents}
+                options={{
+                  mdxOptions: {
+                    remarkPlugins: [remarkGfm],
+                  },
+                }}
+              />
             ) : (
               <div dangerouslySetInnerHTML={{ __html: htmlContent || '' }} />
             )}

@@ -153,15 +153,3 @@ export function markdownToHtml(markdown: string): string {
   return marked.parse(markdown) as string;
 }
 
-/**
- * Serialize MDX content for rendering
- * This needs to be called from a server component/action
- */
-export async function serializeMdx(source: string) {
-  const { serialize } = await import('next-mdx-remote/serialize');
-  return serialize(source, {
-    mdxOptions: {
-      development: process.env.NODE_ENV === 'development',
-    },
-  });
-}
