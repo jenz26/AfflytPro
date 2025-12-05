@@ -10,7 +10,8 @@ export function LandingFooter() {
           <Image src="/images/logo-dark-theme.webp" alt="Afflyt" width={24} height={24} />
           <span>&copy; 2025 Afflyt. Tutti i diritti riservati.</span>
         </div>
-        <div className="flex gap-6">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <a href="/it/blog/dealpilot-diventa-afflyt" className="hover:text-afflyt-cyan-400 transition-colors">Ex DealPilot?</a>
           <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
           <a href="/terms" className="hover:text-white transition-colors">Termini</a>
           <a href="https://t.me/afflyt" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
