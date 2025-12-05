@@ -1,0 +1,280 @@
+---
+title: "Come Funziona il Deal Score di Afflyt: Guida Tecnica Completa"
+slug: "come-funziona-deal-score"
+description: "Scopri l'algoritmo dietro al Deal Score di Afflyt. Analisi tecnica dei fattori, pesi dinamici e ottimizzazione automatica basata su machine learning."
+category: "Tecnico"
+readTime: "10 min"
+publishedAt: "2024-12-05"
+updatedAt: "2024-12-05"
+author: "Afflyt Team"
+keywords:
+  - deal score
+  - algoritmo scoring offerte
+  - machine learning affiliate
+  - pesi dinamici
+  - ottimizzazione conversioni
+  - keepa api
+featured: true
+---
+
+Il Deal Score è il cuore dell'intelligenza di Afflyt. È l'algoritmo che analizza ogni offerta Amazon e decide se vale la pena pubblicarla nel tuo canale Telegram. In questa guida tecnica ti spieghiamo esattamente come funziona, quali fattori considera e come si ottimizza automaticamente nel tempo.
+
+<Callout type="info">
+Questa guida è pensata per chi vuole capire il "dietro le quinte" del sistema. Se cerchi una guida pratica all'uso, consulta [Come configurare un bot offerte automatizzato](/it/blog/configurare-bot-offerte-automatizzato).
+</Callout>
+
+## Cos'è il Deal Score
+
+Il Deal Score è un punteggio da 0 a 100 assegnato a ogni offerta Amazon. Più alto è il punteggio, più l'offerta è considerata "di qualità" per il tuo pubblico specifico.
+
+<ComparisonTable
+  headers={["Range", "Significato", "Azione"]}
+  rows={[
+    ["80-100", "Eccellente", "✅ Pubblica subito"],
+    ["60-79", "Buono", "✅ Offerta solida"],
+    ["40-59", "Discreto", "⚠️ Dipende dai tuoi standard"],
+    ["20-39", "Mediocre", "❌ Probabilmente da scartare"],
+    ["0-19", "Scadente", "❌ Non pubblicare"]
+  ]}
+/>
+
+Ma il Deal Score non è un numero statico calcolato con una formula fissa. È un sistema dinamico che parte da una base comune, si adatta al tipo di canale e impara dalle conversioni reali del tuo canale specifico.
+
+## I Fattori del Deal Score
+
+Il punteggio è composto da sei fattori, ognuno con un peso specifico.
+
+<ScoreBreakdown
+  total={78}
+  factors={[
+    { name: "Discount Score", score: 17, max: 25, color: "#22c55e" },
+    { name: "Rating Score", score: 16, max: 20, color: "#eab308" },
+    { name: "Sales Rank Score", score: 16, max: 20, color: "#3b82f6" },
+    { name: "Price Drop Score", score: 10, max: 15, color: "#a855f7" },
+    { name: "Review Count Score", score: 9, max: 10, color: "#f97316" }
+  ]}
+  bonus={{ name: "Deal Type Bonus", value: 10 }}
+/>
+
+### Fattore 1: Discount Score (Peso Base: 25%)
+
+Misura la qualità dello sconto rispetto allo storico prezzi.
+
+<Callout type="warning">
+Non consideriamo lo "sconto dal prezzo di listino" di Amazon (spesso gonfiato), ma lo sconto rispetto al prezzo medio degli ultimi 30-90 giorni e al prezzo minimo storico.
+</Callout>
+
+La formula normalizza lo sconto reale rispetto a uno sconto massimo atteso (benchmark), con bonus aggiuntivi: +10 punti se è il minimo storico assoluto, +5 punti se è il minimo degli ultimi 30 giorni.
+
+### Fattore 2: Rating Score (Peso Base: 20%)
+
+Valuta la qualità del prodotto basandosi sulle recensioni. Il sistema normalizza il rating su una scala 0-100 dove 3.0 stelle equivale a 0 punti, 4.0 stelle a 50 punti e 5.0 stelle a 100 punti.
+
+<Callout type="info">
+Perché partiamo da 3 stelle? Sotto 3 stelle consideriamo il prodotto non pubblicabile, quindi non ha senso dare punteggi positivi.
+</Callout>
+
+I modificatori applicati includono una riduzione del 20% per prodotti con meno di 50 recensioni e un aumento del 10% per prodotti con oltre 1000 recensioni.
+
+### Fattore 3: Sales Rank Score (Peso Base: 20%)
+
+Il Sales Rank indica la popolarità di vendita nella categoria. Poiché i rank variano enormemente per categoria (un rank 5.000 in "Elettronica" è ottimo, ma in "Libri" è nella media), utilizziamo una scala logaritmica normalizzata.
+
+<ComparisonTable
+  headers={["Sales Rank", "Score Risultante", "Interpretazione"]}
+  rows={[
+    ["1-10", "~100", "Bestseller"],
+    ["100", "~60", "Molto popolare"],
+    ["1.000", "~40", "Popolare"],
+    ["10.000", "~20", "Nella media"],
+    ["100.000+", "~0", "Nicchia"]
+  ]}
+/>
+
+### Fattore 4: Price Drop Score (Peso Base: 15%)
+
+Misura l'entità del calo di prezzo recente. Un calo del 50% ottiene il massimo punteggio (100).
+
+<QuickAnswer question="Perché è separato dal Discount Score?">
+Perché un prodotto può avere uno sconto alto rispetto al "listino" ma prezzo stabile (nessun drop recente), oppure un calo di prezzo recente ma sconto nominale basso. Vogliamo premiare entrambi i casi quando sono reali.
+</QuickAnswer>
+
+### Fattore 5: Review Count Score (Peso Base: 10%)
+
+Valuta la "fiducia" nel prodotto basata sul volume di recensioni, utilizzando una scala logaritmica.
+
+<StatsGrid>
+  <Stat value="10" label="recensioni = ~33 punti" />
+  <Stat value="100" label="recensioni = ~66 punti" />
+  <Stat value="1000" label="recensioni = ~100 punti" />
+</StatsGrid>
+
+### Fattore 6: Deal Type Bonus (Peso Base: 10%)
+
+Alcuni tipi di offerta meritano un bonus aggiuntivo.
+
+<ComparisonTable
+  headers={["Tipo Offerta", "Bonus Punti", "Perché"]}
+  rows={[
+    ["Lightning Deal", "+15", "Offerta lampo, alta urgenza"],
+    ["Deal of the Day", "+12", "Visibilità garantita"],
+    ["Coupon attivo", "+8", "Sconto extra applicabile"],
+    ["Warehouse Deal", "+5", "Occasione su prodotto usato/ricondizionato"],
+    ["Prime Exclusive", "+3", "Riservato membri Prime"]
+  ]}
+/>
+
+## Pesi Dinamici: L'Intelligenza che Impara
+
+Ecco dove Afflyt si distingue dai sistemi tradizionali. I pesi non sono fissi, ma si adattano automaticamente basandosi sulle performance reali del tuo canale.
+
+<Timeline>
+  <TimelineItem date="Fase 1" title="Raccolta Dati" status="complete">
+    Ogni volta che pubblichi un'offerta, il sistema traccia click e conversioni
+  </TimelineItem>
+  <TimelineItem date="Fase 2" title="Calcolo Correlazioni" status="complete">
+    Utilizziamo il coefficiente di Pearson per misurare quanto ogni fattore correla con le conversioni
+  </TimelineItem>
+  <TimelineItem date="Fase 3" title="Aggiornamento Pesi" status="active">
+    I fattori che correlano di più con le vendite ottengono pesi maggiori, solo per il TUO canale
+  </TimelineItem>
+</Timeline>
+
+### Esempio Pratico
+
+Immagina che dopo un mese di dati, Afflyt scopra che nel TUO canale il rating correla fortemente con le conversioni (r = 0.7), ma il sales rank correla poco (r = 0.2).
+
+<BeforeAfter
+  before={{
+    title: "Pesi Default",
+    points: [
+      "Discount: 25%",
+      "Rating: 20%",
+      "Sales Rank: 20%",
+      "Price Drop: 15%",
+      "Reviews: 10%"
+    ]
+  }}
+  after={{
+    title: "Pesi Personalizzati",
+    points: [
+      "Discount: 23%",
+      "Rating: 28% ↑",
+      "Sales Rank: 12% ↓",
+      "Price Drop: 17%",
+      "Reviews: 10%"
+    ]
+  }}
+/>
+
+### Sistema di Confidence
+
+Quando hai pochi dati, il sistema non può essere sicuro delle correlazioni. Usiamo un sistema di confidence che bilancia pesi default e calcolati.
+
+<ComparisonTable
+  headers={["Data Points", "Confidence", "Comportamento"]}
+  rows={[
+    ["<10", "10%", "90% pesi default, 10% calcolati"],
+    ["10-50", "30%", "70% default, 30% calcolati"],
+    ["50-200", "60%", "40% default, 60% calcolati"],
+    [">200", "90%", "10% default, 90% calcolati"]
+  ]}
+/>
+
+Questo garantisce stabilità con pochi dati e personalizzazione con molti dati.
+
+## Audience Types: Preset Pre-Configurati
+
+Per i canali nuovi o con pochi dati, offriamo preset ottimizzati per tipologia di audience.
+
+<ComparisonTable
+  headers={["Fattore", "Tech Enthusiasts", "Bargain Hunters", "Quality Seekers"]}
+  rows={[
+    ["Discount", "20%", "35%", "15%"],
+    ["Rating", "25%", "15%", "35%"],
+    ["Sales Rank", "25%", "15%", "20%"],
+    ["Price Drop", "15%", "25%", "10%"],
+    ["Reviews", "15%", "10%", "20%"]
+  ]}
+/>
+
+<Callout type="tip" title="Quale scegliere?">
+**Tech Enthusiasts**: Pubblico esigente che valuta qualità e popolarità. **Bargain Hunters**: Pubblico focalizzato sul risparmio. **Quality Seekers**: Pubblico che vuole solo prodotti eccellenti.
+</Callout>
+
+## Configurare le Soglie di Pubblicazione
+
+Puoi impostare soglie minime di Deal Score per le tue automazioni.
+
+<ComparisonTable
+  headers={["Strategia", "Soglia", "Risultato Atteso"]}
+  rows={[
+    ["Solo le migliori", "75+", "Poche offerte, altissima qualità"],
+    ["Qualità alta", "65+", "Buon volume, ottima qualità"],
+    ["Standard", "55+", "Volume medio, buona qualità"],
+    ["Volume alto", "45+", "Alto volume, qualità variabile"]
+  ]}
+/>
+
+<Callout type="tip">
+Inizia con soglia alta (70+) e abbassala gradualmente se non hai abbastanza deal. È meglio pubblicare poco e bene che tanto e male.
+</Callout>
+
+<CTA
+  title="Vuoi vedere il Deal Score in azione?"
+  description="Prova Afflyt e guarda come l'AI seleziona le migliori offerte per il tuo pubblico"
+  primaryButton={{ text: "Inizia Gratis", href: "/it/register" }}
+  secondaryButton={{ text: "Vedi Demo", href: "/it/demo" }}
+/>
+
+## Confronto con Altri Sistemi
+
+<ComparisonTable
+  headers={["Feature", "Afflyt Deal Score", "Bot Tradizionali"]}
+  rows={[
+    ["Fattori analizzati", "6+ fattori", "Solo sconto"],
+    ["Pesi", "Dinamici (ML)", "Fissi"],
+    ["Personalizzazione", "Per canale", "Uguale per tutti"],
+    ["Storico prezzi", "Keepa integrato", "Spesso assente"],
+    ["Correlazioni", "Pearson coefficient", "Nessuna"],
+    ["Apprendimento", "Continuo", "Nessuno"]
+  ]}
+  highlight={1}
+/>
+
+## Ottimizzare il Deal Score per il Tuo Canale
+
+<Steps>
+  <Step title="Importa i Report Amazon Associates">
+    Più dati di conversione hai, più i pesi diventano precisi per il tuo pubblico
+  </Step>
+  <Step title="Scegli l'Audience Type Corretto">
+    Inizia dal preset più vicino al tuo pubblico reale
+  </Step>
+  <Step title="Dai Tempo al Sistema">
+    Servono circa 50 conversioni per correlazioni statisticamente significative
+  </Step>
+  <Step title="Analizza i Breakdown">
+    Identifica quali fattori contano davvero per il TUO pubblico
+  </Step>
+  <Step title="Sperimenta con le Soglie">
+    Trova il balance perfetto tra volume e qualità
+  </Step>
+</Steps>
+
+## Conclusione
+
+Il Deal Score di Afflyt non è una semplice formula statica, ma un sistema intelligente che analizza 6+ fattori per ogni offerta, usa dati reali di storico prezzi via Keepa, si adatta automaticamente al tuo pubblico e migliora con più dati di conversione.
+
+Capire come funziona ti aiuta a configurare meglio le automazioni e interpretare le scelte del sistema.
+
+<CTA
+  title="Prova il Deal Score in Azione"
+  description="Registrati gratis e inizia a pubblicare solo le offerte che convertono davvero"
+  primaryButton={{ text: "Inizia Gratis", href: "/it/register" }}
+  variant="gradient"
+/>
+
+---
+
+*Vuoi vedere come il Deal Score si integra con gli analytics? Leggi la guida su [come analizzare click e conversioni](/it/blog/analizzare-click-conversioni-canale-telegram).*
