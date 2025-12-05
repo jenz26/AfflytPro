@@ -29,6 +29,52 @@ async function main() {
   console.log(`Found user: ${user.email} (${user.id})`);
 
   // ═══════════════════════════════════════════════════════════════
+  // 0. CLEANUP OLD INVALID IDs (non-UUID format)
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n🧹 Cleaning up old demo data with invalid IDs...');
+
+  // Delete old automation rules with non-UUID IDs
+  const oldRuleIds = ['rule-tech-deals', 'rule-flash-offers', 'rule-premium-only'];
+  for (const id of oldRuleIds) {
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM "AutomationRule" WHERE id = '${id}'`);
+      console.log(`  ✓ Deleted old rule: ${id}`);
+    } catch {
+      // Ignore if not found
+    }
+  }
+
+  // Delete old channels with non-UUID IDs
+  const oldChannelIds = ['channel-tech-deals', 'channel-offerte-flash'];
+  for (const id of oldChannelIds) {
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM "Channel" WHERE id = '${id}'`);
+      console.log(`  ✓ Deleted old channel: ${id}`);
+    } catch {
+      // Ignore if not found
+    }
+  }
+
+  // Delete old scheduled posts with non-UUID IDs
+  const oldPostIds = ['post-morning-bounty', 'post-weekend-recap'];
+  for (const id of oldPostIds) {
+    try {
+      await prisma.$executeRawUnsafe(`DELETE FROM "ScheduledPost" WHERE id = '${id}'`);
+      console.log(`  ✓ Deleted old post: ${id}`);
+    } catch {
+      // Ignore if not found
+    }
+  }
+
+  // Delete old credential with non-UUID ID
+  try {
+    await prisma.$executeRawUnsafe(`DELETE FROM "Credential" WHERE id = 'demo-telegram-credential'`);
+    console.log(`  ✓ Deleted old credential: demo-telegram-credential`);
+  } catch {
+    // Ignore if not found
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // 1. CREATE AFFILIATE TAGS
   // ═══════════════════════════════════════════════════════════════
   console.log('\n📌 Creating affiliate tags...');
@@ -64,12 +110,24 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════
   console.log('\n📢 Creating channels...');
 
+  // Use deterministic UUIDs for demo data (so they can be updated/deleted)
+  const DEMO_IDS = {
+    credential: 'a0000000-0000-0000-0000-000000000001',
+    channelTech: 'b0000000-0000-0000-0000-000000000001',
+    channelFlash: 'b0000000-0000-0000-0000-000000000002',
+    ruleTechDeals: 'c0000000-0000-0000-0000-000000000001',
+    ruleFlashOffers: 'c0000000-0000-0000-0000-000000000002',
+    rulePremiumOnly: 'c0000000-0000-0000-0000-000000000003',
+    postMorningBounty: 'd0000000-0000-0000-0000-000000000001',
+    postWeekendRecap: 'd0000000-0000-0000-0000-000000000002',
+  };
+
   // First create a credential for the bot
   const credential = await prisma.credential.upsert({
-    where: { id: 'demo-telegram-credential' },
+    where: { id: DEMO_IDS.credential },
     update: {},
     create: {
-      id: 'demo-telegram-credential',
+      id: DEMO_IDS.credential,
       userId: user.id,
       provider: 'TELEGRAM_BOT',
       key: 'demo-encrypted-token',
@@ -79,10 +137,10 @@ async function main() {
 
   const channels = await Promise.all([
     prisma.channel.upsert({
-      where: { id: 'channel-tech-deals' },
+      where: { id: DEMO_IDS.channelTech },
       update: {},
       create: {
-        id: 'channel-tech-deals',
+        id: DEMO_IDS.channelTech,
         userId: user.id,
         name: 'Tech Deals Italia 🇮🇹',
         platform: 'TELEGRAM',
@@ -93,10 +151,10 @@ async function main() {
       }
     }),
     prisma.channel.upsert({
-      where: { id: 'channel-offerte-flash' },
+      where: { id: DEMO_IDS.channelFlash },
       update: {},
       create: {
-        id: 'channel-offerte-flash',
+        id: DEMO_IDS.channelFlash,
         userId: user.id,
         name: 'Offerte Flash ⚡',
         platform: 'TELEGRAM',
@@ -319,7 +377,7 @@ async function main() {
 
   const automationRules = [
     {
-      id: 'rule-tech-deals',
+      id: DEMO_IDS.ruleTechDeals,
       userId: user.id,
       name: 'Tech Deals Automatici',
       description: 'Pubblica automaticamente offerte tech con score > 60',
@@ -327,7 +385,7 @@ async function main() {
       categories: ['Electronics', 'Computers'],
       minScore: 60,
       minDiscount: 20,
-      channelId: 'channel-tech-deals',
+      channelId: DEMO_IDS.channelTech,
       schedulePreset: 'active',
       intervalMinutes: 180,
       dealsPerRun: 5,
@@ -337,7 +395,7 @@ async function main() {
       clicksGenerated: 15678
     },
     {
-      id: 'rule-flash-offers',
+      id: DEMO_IDS.ruleFlashOffers,
       userId: user.id,
       name: 'Offerte Flash',
       description: 'Cattura offerte lampo con sconto > 30%',
@@ -345,7 +403,7 @@ async function main() {
       categories: ['Electronics', 'Home', 'Toys'],
       minScore: 45,
       minDiscount: 30,
-      channelId: 'channel-offerte-flash',
+      channelId: DEMO_IDS.channelFlash,
       schedulePreset: 'intensive',
       intervalMinutes: 60,
       dealsPerRun: 3,
@@ -355,7 +413,7 @@ async function main() {
       clicksGenerated: 45231
     },
     {
-      id: 'rule-premium-only',
+      id: DEMO_IDS.rulePremiumOnly,
       userId: user.id,
       name: 'Solo Premium (Score 80+)',
       description: 'Offerte premium per pubblico esigente',
@@ -364,7 +422,7 @@ async function main() {
       minScore: 80,
       minPrice: 100,
       minRating: 45, // 4.5 stars
-      channelId: 'channel-tech-deals',
+      channelId: DEMO_IDS.channelTech,
       schedulePreset: 'relaxed',
       intervalMinutes: 360,
       dealsPerRun: 2,
@@ -451,9 +509,9 @@ async function main() {
 
   const scheduledPosts = [
     {
-      id: 'post-morning-bounty',
+      id: DEMO_IDS.postMorningBounty,
       userId: user.id,
-      channelId: 'channel-tech-deals',
+      channelId: DEMO_IDS.channelTech,
       type: 'BOUNTY' as const,
       name: 'Bounty Prime Mattina',
       content: '🎁 Non hai ancora Amazon Prime?\n\nProva 30 giorni GRATIS e scopri:\n✅ Spedizioni illimitate in 1 giorno\n✅ Prime Video incluso\n✅ Offerte esclusive\n\n👉 {{link}}',
@@ -466,9 +524,9 @@ async function main() {
       totalClicks: 1234
     },
     {
-      id: 'post-weekend-recap',
+      id: DEMO_IDS.postWeekendRecap,
       userId: user.id,
-      channelId: 'channel-offerte-flash',
+      channelId: DEMO_IDS.channelFlash,
       type: 'RECAP' as const,
       name: 'Recap Weekend',
       content: '📊 TOP 5 OFFERTE DELLA SETTIMANA\n\n{{deals}}\n\n💡 Non perdere le prossime offerte, attiva le notifiche!',
