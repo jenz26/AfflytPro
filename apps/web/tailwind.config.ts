@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import typography from '@tailwindcss/typography';
 
 const config: Config = {
   content: [
@@ -8,6 +9,94 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            color: '#9ca3af',
+            a: {
+              color: '#1AFFF3',
+              '&:hover': {
+                color: '#00E5E0',
+              },
+            },
+            strong: {
+              color: '#ffffff',
+            },
+            h1: {
+              color: '#ffffff',
+            },
+            h2: {
+              color: '#ffffff',
+            },
+            h3: {
+              color: '#ffffff',
+            },
+            h4: {
+              color: '#ffffff',
+            },
+            code: {
+              color: '#1AFFF3',
+              backgroundColor: 'rgba(0, 229, 224, 0.1)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              fontWeight: '400',
+            },
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
+            },
+            pre: {
+              backgroundColor: '#1A1B23',
+              border: '1px solid rgba(0, 229, 224, 0.2)',
+              code: {
+                backgroundColor: 'transparent',
+                padding: '0',
+                color: '#9ca3af',
+              },
+            },
+            table: {
+              width: '100%',
+            },
+            thead: {
+              borderBottomColor: 'rgba(0, 229, 224, 0.3)',
+            },
+            'thead th': {
+              color: '#ffffff',
+              fontWeight: '600',
+            },
+            'tbody tr': {
+              borderBottomColor: 'rgba(156, 163, 175, 0.2)',
+            },
+            'tbody td': {
+              color: '#9ca3af',
+            },
+            blockquote: {
+              borderLeftColor: '#1AFFF3',
+              color: '#9ca3af',
+            },
+            hr: {
+              borderColor: 'rgba(156, 163, 175, 0.2)',
+            },
+            ul: {
+              li: {
+                '&::marker': {
+                  color: '#1AFFF3',
+                },
+              },
+            },
+            ol: {
+              li: {
+                '&::marker': {
+                  color: '#1AFFF3',
+                },
+              },
+            },
+          },
+        },
+      },
       colors: {
         // Primary - Electric Cyan (Data Intelligence)
         'afflyt-cyan': {
@@ -51,6 +140,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [typography],
 };
 export default config;

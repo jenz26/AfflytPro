@@ -1,8 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { marked } from 'marked';
 
 const guidesDirectory = path.join(process.cwd(), 'content/guides');
+
+// Configure marked for better rendering
+marked.setOptions({
+  gfm: true, // GitHub Flavored Markdown (tables, strikethrough, etc.)
+  breaks: true, // Convert \n to <br>
+});
 
 export interface GuideMetadata {
   slug: string;
@@ -128,39 +135,8 @@ export function getGuideBySlug(slug: string): Guide | null {
 }
 
 /**
- * Convert markdown to HTML (simple version)
- * For production, consider using remark/rehype or marked
+ * Convert markdown to HTML using marked
  */
 export function markdownToHtml(markdown: string): string {
-  // Basic markdown to HTML conversion
-  let html = markdown
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold text-white mt-8 mb-4">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold text-white mt-12 mb-6">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-white mt-12 mb-6">$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/gim, '<strong class="text-white font-semibold">$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    // Links - internal
-    .replace(/\[([^\]]+)\]\(\/([^)]+)\)/gim, '<a href="/$2" class="text-afflyt-cyan-400 hover:underline">$1</a>')
-    // Links - external
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-afflyt-cyan-400 hover:underline">$1</a>')
-    // Unordered lists
-    .replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4">$1</li>')
-    // Ordered lists
-    .replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4">$1</li>')
-    // Wrap consecutive li in ul
-    .replace(/(<li.*<\/li>\n?)+/gim, '<ul class="list-disc list-inside space-y-2 text-gray-300 my-4">$&</ul>')
-    // Paragraphs (lines that don't start with < or are empty)
-    .split('\n\n')
-    .map(block => {
-      block = block.trim();
-      if (!block) return '';
-      if (block.startsWith('<')) return block;
-      return `<p class="text-gray-300 leading-relaxed mb-4">${block}</p>`;
-    })
-    .join('\n');
-
-  return html;
+  return marked.parse(markdown) as string;
 }
