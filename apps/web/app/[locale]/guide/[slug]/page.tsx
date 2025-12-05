@@ -7,12 +7,12 @@ import {
   Clock,
   Calendar,
   BookOpen,
-  Share2,
   Sparkles,
   CheckCircle2,
   User
 } from 'lucide-react';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import { ShareButton } from '@/components/guides/ShareButton';
 import { getAllGuideSlugs, getGuideBySlug, getAllGuides, markdownToHtml } from '@/lib/content';
 
 // Generate static params for all guides
@@ -238,20 +238,7 @@ export default async function GuidePage({
             </div>
 
             {/* Share button */}
-            <button
-              className="ml-auto flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-              onClick={() => {
-                if (typeof navigator !== 'undefined' && navigator.share) {
-                  navigator.share({
-                    title: guide.title,
-                    url: window.location.href,
-                  });
-                }
-              }}
-            >
-              <Share2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Condividi</span>
-            </button>
+            <ShareButton title={guide.title} />
           </div>
         </div>
       </div>
