@@ -82,19 +82,19 @@ export function Callout({ type = 'info', title, children }: CalloutProps) {
 
   return (
     <div
-      className={`my-6 rounded-r-lg border-l-4 ${config.borderColor} ${config.bgColor} p-4`}
+      className={`my-8 rounded-xl border ${config.borderColor.replace('border-l-', 'border-')} ${config.bgColor} p-6 shadow-lg`}
     >
-      <div className="flex items-start gap-3">
-        <div className={`flex-shrink-0 mt-0.5 ${config.iconColor}`}>
+      <div className="flex items-start gap-4">
+        <div className={`flex-shrink-0 p-2 rounded-lg ${config.bgColor} ${config.iconColor}`}>
           {config.icon}
         </div>
         <div className="flex-1 min-w-0">
           {displayTitle && (
-            <p className={`font-semibold ${config.titleColor} mb-1`}>
+            <p className={`font-bold text-lg ${config.titleColor} mb-2`}>
               {displayTitle}
             </p>
           )}
-          <div className="text-gray-300 text-sm leading-relaxed [&>p]:m-0">
+          <div className="text-gray-300 leading-relaxed [&>p]:m-0">
             {children}
           </div>
         </div>
